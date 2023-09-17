@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
@@ -21,7 +22,11 @@ func main() {
 	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &opts))
 	//
-	bot, err := tgbotapi.NewBotAPI(cfg.Api.Token)
+	bot, err := tgbotapi.NewBotAPIWithClient(cfg.Api.Token, tgbotapi.APIEndpoint, &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	})
 	if err != nil {
 		panic(err)
 	}
