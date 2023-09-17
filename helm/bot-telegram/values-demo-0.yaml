@@ -2,7 +2,7 @@ ingress:
   hosts:
     - host: demo.tgbot.awakari.cloud
       paths:
-        - path: /webhook
+        - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: secret-api-tls-server
