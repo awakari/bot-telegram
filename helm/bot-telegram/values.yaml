@@ -56,10 +56,8 @@ ingress:
       paths:
         - path: /
           pathType: ImplementationSpecific
-  tlsCa:
-    secretName: secret-api-tls-ca
   tls:
-    - secretName: secret-api-tls-server
+    - secretName: secret-bot-telegram-tls-server
       hosts:
         - bot-telegram.local
 

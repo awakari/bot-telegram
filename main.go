@@ -52,6 +52,7 @@ func main() {
 	if info.LastErrorDate != 0 {
 		panic(err)
 	}
+	log.Info(fmt.Sprintf("Webhook listen path: %s", cfg.Api.Path))
 	chUpdates := bot.ListenForWebhook(cfg.Api.Path)
 	//
 	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
@@ -61,6 +62,7 @@ func main() {
 	//
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", cfg.Api.Port), nil)
 	//
+	log.Info("Start processing updates...")
 	for update := range chUpdates {
 		log.Info(fmt.Sprintf("%+v\n", update))
 	}

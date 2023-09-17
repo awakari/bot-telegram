@@ -7,7 +7,7 @@ import (
 type Config struct {
 	Api struct {
 		Host  string `envconfig:"API_HOST" default:"demo.awakari.cloud" required:"true"`
-		Path  string `envconfig:"API_PATH" default:"/webhook" required:"true"`
+		Path  string `envconfig:"API_PATH" default:"/" required:"true"`
 		Port  uint16 `envconfig:"API_PORT" default:"8080" required:"true"`
 		Token string `envconfig:"API_TOKEN" required:"true"`
 	}

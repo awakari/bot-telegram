@@ -69,7 +69,7 @@ spec:
       volumes:
         - name: server-cert
           secret:
-            secretName: secret-api-tls-server
+            secretName: secret-bot-telegram-tls-server
             items:
               - key: tls.crt
                 path: tls.crt

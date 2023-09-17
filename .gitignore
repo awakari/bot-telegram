@@ -23,3 +23,5 @@ go.work
 vendor/
 ./bot-telegram
 tg-bot-token.txt
+*.pem
+*.key

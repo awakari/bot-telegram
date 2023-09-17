@@ -5,6 +5,6 @@ ingress:
         - path: /
           pathType: ImplementationSpecific
   tls:
-    - secretName: secret-api-tls-server
+    - secretName: secret-bot-telegram-tls-server
       hosts:
         - demo.tgbot.awakari.cloud
