@@ -27,9 +27,13 @@ func main() {
 	}
 	bot.Debug = true
 	log.Info(fmt.Sprintf("Authorized on account %s", bot.Self.UserName))
+	certData, err := os.ReadFile("/etc/server-cert/tls.crt")
+	if err != nil {
+		panic(err)
+	}
 	certFile := tgbotapi.FileBytes{
 		Name:  "server-cert",
-		Bytes: []byte(cfg.Api.Cert),
+		Bytes: certData,
 	}
 	wh, _ := tgbotapi.NewWebhookWithCert(fmt.Sprintf("https://%s%s", cfg.Api.Host, cfg.Api.Path), certFile)
 	_, err = bot.Request(wh)
