@@ -15,7 +15,7 @@ apiVersion: extensions/v1beta1
 {{- end }}
 kind: Ingress
 metadata:
-  name: "{{ $fullName }}-http-v1"
+  name: "{{ $fullName }}"
   labels:
     {{- include "bot-telegram.labels" . | nindent 4 }}
   annotations:
