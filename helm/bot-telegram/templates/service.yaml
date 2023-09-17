@@ -8,14 +8,6 @@ spec:
   type: {{ .Values.service.type }}
   ports:
     - port: {{ .Values.service.port }}
-      targetPort: grpc
-      protocol: TCP
-      name: grpc
-    - port: {{ .Values.service.admin.port }}
-      targetPort: grpc-admin
-      protocol: TCP
-      name: grpc-admin
-    - port: {{ .Values.service.http.port }}
       targetPort: http
       protocol: TCP
       name: http
