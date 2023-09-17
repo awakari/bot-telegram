@@ -53,7 +53,14 @@ func main() {
 		panic(err)
 	}
 	chUpdates := bot.ListenForWebhook(cfg.Api.Path)
+	//
+	http.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("OK"))
+	})
+	//
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", cfg.Api.Port), nil)
+	//
 	for update := range chUpdates {
 		log.Info(fmt.Sprintf("%+v\n", update))
 	}

@@ -53,10 +53,12 @@ spec:
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
-            grpc:
+            httpGet:
+              path: "/healthz"
               port: {{ .Values.service.port }}
           readinessProbe:
-            grpc:
+            httpGet:
+              path: "/healthz"
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
