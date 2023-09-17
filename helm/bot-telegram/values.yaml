@@ -54,7 +54,7 @@ ingress:
   hosts:
     - host: bot-telegram.local
       paths:
-        - path: /telegram/v1
+        - path: /webhook
           pathType: ImplementationSpecific
   tlsCa:
     secretName: secret-api-tls-ca

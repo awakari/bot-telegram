@@ -1,10 +1,10 @@
 ingress:
   hosts:
-    - host: demo.awakari.cloud
+    - host: demo.tgbot.awakari.cloud
       paths:
-        - path: /telegram/v1
+        - path: /webhook
           pathType: ImplementationSpecific
   tls:
     - secretName: secret-api-tls-server
       hosts:
-        - demo.awakari.cloud
+        - demo.tgbot.awakari.cloud
