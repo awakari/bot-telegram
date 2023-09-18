@@ -64,6 +64,9 @@ func main() {
 	//
 	log.Info("Start processing updates...")
 	for update := range chUpdates {
-		log.Info(fmt.Sprintf("%+v\n", update))
+		msg := update.Message
+		if msg != nil {
+			log.Info(fmt.Sprintf("Message id=%d, from=%+v\n", msg.MessageID, msg.From))
+		}
 	}
 }
