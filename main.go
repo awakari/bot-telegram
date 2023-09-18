@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
@@ -62,11 +63,21 @@ func main() {
 	//
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", cfg.Api.Port), nil)
 	//
+	routes := map[string]telegram.Handler{
+		"start": telegram.NewStartHandler(),
+	}
+	h := telegram.NewRouteHandler(routes)
+	h = telegram.NewLoggingHandler(h, log)
+	h = telegram.NewErrorHandler(h)
 	log.Info("Start processing updates...")
 	for update := range chUpdates {
 		msg := update.Message
 		if msg != nil {
-			log.Info(fmt.Sprintf("Message id=%d, from=%+v\n", msg.MessageID, msg.From))
+			reply, _ := h.Handle(msg)
+			_, err = bot.Send(reply)
+			if err != nil {
+				log.Error("failed to send reply", err)
+			}
 		}
 	}
 }
