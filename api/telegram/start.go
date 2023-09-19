@@ -22,18 +22,17 @@ func Start(ctx telebot.Context) (err error) {
 }
 
 func startSubscription(ctx telebot.Context, chatId int64) (err error) {
-	m := &telebot.ReplyMarkup{
-		InlineKeyboard: [][]telebot.InlineButton{
-			{
-				{
-					Unique: "set-sub",
-					WebApp: &telebot.WebApp{
-						URL: "https://google.com",
-					},
+	m := &telebot.ReplyMarkup{}
+	m.Inline(
+		m.Row(
+			m.WebApp(
+				"Setup new subscription",
+				&telebot.WebApp{
+					URL: "https://google.com",
 				},
-			},
-		},
-	}
+			),
+		),
+	)
 	return ctx.Send("Set up new subscription", m)
 }
 
