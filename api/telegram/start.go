@@ -9,9 +9,10 @@ import (
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
 
 var setSub = &telebot.ReplyMarkup{
-	ReplyKeyboard: [][]telebot.ReplyButton{
+	InlineKeyboard: [][]telebot.InlineButton{
 		{
-			telebot.ReplyButton{
+			telebot.InlineButton{
+				Unique: "set-sub",
 				WebApp: &telebot.WebApp{
 					URL: "https://google.com",
 				},

@@ -31,12 +31,12 @@ func main() {
 		},
 		Token: cfg.Api.Token,
 		Poller: &telebot.Webhook{
-			Listen:        fmt.Sprintf(":%d", cfg.Api.Port),
-			HasCustomCert: true,
 			Endpoint: &telebot.WebhookEndpoint{
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Host, cfg.Api.Path),
 				Cert:      "/etc/server-cert/tls.crt",
 			},
+			HasCustomCert: true,
+			Listen:        fmt.Sprintf(":%d", cfg.Api.Port),
 		},
 	}
 	var b *telebot.Bot
@@ -49,5 +49,6 @@ func main() {
 	})
 	b.Handle("/start", telegram.Start)
 	b.Handle(telebot.OnUserLeft, telegram.UserLeft)
+	//b.Handle(telebot.OnText, telegram.SendTextMessage)
 	b.Start()
 }

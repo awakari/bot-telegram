@@ -8,7 +8,7 @@ import (
 
 func LoggingHandlerFunc(next telebot.HandlerFunc, log *slog.Logger) telebot.HandlerFunc {
 	return func(ctx telebot.Context) error {
-		data, _ := json.MarshalIndent(ctx.Update(), "", "  ")
+		data, _ := json.Marshal(ctx.Update())
 		log.Debug(string(data))
 		return next(ctx)
 	}
