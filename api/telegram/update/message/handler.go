@@ -7,7 +7,7 @@ import (
 )
 
 type Handler interface {
-	Handle(msg *tgbotapi.Message) (resp tgbotapi.MessageConfig, err error)
+	Handle(msg *tgbotapi.Message, resp *tgbotapi.MessageConfig) (err error)
 }
 
 type handler struct {
@@ -20,13 +20,24 @@ func NewHandler(handlerCmd command.Handler) Handler {
 	}
 }
 
-func (h handler) Handle(msg *tgbotapi.Message) (resp tgbotapi.MessageConfig, err error) {
+func (h handler) Handle(msg *tgbotapi.Message, resp *tgbotapi.MessageConfig) (err error) {
 	cmd := msg.Command()
 	switch cmd {
 	case "":
-		fmt.Printf("TODO: handle non-command message %+v\n", msg)
+		err = h.handleMessage(msg, resp)
 	default:
-		resp, err = h.handlerCmd.Handle(msg.Chat, msg.From, cmd)
+		err = h.handlerCmd.Handle(msg.Chat, msg.From, cmd, resp)
+	}
+	return
+}
+
+func (h handler) handleMessage(msg *tgbotapi.Message, resp *tgbotapi.MessageConfig) (err error) {
+	userLeft := msg.LeftChatMember
+	switch {
+	case userLeft != nil:
+		fmt.Printf("User id=%d left, TODO: check if it's the same as subscription owner id and if so, delete the subscription\n", userLeft.ID)
+	default:
+		fmt.Printf("Handle message: %+v\n", msg)
 	}
 	return
 }

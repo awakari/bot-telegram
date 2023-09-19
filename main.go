@@ -6,6 +6,7 @@ import (
 	"github.com/awakari/bot-telegram/api/telegram/update"
 	"github.com/awakari/bot-telegram/api/telegram/update/message"
 	"github.com/awakari/bot-telegram/api/telegram/update/message/command"
+	"github.com/awakari/bot-telegram/api/telegram/update/query"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
@@ -74,7 +75,10 @@ func main() {
 	msgHandler := message.NewHandler(cmdHandler)
 	msgHandler = message.NewLoggingHandler(msgHandler, log)
 	msgHandler = message.NewErrorHandler(msgHandler)
-	updHandler := update.NewHandler(bot, msgHandler)
+	queryHandler := query.NewHandler()
+	queryHandler = query.NewLoggingHandler(queryHandler, log)
+	queryHandler = query.NewErrorHandler(queryHandler)
+	updHandler := update.NewHandler(bot, msgHandler, queryHandler)
 	updHandler = update.NewLoggingHandler(updHandler, log)
 	log.Info("Start processing updates...")
 	for u := range chUpdates {

@@ -7,7 +7,7 @@ import (
 )
 
 type Handler interface {
-	Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string) (resp tgbotapi.MessageConfig, err error)
+	Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string, resp *tgbotapi.MessageConfig) (err error)
 }
 
 var ErrUnrecognizedCommand = errors.New("unrecognized command")
@@ -22,10 +22,10 @@ func NewHandler(handlerByCmd map[string]Handler) Handler {
 	}
 }
 
-func (h handler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string) (resp tgbotapi.MessageConfig, err error) {
+func (h handler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string, resp *tgbotapi.MessageConfig) (err error) {
 	hCmd, ok := h.handlerByCmd[cmd]
 	if ok {
-		resp, err = hCmd.Handle(chat, user, cmd)
+		err = hCmd.Handle(chat, user, cmd, resp)
 	} else {
 		err = fmt.Errorf("%w: %s", ErrUnrecognizedCommand, cmd)
 	}

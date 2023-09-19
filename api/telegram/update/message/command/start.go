@@ -3,6 +3,7 @@ package command
 import (
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/telegram/update/query"
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -23,7 +24,7 @@ func NewStartCommandHandler() Handler {
 	return startCommandHandler{}
 }
 
-func (s startCommandHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, _ string) (resp tgbotapi.MessageConfig, err error) {
+func (s startCommandHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, _ string, resp *tgbotapi.MessageConfig) (err error) {
 	if user == nil {
 		err = ErrNoUser
 	}
@@ -32,9 +33,9 @@ func (s startCommandHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, _ 
 		userId = user.ID
 		switch ChatType(chat.Type) {
 		case ChatTypeGroup:
-			resp, err = s.menuSubscription(chat, userId)
+			err = s.menuSubscription(chat, userId, resp)
 		case ChatTypePrivate:
-			resp, err = s.menuMessage(chat, userId)
+			err = s.menuMessage(chat, userId, resp)
 		default:
 			err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
 		}
@@ -42,21 +43,27 @@ func (s startCommandHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, _ 
 	return
 }
 
-func (s startCommandHandler) menuSubscription(chat *tgbotapi.Chat, userId int64) (resp tgbotapi.MessageConfig, err error) {
+func (s startCommandHandler) menuSubscription(chat *tgbotapi.Chat, userId int64, resp *tgbotapi.MessageConfig) (err error) {
 	resp.Text = "Set up a new subscription to receive matching messages here. To complete, press the button below."
+	cbd := query.SetSubscription
+	url := "https://google.com"
 	resp.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Set Subscription", "msg-cmd-sub-set"),
+			tgbotapi.InlineKeyboardButton{
+				Text:         "Setup Subscription",
+				URL:          &url,
+				CallbackData: &cbd,
+			},
 		),
 	)
 	return
 }
 
-func (s startCommandHandler) menuMessage(chat *tgbotapi.Chat, userId int64) (resp tgbotapi.MessageConfig, err error) {
+func (s startCommandHandler) menuMessage(chat *tgbotapi.Chat, userId int64, resp *tgbotapi.MessageConfig) (err error) {
 	resp.Text = "Type a text to send a simple text message to Awakari. Press the button below to send a message with arbitrary attributes."
 	resp.ReplyMarkup = tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("New Custom Message", "msg-cmd-custom-send"),
+			tgbotapi.NewInlineKeyboardButtonData("New Custom Message", query.NewMessage),
 		),
 	)
 	return

@@ -18,8 +18,8 @@ func NewLoggingHandler(h Handler, log *slog.Logger) Handler {
 	}
 }
 
-func (l LoggingHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string) (resp tgbotapi.MessageConfig, err error) {
-	resp, err = l.h.Handle(chat, user, cmd)
+func (l LoggingHandler) Handle(chat *tgbotapi.Chat, user *tgbotapi.User, cmd string, resp *tgbotapi.MessageConfig) (err error) {
+	err = l.h.Handle(chat, user, cmd, resp)
 	switch err {
 	case nil:
 		l.log.Debug(fmt.Sprintf("Command \"%s\", user %+v, chat %+v: processing done, response text: %s", cmd, user, chat, resp.Text))

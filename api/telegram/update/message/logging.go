@@ -18,8 +18,8 @@ func NewLoggingHandler(h Handler, log *slog.Logger) Handler {
 	}
 }
 
-func (l LoggingHandler) Handle(req *tgbotapi.Message) (resp tgbotapi.MessageConfig, err error) {
-	resp, err = l.h.Handle(req)
+func (l LoggingHandler) Handle(req *tgbotapi.Message, resp *tgbotapi.MessageConfig) (err error) {
+	err = l.h.Handle(req, resp)
 	switch err {
 	case nil:
 		l.log.Debug(fmt.Sprintf("Message %d processing done, response text: %s", req.MessageID, resp.Text))
