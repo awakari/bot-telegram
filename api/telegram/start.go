@@ -9,7 +9,7 @@ import (
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
 
 var btnSubNew = telebot.Btn{
-	Text: "Setup",
+	Text: "Setup New Subscription",
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/web/sub-new-tg.html",
 	},
@@ -36,6 +36,6 @@ func startGroup(ctx telebot.Context, chatId int64) (err error) {
 func startPrivate(ctx telebot.Context, chatId int64) (err error) {
 	m := &telebot.ReplyMarkup{}
 	m.Reply(m.Row(btnSubNew))
-	err = ctx.Send("New Subscription", m)
+	err = ctx.Send("Press the button below to proceed", m)
 	return
 }
