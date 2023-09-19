@@ -24,7 +24,7 @@ func (h handler) Handle(msg *tgbotapi.Message) (resp tgbotapi.MessageConfig, err
 	cmd := msg.Command()
 	switch cmd {
 	case "":
-		fmt.Printf("TODO: handle non-command message \"%s\"\n", msg.Text)
+		fmt.Printf("TODO: handle non-command message %+v\n", msg)
 	default:
 		resp, err = h.handlerCmd.Handle(msg.Chat, msg.From, cmd)
 	}
