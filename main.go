@@ -3,6 +3,7 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"gopkg.in/telebot.v3"
 	"log/slog"
@@ -37,16 +38,16 @@ func main() {
 				Cert:      "/etc/server-cert/tls.crt",
 			},
 		},
-		Verbose: true,
 	}
 	var b *telebot.Bot
 	b, err = telebot.NewBot(s)
 	if err != nil {
 		panic(err)
 	}
-	b.Handle(telebot.OnText, func(ctx telebot.Context) error {
-		log.Info(fmt.Sprintf("update: %+v", ctx.Update()))
-		return ctx.Send(ctx.Text())
+	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
+		return telegram.LoggingHandlerFunc(next, log)
 	})
+	b.Handle("/start", telegram.Start)
+	b.Handle(telebot.OnUserLeft, telegram.UserLeft)
 	b.Start()
 }
