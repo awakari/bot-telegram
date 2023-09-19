@@ -3,7 +3,9 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"github.com/awakari/bot-telegram/api/telegram"
+	"github.com/awakari/bot-telegram/api/telegram/update"
+	"github.com/awakari/bot-telegram/api/telegram/update/message"
+	"github.com/awakari/bot-telegram/api/telegram/update/message/command"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"log/slog"
@@ -63,21 +65,19 @@ func main() {
 	//
 	go http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", cfg.Api.Port), nil)
 	//
-	routes := map[string]telegram.Handler{
-		"start": telegram.NewStartHandler(),
+	startCmdHandler := command.NewStartCommandHandler()
+	cmdHandlerByCmd := map[string]command.Handler{
+		"start": startCmdHandler,
 	}
-	h := telegram.NewRouteHandler(routes)
-	h = telegram.NewLoggingHandler(h, log)
-	h = telegram.NewErrorHandler(h)
+	cmdHandler := command.NewHandler(cmdHandlerByCmd)
+	cmdHandler = command.NewLoggingHandler(cmdHandler, log)
+	msgHandler := message.NewHandler(cmdHandler)
+	msgHandler = message.NewLoggingHandler(msgHandler, log)
+	msgHandler = message.NewErrorHandler(msgHandler)
+	updHandler := update.NewHandler(bot, msgHandler)
+	updHandler = update.NewLoggingHandler(updHandler, log)
 	log.Info("Start processing updates...")
-	for update := range chUpdates {
-		msg := update.Message
-		if msg != nil {
-			reply, _ := h.Handle(msg)
-			_, err = bot.Send(reply)
-			if err != nil {
-				log.Error("failed to send reply", err)
-			}
-		}
+	for u := range chUpdates {
+		_ = updHandler.Handle(u)
 	}
 }

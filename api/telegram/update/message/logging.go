@@ -1,4 +1,4 @@
-package telegram
+package message
 
 import (
 	"fmt"
@@ -22,9 +22,9 @@ func (l LoggingHandler) Handle(req *tgbotapi.Message) (resp tgbotapi.MessageConf
 	resp, err = l.h.Handle(req)
 	switch err {
 	case nil:
-		l.log.Debug(fmt.Sprintf("Handler request id=%d text=%s, text=%s", req.MessageID, req.Text, resp.Text))
+		l.log.Debug(fmt.Sprintf("Message %d processing done, response text: %s", req.MessageID, resp.Text))
 	default:
-		l.log.Error(fmt.Sprintf("Handler request id=%d text=%s, text=%s, err=%s", req.MessageID, req.Text, resp.Text, err))
+		l.log.Warn(fmt.Sprintf("Message %d processing failed, err=%s, response text: %s", req.MessageID, err, resp.Text))
 	}
 	return
 }
