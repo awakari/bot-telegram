@@ -33,10 +33,22 @@ func startSubscription(ctx telebot.Context, chatId int64) (err error) {
 			),
 		),
 	)
-	return ctx.Send("Set up new subscription", m)
+	err = ctx.Send("Set up new subscription", m)
+	return
 }
 
 func startMessage(ctx telebot.Context, chatId int64) (err error) {
-	fmt.Printf("TODO: start message")
+	m := &telebot.ReplyMarkup{}
+	m.Inline(
+		m.Row(
+			m.WebApp(
+				"Setup new subscription",
+				&telebot.WebApp{
+					URL: "https://google.com",
+				},
+			),
+		),
+	)
+	err = ctx.Send("Set up new subscription", m)
 	return
 }
