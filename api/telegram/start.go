@@ -6,12 +6,6 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type StartHandler struct {
-	SubHandlers SubscriptionHandlers
-}
-
-const msgStartGroup = "Here follows the list of your subscriptions. Select any to proceed."
-
 const msgStartPrivate = `
 • Send a text to submit a simple message to Awakari.
 • Send a command to create a simple text matching subscription:
@@ -35,17 +29,19 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-func (h StartHandler) Start(ctx telebot.Context) (err error) {
-	chat := ctx.Chat()
-	switch chat.Type {
-	case telebot.ChatGroup:
-		err = h.SubHandlers.ListMySubscriptions(ctx)
-	case telebot.ChatPrivate:
-		err = startPrivate(ctx)
-	default:
-		err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
+func StartHandlerFunc(listSubsHandlerFunc telebot.HandlerFunc) telebot.HandlerFunc {
+	return func(ctx telebot.Context) (err error) {
+		chat := ctx.Chat()
+		switch chat.Type {
+		case telebot.ChatGroup:
+			err = listSubsHandlerFunc(ctx)
+		case telebot.ChatPrivate:
+			err = startPrivate(ctx)
+		default:
+			err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
+		}
+		return
 	}
-	return
 }
 
 func startPrivate(ctx telebot.Context) (err error) {

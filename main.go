@@ -4,6 +4,8 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/telegram"
+	"github.com/awakari/bot-telegram/api/telegram/events"
+	"github.com/awakari/bot-telegram/api/telegram/subscriptions"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
@@ -53,22 +55,20 @@ func main() {
 		panic(err)
 	}
 	//
-	if err != nil {
-		panic(err)
+	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
+	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
+	viewInboxHandlerFunc := events.ViewInboxHandlerFunc(awakariClient, cfg.Api.GroupId)
+	argHandlers := map[string]telegram.ArgHandlerFunc{
+		"viewsub": viewInboxHandlerFunc,
 	}
+	callbackHandlerFunc := telegram.Callback(argHandlers)
+	//
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
-	subHandlers := telegram.SubscriptionHandlers{
-		Client:  awakariClient,
-		GroupId: cfg.Api.GroupId,
-	}
-	startHandler := telegram.StartHandler{
-		SubHandlers: subHandlers,
-	}
-	b.Handle("/start", telegram.ErrorHandlerFunc(startHandler.Start))
-	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(subHandlers.CreateTextSubscription))
-	b.Handle(telebot.OnCallback, telegram.Callback)
-	b.Handle(telebot.OnText, telegram.SubmitText)
+	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc(listSubsHandlerFunc)))
+	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
+	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
+	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
 	b.Start()
 }
