@@ -29,7 +29,6 @@ func main() {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		},
-		ParseMode: telebot.ModeMarkdownV2,
 		Poller: &telebot.Webhook{
 			Endpoint: &telebot.WebhookEndpoint{
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Host, cfg.Api.Path),
