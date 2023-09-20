@@ -38,7 +38,6 @@ func main() {
 			HasCustomCert: true,
 			Listen:        fmt.Sprintf(":%d", cfg.Api.Port),
 		},
-		ParseMode: telebot.ModeMarkdownV2,
 	}
 	var b *telebot.Bot
 	b, err = telebot.NewBot(s)

@@ -8,21 +8,21 @@ import (
 
 const msgStartGroup = "Here follows the list of your subscriptions. Select any to proceed."
 
-const msgStartPrivate = "\\* Just type a text to send a simple text message to Awakari\\.\n" +
-	"\\* Send a \\`/sub name keyword1 keyword2 \\.\\.\\.\\` command to create a basic text matching subscription\\.\n" +
-	"\\* To customize a message or a subscription, choose a button below\\."
+const msgStartPrivate = "* Send a text to submit a simple message to Awakari.\n" +
+	"* Send a `/sub name keyword1 keyword2 ...` command to create a simple text matching subscription.\n" +
+	"* To customize these options, choose a button below."
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
 
 var btnSubNewCustom = telebot.Btn{
-	Text: "Setup New Subscription",
+	Text: "New Custom Subscription",
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/web/sub-new-tg.html",
 	},
 }
 
 var btnMsgNewCustom = telebot.Btn{
-	Text: "Send Custom Message",
+	Text: "New Custom Message",
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/web/msg-new-tg.html",
 	},
@@ -65,8 +65,9 @@ func startGroup(ctx telebot.Context, chatId int64) (err error) {
 }
 
 func startPrivate(ctx telebot.Context, chatId int64) (err error) {
-	m := &telebot.ReplyMarkup{}
+	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 	m.Reply(m.Row(btnSubNewCustom))
-	err = ctx.Send(msgStartPrivate, m, telebot.ModeMarkdownV2)
+	m.Reply(m.Row(btnMsgNewCustom))
+	err = ctx.Send(msgStartPrivate, m)
 	return
 }
