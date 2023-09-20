@@ -57,7 +57,7 @@ func (s Subscriptions) CreateTextSubscription(ctx telebot.Context) (err error) {
 		subId, err = s.Client.CreateSubscription(groupIdCtx, userId, subData)
 	}
 	if err == nil {
-		err = ctx.Send(fmt.Sprintf("Created the new simple subscription, id: %s", subId))
+		err = ctx.Send(fmt.Sprintf("Created the new simple subscription, id:\n<pre>%s</pre>", subId))
 	} else {
 		err = fmt.Errorf("failed to create the subscription: %w", err)
 	}
