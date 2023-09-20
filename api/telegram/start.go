@@ -9,9 +9,9 @@ import (
 const msgStartGroup = "Here follows the list of your subscriptions. Select any to proceed."
 
 const msgStartPrivate = `
-* Just type a text to send a simple text message to Awakari.
-* Send a "/sub name keyword1 keyword2 ..." command to create a basic text matching subscription.
-* To customize a message or a subscription, choose a button below.
+\\* Just type a text to send a simple text message to Awakari.
+\\* Send a "/sub name keyword1 keyword2 ..." command to create a basic text matching subscription.
+\\* To customize a message or a subscription, choose a button below.
 `
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
