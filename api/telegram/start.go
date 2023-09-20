@@ -10,8 +10,8 @@ const msgStartGroup = "Here follows the list of your subscriptions. Select any t
 
 const msgStartPrivate = `
 • Send a text to submit a simple message to Awakari.
-• Send a "/sub <pre>name keyword1 keyword2 ...</pre>" command to create a simple text matching subscription.
-• To customize these options, choose a button below
+• Send a <code>/sub name keyword1 keyword2 ...</code>" command to create a simple text matching subscription.
+• To customize these options, choose a button below.
 `
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
