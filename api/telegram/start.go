@@ -69,6 +69,6 @@ func startGroup(ctx telebot.Context, chatId int64) (err error) {
 func startPrivate(ctx telebot.Context, chatId int64) (err error) {
 	m := &telebot.ReplyMarkup{}
 	m.Reply(m.Row(btnSubNewCustom))
-	err = ctx.Send(msgStartPrivate, m, telebot.ModeMarkdown)
+	err = ctx.Send(msgStartPrivate, m, telebot.ModeMarkdownV2)
 	return
 }
