@@ -68,8 +68,10 @@ func startGroup(ctx telebot.Context) (err error) {
 
 func startPrivate(ctx telebot.Context) (err error) {
 	m := &telebot.ReplyMarkup{}
-	m.Reply(m.Row(btnSubNewCustom))
-	m.Reply(m.Row(btnMsgNewCustom))
+	m.Reply(
+		m.Row(btnSubNewCustom),
+		m.Row(btnMsgNewCustom),
+	)
 	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return
 }
