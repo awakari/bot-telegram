@@ -82,7 +82,7 @@ func (h SubscriptionHandlers) ListMySubscriptions(ctx telebot.Context) (err erro
 			row := m.Row(telebot.Btn{
 				Unique: subId,
 				Text:   sub.Description,
-				Data:   subId,
+				Data:   "viewsub",
 			})
 			rows = append(rows, row)
 		}
