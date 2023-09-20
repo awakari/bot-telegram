@@ -31,17 +31,17 @@ spec:
         - name: {{ .Chart.Name }}
           env:
             {{- range .Values.ingress.hosts }}
-            - name: API_HOST
+            - name: API_TELEGRAM_WEBHOOK_HOST
               value: {{ .host }}
             {{- range .paths }}
-            - name: API_PATH
+            - name: API_TELEGRAM_WEBHOOK_PATH
               value: {{ .path }}
             {{- end }}
             {{- end }}
-            - name: API_PORT
+            - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
-            - name: API_TOKEN
-              value: "{{ .Values.api.token }}"
+            - name: API_TELEGRAM_TOKEN
+              value: "{{ .Values.api.telegram.token }}"
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
           securityContext:

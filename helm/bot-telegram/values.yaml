@@ -84,7 +84,8 @@ affinity: {}
 
 api:
   cert: server-cert
-  token: telegram-bot-token
+  telegram:
+    token: telegram-bot-token
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4
