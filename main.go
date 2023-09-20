@@ -48,7 +48,7 @@ func main() {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
 	b.Handle("/start", telegram.Start)
-	b.Handle(telebot.OnUserLeft, telegram.UserLeft)
-	//b.Handle(telebot.OnText, telegram.SendTextMessage)
+	b.Handle("/sub", telegram.CreateTextSubscription)
+	b.Handle(telebot.OnText, telegram.SubmitText)
 	b.Start()
 }
