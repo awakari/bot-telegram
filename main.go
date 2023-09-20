@@ -49,6 +49,7 @@ func main() {
 	})
 	b.Handle("/start", telegram.Start)
 	b.Handle("/sub", telegram.CreateTextSubscription)
+	b.Handle(telebot.OnCallback, telegram.Callback)
 	b.Handle(telebot.OnText, telegram.SubmitText)
 	b.Start()
 }
