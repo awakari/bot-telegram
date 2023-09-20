@@ -32,16 +32,16 @@ func Start(ctx telebot.Context) (err error) {
 	chat := ctx.Chat()
 	switch chat.Type {
 	case telebot.ChatGroup:
-		err = startGroup(ctx, chat.ID)
+		err = startGroup(ctx)
 	case telebot.ChatPrivate:
-		err = startPrivate(ctx, chat.ID)
+		err = startPrivate(ctx)
 	default:
 		err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
 	}
 	return
 }
 
-func startGroup(ctx telebot.Context, chatId int64) (err error) {
+func startGroup(ctx telebot.Context) (err error) {
 	m := &telebot.ReplyMarkup{}
 	m.Inline(
 		m.Row(telebot.Btn{
@@ -64,8 +64,8 @@ func startGroup(ctx telebot.Context, chatId int64) (err error) {
 	return
 }
 
-func startPrivate(ctx telebot.Context, chatId int64) (err error) {
-	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
+func startPrivate(ctx telebot.Context) (err error) {
+	m := &telebot.ReplyMarkup{}
 	m.Reply(m.Row(btnSubNewCustom))
 	m.Reply(m.Row(btnMsgNewCustom))
 	err = ctx.Send(msgStartPrivate, m)

@@ -29,7 +29,7 @@ func main() {
 				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 			},
 		},
-		Token: cfg.Api.Token,
+		ParseMode: telebot.ModeMarkdownV2,
 		Poller: &telebot.Webhook{
 			Endpoint: &telebot.WebhookEndpoint{
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Host, cfg.Api.Path),
@@ -38,6 +38,7 @@ func main() {
 			HasCustomCert: true,
 			Listen:        fmt.Sprintf(":%d", cfg.Api.Port),
 		},
+		Token: cfg.Api.Token,
 	}
 	var b *telebot.Bot
 	b, err = telebot.NewBot(s)
@@ -48,7 +49,7 @@ func main() {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
 	b.Handle("/start", telegram.Start)
-	b.Handle("/sub", telegram.CreateTextSubscription)
+	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, telegram.CreateTextSubscription)
 	b.Handle(telebot.OnCallback, telegram.Callback)
 	b.Handle(telebot.OnText, telegram.SubmitText)
 	b.Start()
