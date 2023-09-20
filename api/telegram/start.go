@@ -67,7 +67,7 @@ func startGroup(ctx telebot.Context) (err error) {
 }
 
 func startPrivate(ctx telebot.Context) (err error) {
-	m := &telebot.ReplyMarkup{}
+	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 	m.Reply(
 		m.Row(btnSubNewCustom),
 		m.Row(btnMsgNewCustom),
