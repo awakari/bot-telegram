@@ -28,7 +28,7 @@ var ErrCreateSubNotEnoughArgs = errors.New("not enough arguments to create a tex
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Created the new simple subscription, id:
 <pre>%s</pre>
-Next, go to a group with the bot and select this subscription by name to start receiving the matching messages.`
+Next, you can go to a group with the bot and select this subscription by name to receive the matching messages.`
 
 func (h SubscriptionHandlers) CreateTextSubscription(ctx telebot.Context) (err error) {
 	txt := ctx.Text()
@@ -83,9 +83,8 @@ func (h SubscriptionHandlers) ListMySubscriptions(ctx telebot.Context) (err erro
 				break
 			}
 			row := m.Row(telebot.Btn{
-				Unique: subId,
-				Text:   sub.Description,
-				Data:   "viewsub",
+				Text: sub.Description,
+				Data: "viewsub " + subId,
 			})
 			rows = append(rows, row)
 		}
