@@ -26,6 +26,9 @@ const subListLimit = 10 // TODO: implement the proper pagination later
 var ErrCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
+var msgFmtSubCreated = `Created the new simple subscription, id:
+<pre>%s</pre>
+Next, go to a group with the bot and select this subscription by name to start receiving the matching messages.`
 
 func (h SubscriptionHandlers) CreateTextSubscription(ctx telebot.Context) (err error) {
 	txt := ctx.Text()
@@ -58,7 +61,7 @@ func (h SubscriptionHandlers) CreateTextSubscription(ctx telebot.Context) (err e
 		subId, err = h.Client.CreateSubscription(groupIdCtx, userId, subData)
 	}
 	if err == nil {
-		err = ctx.Send(fmt.Sprintf("Created the new simple subscription, id:\n<pre>%s</pre>", subId))
+		err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
 	} else {
 		err = fmt.Errorf("failed to create the subscription: %w", err)
 	}
