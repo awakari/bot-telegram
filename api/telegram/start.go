@@ -10,7 +10,8 @@ const msgStartGroup = "Here follows the list of your subscriptions. Select any t
 
 const msgStartPrivate = `
 • Send a text to submit a simple message to Awakari.
-• Send a "<code>/sub name keyword1 keyword2 ...</code>" command to create a simple text matching subscription.
+• Send a command to create a simple text matching subscription:
+	<pre>/sub &lt;sub_name&gt; &lt;keyword1&gt; &lt;keyword2&gt; ...</pre>
 • To customize these options, choose a button below.
 `
 
