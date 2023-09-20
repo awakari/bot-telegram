@@ -9,7 +9,7 @@ import (
 const msgStartGroup = "Select a subscription from the list"
 const msgStartPrivate = `
 * Just type a text to send a simple text message to Awakari.
-* Send "/sub keyword1 keyword2 ..." command to create a basic text matching subscription.
+* Send "/sub name keyword1 keyword2 ..." command to create a basic text matching subscription.
 `
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"group\", \"private\")")
@@ -67,6 +67,6 @@ func startGroup(ctx telebot.Context, chatId int64) (err error) {
 func startPrivate(ctx telebot.Context, chatId int64) (err error) {
 	m := &telebot.ReplyMarkup{}
 	m.Reply(m.Row(btnSubNewCustom, btnMsgNewCustom))
-	err = ctx.Send(msgStartPrivate, m)
+	err = ctx.Send(msgStartPrivate, m, telebot.ModeMarkdown)
 	return
 }
