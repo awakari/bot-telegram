@@ -46,6 +46,7 @@ func main() {
 		},
 		Token: cfg.Api.Telegram.Token,
 	}
+	log.Info(fmt.Sprintf("Telegram bot settigs: %+v", s))
 	var b *telebot.Bot
 	b, err = telebot.NewBot(s)
 	if err != nil {
