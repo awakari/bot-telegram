@@ -14,19 +14,20 @@ import (
 	"strings"
 )
 
-type Subscriptions struct {
+type SubscriptionHandlers struct {
 	Client  api.Client
 	GroupId string
 }
 
 const CmdPrefixSubCreateSimplePrefix = "/sub"
 const argSep = " "
+const subListLimit = 10 // TODO: implement the proper pagination later
 
 var ErrCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 
-func (s Subscriptions) CreateTextSubscription(ctx telebot.Context) (err error) {
+func (h SubscriptionHandlers) CreateTextSubscription(ctx telebot.Context) (err error) {
 	txt := ctx.Text()
 	argStr, ok := strings.CutPrefix(txt, CmdPrefixSubCreateSimplePrefix+" ")
 	if !ok {
@@ -42,7 +43,7 @@ func (s Subscriptions) CreateTextSubscription(ctx telebot.Context) (err error) {
 	}
 	var subId string
 	if err == nil {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", s.GroupId)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", h.GroupId)
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
 		name := args[0]
 		keywords := args[1]
@@ -54,12 +55,39 @@ func (s Subscriptions) CreateTextSubscription(ctx telebot.Context) (err error) {
 			Description: name,
 			Enabled:     true,
 		}
-		subId, err = s.Client.CreateSubscription(groupIdCtx, userId, subData)
+		subId, err = h.Client.CreateSubscription(groupIdCtx, userId, subData)
 	}
 	if err == nil {
 		err = ctx.Send(fmt.Sprintf("Created the new simple subscription, id:\n<pre>%s</pre>", subId))
 	} else {
 		err = fmt.Errorf("failed to create the subscription: %w", err)
 	}
+	return
+}
+
+func (h SubscriptionHandlers) ListMySubscriptions(ctx telebot.Context) (err error) {
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", h.GroupId)
+	userId := strconv.FormatInt(ctx.Sender().ID, 10)
+	var subIds []string
+	subIds, err = h.Client.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
+	m := &telebot.ReplyMarkup{}
+	var rows []telebot.Row
+	if err == nil {
+		var sub subscription.Data
+		for _, subId := range subIds {
+			sub, err = h.Client.ReadSubscription(groupIdCtx, userId, subId)
+			if err != nil {
+				break
+			}
+			row := m.Row(telebot.Btn{
+				Unique: subId,
+				Text:   sub.Description,
+				Data:   subId,
+			})
+			rows = append(rows, row)
+		}
+	}
+	m.Inline(rows...)
+	err = ctx.Send(msgStartGroup, m)
 	return
 }

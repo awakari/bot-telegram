@@ -6,6 +6,10 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+type StartHandler struct {
+	SubHandlers SubscriptionHandlers
+}
+
 const msgStartGroup = "Here follows the list of your subscriptions. Select any to proceed."
 
 const msgStartPrivate = `
@@ -31,39 +35,16 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-func Start(ctx telebot.Context) (err error) {
+func (h StartHandler) Start(ctx telebot.Context) (err error) {
 	chat := ctx.Chat()
 	switch chat.Type {
 	case telebot.ChatGroup:
-		err = startGroup(ctx)
+		err = h.SubHandlers.ListMySubscriptions(ctx)
 	case telebot.ChatPrivate:
 		err = startPrivate(ctx)
 	default:
 		err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
 	}
-	return
-}
-
-func startGroup(ctx telebot.Context) (err error) {
-	m := &telebot.ReplyMarkup{}
-	m.Inline(
-		m.Row(telebot.Btn{
-			Unique: "sub0 unique",
-			Text:   "sub0 text",
-			Data:   "sub0 data",
-		}),
-		m.Row(telebot.Btn{
-			Unique: "sub1 unique",
-			Text:   "sub1 text",
-			Data:   "sub1 data",
-		}),
-		m.Row(telebot.Btn{
-			Unique: "sub2 unique",
-			Text:   "sub2 text",
-			Data:   "sub2 data",
-		}),
-	)
-	err = ctx.Send(msgStartGroup, m)
 	return
 }
 

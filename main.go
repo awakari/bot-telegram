@@ -53,46 +53,21 @@ func main() {
 		panic(err)
 	}
 	//
-	err = b.SetCommands([]telebot.CommandParams{
-		{
-			Commands: []telebot.Command{
-				{
-					Description: "List My Subscriptions",
-					Text:        "listsubs",
-				},
-			},
-			Scope: &telebot.CommandScope{
-				Type: telebot.CommandScopeAllGroupChats,
-			},
-		},
-		{
-			Commands: []telebot.Command{
-				{
-					Description: "New Custom Subscription",
-					Text:        "newsub",
-				},
-				{
-					Description: "New Custom Message",
-					Text:        "newmsg",
-				},
-			},
-			Scope: &telebot.CommandScope{
-				Type: telebot.CommandScopeAllPrivateChats,
-			},
-		},
-	})
 	if err != nil {
 		panic(err)
 	}
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
-	b.Handle("/start", telegram.Start)
-	subsHandlers := telegram.Subscriptions{
+	subHandlers := telegram.SubscriptionHandlers{
 		Client:  awakariClient,
 		GroupId: cfg.Api.GroupId,
 	}
-	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(subsHandlers.CreateTextSubscription))
+	startHandler := telegram.StartHandler{
+		SubHandlers: subHandlers,
+	}
+	b.Handle("/start", telegram.ErrorHandlerFunc(startHandler.Start))
+	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(subHandlers.CreateTextSubscription))
 	b.Handle(telebot.OnCallback, telegram.Callback)
 	b.Handle(telebot.OnText, telegram.SubmitText)
 	b.Start()
