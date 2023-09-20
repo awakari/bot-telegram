@@ -60,7 +60,7 @@ func main() {
 		Client:  awakariClient,
 		GroupId: cfg.Api.GroupId,
 	}
-	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, subsHandlers.CreateTextSubscription)
+	b.Handle(telegram.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(subsHandlers.CreateTextSubscription))
 	b.Handle(telebot.OnCallback, telegram.Callback)
 	b.Handle(telebot.OnText, telegram.SubmitText)
 	b.Start()
