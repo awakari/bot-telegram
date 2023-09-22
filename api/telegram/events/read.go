@@ -14,6 +14,7 @@ import (
 )
 
 const readBatchSize = 16
+const readerOpenBackoff = 1 * time.Minute
 
 func ViewInboxHandlerFunc(awakariClient api.Client, groupId string) telegram.ArgHandlerFunc {
 	return func(ctx telebot.Context, args ...string) (err error) {
@@ -38,7 +39,8 @@ func readAndSentEventsOnce(ctx telebot.Context, awakariClient api.Client, groupI
 	groupIdCtx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
 	defer cancel()
 	groupIdCtx = metadata.AppendToOutgoingContext(groupIdCtx, "x-awakari-group-id", groupId)
-	r, err := awakariClient.OpenMessagesReader(groupIdCtx, userId, subId, readBatchSize)
+	var r model.Reader[[]*pb.CloudEvent]
+	r, err = awakariClient.OpenMessagesReader(groupIdCtx, userId, subId, readBatchSize)
 	if err == nil {
 		defer r.Close()
 		fmt.Printf("New reader for subscription %s\n", subId)
