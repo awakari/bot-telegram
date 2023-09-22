@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 const readBatchSize = 16
@@ -25,11 +26,7 @@ func ViewInboxHandlerFunc(awakariClient api.Client, groupId string) telegram.Arg
 
 func readAndSendEventsLoop(ctx telebot.Context, awakariClient api.Client, groupId, userId, subId string) {
 	for {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		r, err := awakariClient.OpenMessagesReader(groupIdCtx, userId, subId, readBatchSize)
-		if err == nil {
-			readAndSendEvents(ctx, r)
-		}
+		err := readAndSentEventsOnce(ctx, awakariClient, groupId, userId, subId)
 		if err != nil {
 			_ = ctx.Send(fmt.Sprintf("Failed to open the events stream, try again later: %s", err.Error()))
 			break // TODO backoff instead
@@ -37,8 +34,21 @@ func readAndSendEventsLoop(ctx telebot.Context, awakariClient api.Client, groupI
 	}
 }
 
+func readAndSentEventsOnce(ctx telebot.Context, awakariClient api.Client, groupId, userId, subId string) (err error) {
+	groupIdCtx, cancel := context.WithTimeout(context.TODO(), 1*time.Minute)
+	defer cancel()
+	groupIdCtx = metadata.AppendToOutgoingContext(groupIdCtx, "x-awakari-group-id", groupId)
+	r, err := awakariClient.OpenMessagesReader(groupIdCtx, userId, subId, readBatchSize)
+	if err == nil {
+		defer r.Close()
+		fmt.Printf("New reader for subscription %s\n", subId)
+		readAndSendEvents(ctx, r)
+		fmt.Printf("Done reader for subscription %s\n", subId)
+	}
+	return
+}
+
 func readAndSendEvents(ctx telebot.Context, r model.Reader[[]*pb.CloudEvent]) {
-	defer r.Close()
 	for {
 		evts, err := r.Read()
 		if len(evts) > 0 {
