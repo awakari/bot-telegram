@@ -57,6 +57,7 @@ func readAndSendEvents(ctx telebot.Context, r model.Reader[[]*pb.CloudEvent]) {
 			sendEvents(ctx, evts)
 		}
 		if err != nil {
+			fmt.Printf("Read error: %s\n", err)
 			break
 		}
 	}
