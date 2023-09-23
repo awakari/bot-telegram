@@ -43,6 +43,7 @@ func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storag
 				GroupId:  groupId,
 				UserId:   userId,
 			}.DeliveryLoop(context.Background())
+			_ = ctx.Send("Started, new messages by the subscription will appear here...")
 		}
 		return
 	}
