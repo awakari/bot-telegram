@@ -27,7 +27,7 @@ func Callback(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 			var ok bool
 			f, ok = handlers[cmd]
 			if !ok {
-				err = fmt.Errorf("%w: %s", errInvalidCallbackCmd)
+				err = fmt.Errorf("%w: %s", errInvalidCallbackCmd, cmd)
 			}
 		}
 		if err == nil {

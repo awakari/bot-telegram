@@ -42,6 +42,28 @@ spec:
               value: "{{ .Values.service.port }}"
             - name: API_TELEGRAM_TOKEN
               value: "{{ .Values.api.telegram.token }}"
+            - name: CHATS_DB_URI
+              value: "{{ .Values.chats.db.protocol }}://{{ .Values.chats.db.hostname }}/?retryWrites=true&w=majority"
+            - name: CHATS_DB_NAME
+              value: {{ .Values.chats.db.name }}
+            - name: CHATS_DB_USERNAME
+              value: {{ .Values.chats.db.username }}
+            {{- if .Values.chats.db.password.secret.enabled }}
+            - name: CHATS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ .Values.chats.db.password.secret.name }}"
+                  key: "{{ .Values.chats.db.password.secret.key }}"
+            {{- else }}
+            - name: CHATS_DB_PASSWORD
+              value: "{{ .Values.chats.db.password.raw }}"
+            {{- end }}
+            - name: CHATS_DB_TABLE_NAME
+              value: {{ .Values.chats.db.table.name }}
+            - name: CHATS_DB_TLS_ENABLED
+              value: "{{ .Values.chats.db.tls.enabled }}"
+            - name: CHATS_DB_TLS_INSECURE
+              value: "{{ .Values.chats.db.tls.insecure }}"
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
           securityContext:
