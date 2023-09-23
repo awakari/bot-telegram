@@ -30,6 +30,8 @@ func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storag
 				Id:    ctx.Chat().ID,
 				SubId: subId,
 			},
+			GroupId: groupId,
+			UserId:  userId,
 			State:   chats.StateActive,
 			Expires: time.Now().Add(ReaderTtl),
 		}
