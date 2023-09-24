@@ -168,7 +168,11 @@ func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Read
 func (r *reader) deliverEvents(evts []*pb.CloudEvent) (err error) {
 	for _, evt := range evts {
 		err = r.tgCtx.Send(formatHtmlEvent(evt), telebot.ModeHTML)
-		if err != nil || r.stop {
+		if err != nil {
+			fmt.Printf("Failed to send events to chat %d: %s\n", r.chatKey.Id, err)
+			break
+		}
+		if r.stop {
 			break
 		}
 	}
@@ -182,7 +186,7 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 		txt += fmt.Sprintf("<p><b>%s</b></p>", title)
 	}
 
-	//txt += fmt.Sprintf("<p>From: %s</p>", evt.Attributes["awakarigroupid"])
+	txt += fmt.Sprintf("<p>From: %s</p>", evt.Attributes["awakarigroupid"])
 
 	urlSrc := evt.Source
 	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
