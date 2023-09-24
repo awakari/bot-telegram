@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
+	"html"
 	"sync"
 	"time"
 )
@@ -186,24 +187,27 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 		txt += fmt.Sprintf("<b>%s</b>\n", title)
 	}
 
-	txt += fmt.Sprintf("From: %s\n", evt.Attributes["awakarigroupid"])
+	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
+	if groupIdSrcOk {
+		txt += fmt.Sprintf("From: %s\n", groupIdSrc.GetCeString())
+	}
 
 	urlSrc := evt.Source
 	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	txt += fmt.Sprintf("<a href=\"%s\">Source Link</a>\n", urlSrc)
+	txt += fmt.Sprintf("Source: <a href=\"%s\">%s</a>\n", urlSrc, urlSrc)
 
 	summary, summaryOk := evt.Attributes["summary"]
 	if summaryOk {
-		txt += fmt.Sprintf("%s\n", summary)
+		txt += fmt.Sprintf("%s\n", html.EscapeString(summary.GetCeString()))
 	}
 
 	txtData := evt.GetTextData()
 	switch {
 	case txtData != "":
-		txt += fmt.Sprintf("%s\n", txtData)
+		txt += fmt.Sprintf("%s\n", html.EscapeString(txtData))
 	}
 
 	urlImg, urlImgOk := evt.Attributes["imageurl"]
@@ -218,8 +222,6 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 			txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">  </a>\n", urlImg.GetCeUri())
 		}
 	}
-
-	fmt.Printf("Send text to chat:\n%s\n", txt)
 
 	return
 }
