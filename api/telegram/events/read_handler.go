@@ -23,7 +23,7 @@ func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storag
 			GroupId: groupId,
 			UserId:  userId,
 			State:   chats.StateActive,
-			Expires: time.Now().Add(ReaderTtl),
+			Expires: time.Now().UTC().Add(ReaderTtl),
 		}
 		err = chatStor.Create(context.TODO(), chat)
 		if err == nil {

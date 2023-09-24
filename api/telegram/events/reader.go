@@ -32,7 +32,7 @@ func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebo
 	var c chats.Chat
 	var nextErr error
 	for !resumingDone {
-		c, nextErr = chatStor.ActivateNext(ctx, time.Now().Add(ReaderTtl))
+		c, nextErr = chatStor.ActivateNext(ctx, time.Now().UTC().Add(ReaderTtl))
 		switch {
 		case nextErr == nil:
 			u := telebot.Update{
@@ -130,7 +130,7 @@ func (r *reader) runOnce(ctx context.Context) (err error) {
 	if err == nil {
 		nextChatState := chats.Chat{
 			Key:     r.chatKey,
-			Expires: time.Now().Add(ReaderTtl),
+			Expires: time.Now().UTC().Add(ReaderTtl),
 			State:   chats.StateActive,
 		}
 		err = r.chatStor.Update(ctx, nextChatState)
@@ -183,27 +183,27 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 
 	title, titleOk := evt.Attributes["title"]
 	if titleOk {
-		txt += fmt.Sprintf("<p><b>%s</b></p>", title)
+		txt += fmt.Sprintf("<b>%s</b>\n", title)
 	}
 
-	txt += fmt.Sprintf("<p>From: %s</p>", evt.Attributes["awakarigroupid"])
+	txt += fmt.Sprintf("From: %s\n", evt.Attributes["awakarigroupid"])
 
 	urlSrc := evt.Source
 	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	txt += fmt.Sprintf("<p><a href=\"%s\">Source Link</a></p>", urlSrc)
+	txt += fmt.Sprintf("<a href=\"%s\">Source Link</a>\n", urlSrc)
 
 	summary, summaryOk := evt.Attributes["summary"]
 	if summaryOk {
-		txt += fmt.Sprintf("<p>%s</p>", summary)
+		txt += fmt.Sprintf("%s\n", summary)
 	}
 
 	txtData := evt.GetTextData()
 	switch {
 	case txtData != "":
-		txt += fmt.Sprintf("<p>%s</p>", txtData)
+		txt += fmt.Sprintf("%s\n", txtData)
 	}
 
 	urlImg, urlImgOk := evt.Attributes["imageurl"]
@@ -213,9 +213,9 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 	if urlImgOk {
 		switch {
 		case urlImg.GetCeString() != "":
-			txt += fmt.Sprintf("<p><a href=\"%s\" alt=\"image\">  </a></p>", urlImg.GetCeString())
+			txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">  </a>\n", urlImg.GetCeString())
 		case urlImg.GetCeUri() != "":
-			txt += fmt.Sprintf("<p><a href=\"%s\" alt=\"image\">  </a></p>", urlImg.GetCeUri())
+			txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">  </a>\n", urlImg.GetCeUri())
 		}
 	}
 
