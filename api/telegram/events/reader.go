@@ -152,7 +152,6 @@ func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Read
 	//
 	var evts []*pb.CloudEvent
 	evts, err = awakariReader.Read()
-	fmt.Printf("Awakari Read: %d events, error=%s\n", len(evts), err)
 	//
 	switch status.Code(err) {
 	case codes.NotFound:
@@ -183,7 +182,7 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 		txt += fmt.Sprintf("<p><b>%s</b></p>", title)
 	}
 
-	txt += fmt.Sprintf("<p>From: %s</p>", evt.Attributes["awakarigroupid"])
+	//txt += fmt.Sprintf("<p>From: %s</p>", evt.Attributes["awakarigroupid"])
 
 	urlSrc := evt.Source
 	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
