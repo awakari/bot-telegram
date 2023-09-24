@@ -156,7 +156,10 @@ func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Read
 	//
 	switch status.Code(err) {
 	case codes.NotFound:
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		r.stop = true
+		err = nil
 	}
 	//
 	if len(evts) > 0 {
@@ -184,7 +187,7 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 
 	title, titleOk := evt.Attributes["title"]
 	if titleOk {
-		txt += fmt.Sprintf("<b>%s</b>\n", title)
+		txt += fmt.Sprintf("<b>%s</b>\n", html.EscapeString(title.GetCeString()))
 	}
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
