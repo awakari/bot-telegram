@@ -2,7 +2,6 @@ package events
 
 import (
 	"context"
-	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/chats"
 	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
@@ -12,7 +11,7 @@ import (
 
 const CmdSubRead = "readsub"
 
-func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storage, groupId string) telegram.ArgHandlerFunc {
+func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storage, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(ctx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
 		subId := args[0]
