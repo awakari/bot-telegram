@@ -88,6 +88,7 @@ func main() {
 	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc(listSubsHandlerFunc)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
+	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeft))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
 
 	log.Info("Resume previously existing inactive/expried chats...")
