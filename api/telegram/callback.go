@@ -7,12 +7,10 @@ import (
 	"strings"
 )
 
-type ArgHandlerFunc func(ctx telebot.Context, args ...string) (err error)
-
 var errInvalidCallbackData = errors.New("invalid callback data")
 var errInvalidCallbackCmd = errors.New("invalid callback command")
 
-func Callback(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
+func Callback(handlers map[string]func(ctx telebot.Context, args ...string) (err error)) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		data := ctx.Callback().Data
 		parts := strings.Split(data, " ")
@@ -20,7 +18,7 @@ func Callback(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 			err = fmt.Errorf("%w: %s", errInvalidCallbackData, data)
 		}
 		var arg string
-		var f ArgHandlerFunc
+		var f func(ctx telebot.Context, args ...string) (err error)
 		if err == nil {
 			cmd := parts[0]
 			arg = parts[1]

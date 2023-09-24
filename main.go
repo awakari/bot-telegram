@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/api/telegram/events"
@@ -15,7 +14,6 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"time"
 )
 
 func main() {
@@ -76,7 +74,7 @@ func main() {
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	readSubHandlerFunc := events.SubscriptionReadHandlerFunc(awakariClient, chatStor, cfg.Api.GroupId)
-	argHandlers := map[string]telegram.ArgHandlerFunc{
+	argHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
 		events.CmdSubRead: readSubHandlerFunc,
 	}
 	callbackHandlerFunc := telegram.Callback(argHandlers)
@@ -91,29 +89,9 @@ func main() {
 	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeft(chatStor)))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
 
-	log.Info("Resume previously existing inactive/expried chats...")
-	var resumingDone bool
-	for !resumingDone {
-		c, err := chatStor.ActivateNext(ctx, time.Now().Add(events.ReaderTtl))
-		switch {
-		case err == nil:
-			u := telebot.Update{
-				Message: &telebot.Message{
-					Chat: &telebot.Chat{
-						ID: c.Key.Id,
-					},
-				},
-			}
-			r := events.NewReader(b.NewContext(u), awakariClient, chatStor, c.Key, c.GroupId, c.UserId)
-			go r.Run(context.Background())
-			log.Debug(fmt.Sprintf("Resumed the chat %d for the subscription %s", c.Key.Id, c.Key.SubId))
-		case errors.Is(err, chats.ErrNotFound):
-			log.Info(fmt.Sprintf("Resuming chats done"))
-			resumingDone = true
-		default:
-			log.Error(fmt.Sprintf("failed to resume a chat %+v: %s", c.Key, err))
-		}
-	}
+	log.Debug("Resume previously existing inactive/expried chats...")
+	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient)
+	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
 	defer events.StopAllReaders()
 
 	b.Start()

@@ -2,6 +2,7 @@ package events
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/chats"
 	"github.com/awakari/client-sdk-go/api"
@@ -25,6 +26,33 @@ const readerBackoff = 1 * time.Minute
 
 var runtimeReaders = make(map[int64]*reader)
 var runtimeReadersLock = &sync.Mutex{}
+
+func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebot.Bot, awakariClient api.Client) (count uint32, err error) {
+	var resumingDone bool
+	var c chats.Chat
+	var nextErr error
+	for !resumingDone {
+		c, nextErr = chatStor.ActivateNext(ctx, time.Now().Add(ReaderTtl))
+		switch {
+		case nextErr == nil:
+			u := telebot.Update{
+				Message: &telebot.Message{
+					Chat: &telebot.Chat{
+						ID: c.Key.Id,
+					},
+				},
+			}
+			r := NewReader(tgBot.NewContext(u), awakariClient, chatStor, c.Key, c.GroupId, c.UserId)
+			go r.Run(context.Background())
+			count++
+		case errors.Is(nextErr, chats.ErrNotFound):
+			resumingDone = true
+		default:
+			err = errors.Join(err, nextErr)
+		}
+	}
+	return
+}
 
 func StopAllReaders() {
 	runtimeReadersLock.Lock()
@@ -124,6 +152,7 @@ func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Read
 	//
 	var evts []*pb.CloudEvent
 	evts, err = awakariReader.Read()
+	fmt.Printf("Awakari Read: %d events, error=%s\n", len(evts), err)
 	//
 	switch status.Code(err) {
 	case codes.NotFound:
@@ -186,6 +215,8 @@ func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
 			txt += fmt.Sprintf("<p><a href=\"%s\" alt=\"image\">  </a></p>", urlImg.GetCeUri())
 		}
 	}
+
+	fmt.Printf("Send text to chat:\n%s\n", txt)
 
 	return
 }
