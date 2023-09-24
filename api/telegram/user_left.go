@@ -1,12 +1,24 @@
 package telegram
 
 import (
-	"fmt"
+	"context"
+	"errors"
+	"github.com/awakari/bot-telegram/api/telegram/events"
+	"github.com/awakari/bot-telegram/chats"
 	"gopkg.in/telebot.v3"
 )
 
-func UserLeft(ctx telebot.Context) (err error) {
-	msg := ctx.Message()
-	fmt.Printf("User %d left the chat %d\n", msg.UserLeft.ID, ctx.Chat().ID)
-	return
+func UserLeft(chatStor chats.Storage) telebot.HandlerFunc {
+	return func(ctx telebot.Context) (err error) {
+		chat := ctx.Chat()
+		if chat == nil {
+			err = errors.New("user left a missing chat")
+		}
+		if err == nil {
+			chatId := chat.ID
+			events.StopChatReader(chatId)
+			_ = chatStor.Delete(context.Background(), chatId)
+		}
+		return
+	}
 }

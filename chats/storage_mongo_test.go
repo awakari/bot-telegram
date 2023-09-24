@@ -208,26 +208,20 @@ func TestStorageMongo_Delete(t *testing.T) {
 	require.Nil(t, err)
 	//
 	cases := map[string]struct {
-		key Key
+		id  int64
 		err error
 	}{
 		"ok": {
-			key: Key{
-				Id:    -123,
-				SubId: "sub0",
-			},
+			id: -123,
 		},
 		"not found is ok": {
-			key: Key{
-				Id:    -123,
-				SubId: "sub1",
-			},
+			id: 234,
 		},
 	}
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			err = s.Delete(ctx, c.key)
+			err = s.Delete(ctx, c.id)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}

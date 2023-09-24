@@ -161,10 +161,9 @@ func (sm storageMongo) Update(ctx context.Context, c Chat) (err error) {
 	return
 }
 
-func (sm storageMongo) Delete(ctx context.Context, k Key) (err error) {
+func (sm storageMongo) Delete(ctx context.Context, id int64) (err error) {
 	q := bson.M{
-		attrId:    k.Id,
-		attrSubId: k.SubId,
+		attrId: id,
 	}
 	_, err = sm.coll.DeleteOne(ctx, q)
 	err = decodeMongoError(err)

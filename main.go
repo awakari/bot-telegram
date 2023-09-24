@@ -88,7 +88,7 @@ func main() {
 	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc(listSubsHandlerFunc)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeft))
+	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeft(chatStor)))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
 
 	log.Info("Resume previously existing inactive/expried chats...")
@@ -104,14 +104,8 @@ func main() {
 					},
 				},
 			}
-			go events.ChatEvents{
-				TgCtx:    b.NewContext(u),
-				Client:   awakariClient,
-				ChatStor: chatStor,
-				ChatKey:  c.Key,
-				GroupId:  c.GroupId,
-				UserId:   c.UserId,
-			}.DeliveryLoop(context.Background())
+			r := events.NewReader(b.NewContext(u), awakariClient, chatStor, c.Key, c.GroupId, c.UserId)
+			go r.Run(context.Background())
 			log.Debug(fmt.Sprintf("Resumed the chat %d for the subscription %s", c.Key.Id, c.Key.SubId))
 		case errors.Is(err, chats.ErrNotFound):
 			log.Info(fmt.Sprintf("Resuming chats done"))
@@ -120,6 +114,7 @@ func main() {
 			log.Error(fmt.Sprintf("failed to resume a chat %+v: %s", c.Key, err))
 		}
 	}
+	defer events.StopAllReaders()
 
 	b.Start()
 }
