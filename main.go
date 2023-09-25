@@ -17,6 +17,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func main() {
@@ -117,6 +118,9 @@ func main() {
 	log.Debug("Resume previously existing inactive/expried chats...")
 	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
 	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
+	// Create a context with a timeout for cleanup
+	ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancelShutdown()
 	// Listen for shutdown signals
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
@@ -125,7 +129,9 @@ func main() {
 		log.Debug("Stopping all chats gracefully...")
 		events.StopAllReaders()
 		log.Debug("Stopped all chats gracefully.")
+		cancelShutdown()
 	}()
 
 	b.Start()
+	<-ctxShutdown.Done()
 }
