@@ -119,7 +119,7 @@ func main() {
 	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
 	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
 	// Create a context with a timeout for cleanup
-	ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), 10*time.Second)
+	ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancelShutdown()
 	// Listen for shutdown signals
 	sigs := make(chan os.Signal, 1)
