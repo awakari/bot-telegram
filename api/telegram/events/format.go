@@ -8,8 +8,8 @@ import (
 )
 
 const fmtLenMaxTitle = 128
-const fmtLenMaxSummary = 512
-const fmtLenMaxTxt = 512
+const fmtLenMaxSummary = 256
+const fmtLenMaxTxt = 256
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
@@ -19,20 +19,20 @@ func (f Format) Html(evt *pb.CloudEvent) (txt string) {
 	title, titleOk := evt.Attributes["title"]
 	if titleOk {
 		titleHtml := f.HtmlPolicy.Sanitize(title.GetCeString())
-		txt += fmt.Sprintf("<b>%s</b>\n", truncateStringUtf8(titleHtml, fmtLenMaxTitle))
+		txt += fmt.Sprintf("<b>%s</b>", truncateStringUtf8(titleHtml, fmtLenMaxTitle))
 	}
 
 	summary, summaryOk := evt.Attributes["summary"]
 	if summaryOk {
 		summaryHtml := f.HtmlPolicy.Sanitize(summary.GetCeString())
-		txt += fmt.Sprintf("%s\n", truncateStringUtf8(summaryHtml, fmtLenMaxSummary))
+		txt += fmt.Sprintf("\n%s", truncateStringUtf8(summaryHtml, fmtLenMaxSummary))
 	}
 
 	txtData := evt.GetTextData()
 	switch {
 	case txtData != "":
 		txtHtml := f.HtmlPolicy.Sanitize(txtData)
-		txt += fmt.Sprintf("%s\n", truncateStringUtf8(txtHtml, fmtLenMaxTxt))
+		txt += fmt.Sprintf("\n%s", truncateStringUtf8(txtHtml, fmtLenMaxTxt))
 	}
 
 	urlImg, urlImgOk := evt.Attributes["imageurl"]
@@ -53,11 +53,11 @@ func (f Format) Html(evt *pb.CloudEvent) (txt string) {
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	txt += fmt.Sprintf("<a href=\"%s\">Read more</a>\n", urlSrc)
+	txt += fmt.Sprintf(" <a href=\"%s\">Link</a>.", urlSrc)
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
 	if groupIdSrcOk {
-		txt += fmt.Sprintf("From: %s\n", groupIdSrc.GetCeString())
+		txt += fmt.Sprintf("Via: %s\n", groupIdSrc.GetCeString())
 	}
 
 	return
