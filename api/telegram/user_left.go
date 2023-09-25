@@ -8,7 +8,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-func UserLeft(chatStor chats.Storage) telebot.HandlerFunc {
+func UserLeftHandlerFunc(chatStor chats.Storage) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		chat := ctx.Chat()
 		if chat == nil {

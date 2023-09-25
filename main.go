@@ -109,8 +109,8 @@ func main() {
 	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc(listSubsHandlerFunc)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeft(chatStor)))
-	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
+	b.Handle(telebot.OnUserLeft, telegram.ErrorHandlerFunc(telegram.UserLeftHandlerFunc(chatStor)))
+	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitTextHandlerFunc(awakariClient, cfg.Api.GroupId)))
 
 	log.Debug("Resume previously existing inactive/expried chats...")
 	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
