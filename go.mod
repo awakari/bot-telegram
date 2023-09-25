@@ -5,6 +5,7 @@ go 1.21
 require (
 	github.com/awakari/client-sdk-go v1.0.4
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.14.0
+	github.com/google/uuid v1.3.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/microcosm-cc/bluemonday v1.0.25
 	github.com/stretchr/testify v1.8.4

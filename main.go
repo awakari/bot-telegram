@@ -15,6 +15,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -115,7 +117,11 @@ func main() {
 	log.Debug("Resume previously existing inactive/expried chats...")
 	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
 	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
-	defer func() {
+	// Listen for shutdown signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
 		log.Debug("Stopping all chats gracefully...")
 		events.StopAllReaders()
 		log.Debug("Stopped all chats gracefully.")
