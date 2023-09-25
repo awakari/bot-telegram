@@ -126,9 +126,8 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
-		log.Debug("Stopping all chats gracefully...")
-		events.ReleaseAllChats(ctxShutdown)
-		log.Debug("Stopped all chats gracefully.")
+		events.ReleaseAllChats(ctxShutdown, log)
+		log.Debug("Graceful shutdown done")
 		cancelShutdown()
 	}()
 

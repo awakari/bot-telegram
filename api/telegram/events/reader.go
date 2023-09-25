@@ -12,6 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"sync"
 	"time"
 )
@@ -54,15 +55,22 @@ func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebo
 	return
 }
 
-func ReleaseAllChats(ctx context.Context) {
+func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
 	for _, r := range runtimeReaders {
 		c := chats.Chat{
-			Key:   r.chatKey,
-			State: chats.StateInactive,
+			Key:     r.chatKey,
+			State:   chats.StateInactive,
+			Expires: time.Now().UTC(),
 		}
-		_ = r.chatStor.Update(ctx, c)
+		err := r.chatStor.Update(ctx, c)
+		switch err {
+		case nil:
+			log.Debug(fmt.Sprintf("Released chat %d", c.Key.Id))
+		default:
+			log.Error(fmt.Sprintf("Failed to release chat %d: %s", c.Key.Id, err))
+		}
 	}
 }
 
