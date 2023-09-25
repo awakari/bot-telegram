@@ -118,19 +118,16 @@ func main() {
 	log.Debug("Resume previously existing inactive/expried chats...")
 	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
 	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
-	// Create a context with a timeout for cleanup
-	ctxShutdown, cancelShutdown := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancelShutdown()
 	// Listen for shutdown signals
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.TODO(), 15*time.Second)
 		events.ReleaseAllChats(ctxShutdown, log)
 		log.Debug("Graceful shutdown done")
 		cancelShutdown()
 	}()
 
 	b.Start()
-	<-ctxShutdown.Done()
 }
