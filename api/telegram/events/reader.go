@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
-	"html"
 	"sync"
 	"time"
 )
@@ -28,7 +27,7 @@ const readerBackoff = 1 * time.Minute
 var runtimeReaders = make(map[int64]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
-func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebot.Bot, awakariClient api.Client) (count uint32, err error) {
+func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebot.Bot, awakariClient api.Client, format Format) (count uint32, err error) {
 	var resumingDone bool
 	var c chats.Chat
 	var nextErr error
@@ -43,7 +42,7 @@ func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebo
 					},
 				},
 			}
-			r := NewReader(tgBot.NewContext(u), awakariClient, chatStor, c.Key, c.GroupId, c.UserId)
+			r := NewReader(tgBot.NewContext(u), awakariClient, chatStor, c.Key, c.GroupId, c.UserId, format)
 			go r.Run(context.Background())
 			count++
 		case errors.Is(nextErr, chats.ErrNotFound):
@@ -72,7 +71,7 @@ func StopChatReader(chatId int64) {
 	}
 }
 
-func NewReader(tgCtx telebot.Context, client api.Client, chatStor chats.Storage, chatKey chats.Key, groupId, userId string) Reader {
+func NewReader(tgCtx telebot.Context, client api.Client, chatStor chats.Storage, chatKey chats.Key, groupId, userId string, format Format) Reader {
 	return &reader{
 		tgCtx:    tgCtx,
 		client:   client,
@@ -80,6 +79,7 @@ func NewReader(tgCtx telebot.Context, client api.Client, chatStor chats.Storage,
 		chatKey:  chatKey,
 		groupId:  groupId,
 		userId:   userId,
+		format:   format,
 	}
 }
 
@@ -91,6 +91,7 @@ type reader struct {
 	groupId  string
 	userId   string
 	stop     bool
+	format   Format
 }
 
 func (r *reader) Run(ctx context.Context) {
@@ -171,7 +172,7 @@ func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Read
 
 func (r *reader) deliverEvents(evts []*pb.CloudEvent) (err error) {
 	for _, evt := range evts {
-		err = r.tgCtx.Send(formatHtmlEvent(evt), telebot.ModeHTML)
+		err = r.tgCtx.Send(r.format.Html(evt), telebot.ModeHTML)
 		if err != nil {
 			fmt.Printf("Failed to send events to chat %d: %s\n", r.chatKey.Id, err)
 			break
@@ -180,52 +181,6 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent) (err error) {
 			break
 		}
 	}
-	return
-}
-
-func formatHtmlEvent(evt *pb.CloudEvent) (txt string) {
-
-	title, titleOk := evt.Attributes["title"]
-	if titleOk {
-		txt += fmt.Sprintf("<b>%s</b>\n", html.EscapeString(title.GetCeString()))
-	}
-
-	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
-	if groupIdSrcOk {
-		txt += fmt.Sprintf("From: %s\n", groupIdSrc.GetCeString())
-	}
-
-	urlSrc := evt.Source
-	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
-	if rssItemGuidOk {
-		urlSrc = rssItemGuid.GetCeString()
-	}
-	txt += fmt.Sprintf("Source: <a href=\"%s\">%s</a>\n", urlSrc, urlSrc)
-
-	summary, summaryOk := evt.Attributes["summary"]
-	if summaryOk {
-		txt += fmt.Sprintf("%s\n", html.EscapeString(summary.GetCeString()))
-	}
-
-	txtData := evt.GetTextData()
-	switch {
-	case txtData != "":
-		txt += fmt.Sprintf("%s\n", html.EscapeString(txtData))
-	}
-
-	urlImg, urlImgOk := evt.Attributes["imageurl"]
-	if !urlImgOk {
-		urlImg, urlImgOk = evt.Attributes["feedimageurl"]
-	}
-	if urlImgOk {
-		switch {
-		case urlImg.GetCeString() != "":
-			txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">  </a>\n", urlImg.GetCeString())
-		case urlImg.GetCeUri() != "":
-			txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">  </a>\n", urlImg.GetCeUri())
-		}
-	}
-
 	return
 }
 

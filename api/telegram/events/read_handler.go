@@ -11,7 +11,7 @@ import (
 
 const CmdSubRead = "readsub"
 
-func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storage, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storage, groupId string, format Format) func(ctx telebot.Context, args ...string) (err error) {
 	return func(ctx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
 		subId := args[0]
@@ -27,7 +27,7 @@ func SubscriptionReadHandlerFunc(awakariClient api.Client, chatStor chats.Storag
 		}
 		err = chatStor.Create(context.TODO(), chat)
 		if err == nil {
-			r := NewReader(ctx, awakariClient, chatStor, chat.Key, groupId, userId)
+			r := NewReader(ctx, awakariClient, chatStor, chat.Key, groupId, userId, format)
 			go r.Run(context.Background())
 			_ = ctx.Send("Started, new messages by the subscription will appear here...")
 		}

@@ -10,6 +10,7 @@ import (
 	"github.com/awakari/bot-telegram/chats"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
@@ -70,10 +71,32 @@ func main() {
 	}
 	defer chatStor.Close()
 
+	// init events format, see https://core.telegram.org/bots/api#html-style for details
+	htmlPolicy := bluemonday.NewPolicy()
+	htmlPolicy.AllowStandardURLs()
+	htmlPolicy.
+		AllowAttrs("href").
+		OnElements("a")
+	htmlPolicy.AllowElements("b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "code", "pre")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("span")
+	htmlPolicy.AllowURLSchemes("tg")
+	htmlPolicy.
+		AllowAttrs("emoji-ids").
+		OnElements("tg-emoji")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("code")
+	htmlPolicy.AllowDataURIImages()
+	evtFormat := events.Format{
+		HtmlPolicy: htmlPolicy,
+	}
+
 	// init handlers
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
-	readSubHandlerFunc := events.SubscriptionReadHandlerFunc(awakariClient, chatStor, cfg.Api.GroupId)
+	readSubHandlerFunc := events.SubscriptionReadHandlerFunc(awakariClient, chatStor, cfg.Api.GroupId, evtFormat)
 	argHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
 		events.CmdSubRead: readSubHandlerFunc,
 	}
@@ -90,9 +113,13 @@ func main() {
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitText))
 
 	log.Debug("Resume previously existing inactive/expried chats...")
-	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient)
+	count, err := events.ResumeAllReaders(ctx, chatStor, b, awakariClient, evtFormat)
 	log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
-	defer events.StopAllReaders()
+	defer func() {
+		log.Debug("Stopping all chats gracefully...")
+		events.StopAllReaders()
+		log.Debug("Stopped all chats gracefully.")
+	}()
 
 	b.Start()
 }
