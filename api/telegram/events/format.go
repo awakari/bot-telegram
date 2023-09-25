@@ -53,11 +53,11 @@ func (f Format) Html(evt *pb.CloudEvent) (txt string) {
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	txt += fmt.Sprintf(" <a href=\"%s\">Link</a>.", urlSrc)
+	txt += fmt.Sprintf("\n<a href=\"%s\">Link</a>.", urlSrc)
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
 	if groupIdSrcOk {
-		txt += fmt.Sprintf("Via: %s\n", groupIdSrc.GetCeString())
+		txt += fmt.Sprintf("\nVia: %s\n", groupIdSrc.GetCeString())
 	}
 
 	return
