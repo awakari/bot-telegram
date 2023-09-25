@@ -54,11 +54,15 @@ func ResumeAllReaders(ctx context.Context, chatStor chats.Storage, tgBot *telebo
 	return
 }
 
-func StopAllReaders() {
+func ReleaseAllChats(ctx context.Context) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
 	for _, r := range runtimeReaders {
-		r.stop = true
+		c := chats.Chat{
+			Key:   r.chatKey,
+			State: chats.StateInactive,
+		}
+		_ = r.chatStor.Update(ctx, c)
 	}
 }
 

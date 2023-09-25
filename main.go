@@ -127,7 +127,7 @@ func main() {
 	go func() {
 		<-sigs
 		log.Debug("Stopping all chats gracefully...")
-		events.StopAllReaders()
+		events.ReleaseAllChats(ctxShutdown)
 		log.Debug("Stopped all chats gracefully.")
 		cancelShutdown()
 	}()
