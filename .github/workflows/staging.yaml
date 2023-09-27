@@ -62,4 +62,4 @@ jobs:
         run: |
           helm upgrade --install ${COMPONENT} ${COMPONENT}-0.0.0.tgz \
             --values helm/bot-telegram/values-demo-0.yaml \
-            --set podAnnotations.commit=$(git rev-parse --short HEAD),api.telegram.token=${{ secrets.TG_BOT_TOKEN }},chats.db.password.secret.enabled=false,chats.db.protocol=mongodb+srv,chats.db.tls.enabled=true,chats.db.tls.insecure=true,chats.db.hostname=${{ secrets.DB_HOST_DEMO }},chats.db.username=${{ secrets.DB_USERNAME_DEMO }},chats.db.password.raw=${{ secrets.DB_PASSWORD_DEMO }}
+            --set podAnnotations.commit=$(git rev-parse --short HEAD),api.telegram.token=${{ secrets.TG_BOT_TOKEN }}

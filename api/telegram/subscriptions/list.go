@@ -3,7 +3,6 @@ package subscriptions
 import (
 	"context"
 	"fmt"
-	"github.com/awakari/bot-telegram/api/telegram/events"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
@@ -31,7 +30,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				}
 				row := m.Row(telebot.Btn{
 					Text: sub.Description,
-					Data: fmt.Sprintf("%s %s", events.CmdSubRead, subId),
+					Data: fmt.Sprintf("%s %s", "TODO", subId),
 				})
 				rows = append(rows, row)
 			}

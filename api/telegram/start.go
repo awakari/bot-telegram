@@ -29,12 +29,10 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-func StartHandlerFunc(listSubsHandlerFunc telebot.HandlerFunc) telebot.HandlerFunc {
+func StartHandlerFunc() telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		chat := ctx.Chat()
 		switch chat.Type {
-		case telebot.ChatGroup:
-			err = listSubsHandlerFunc(ctx)
 		case telebot.ChatPrivate:
 			err = startPrivate(ctx)
 		default:

@@ -24,8 +24,6 @@ jobs:
 
       - name: Test
         run: make test
-        env:
-          DB_URI_TEST_MONGO: ${{ secrets.DB_URI_TEST_MONGO }}
 
       - name: Registry login
         uses: docker/login-action@v2

@@ -14,7 +14,4 @@ func TestConfig(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, uint16(56789), cfg.Api.Telegram.Webhook.Port)
 	assert.Equal(t, 4, cfg.Log.Level)
-	assert.Equal(t, "mongodb://localhost:27017/?retryWrites=true&w=majority", cfg.Chats.Db.Uri)
-	assert.Equal(t, "bot-telegram", cfg.Chats.Db.Name)
-	assert.Equal(t, "chats", cfg.Chats.Db.Table.Name)
 }
