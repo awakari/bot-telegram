@@ -60,8 +60,11 @@ func main() {
 	// init handlers
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	//listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
-	argHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
-	callbackHandlerFunc := telegram.Callback(argHandlers)
+	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
+	callbackHandlerFunc := telegram.Callback(callbackHandlers)
+	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
+		telegram.LabelWebAppSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+	}
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
@@ -71,10 +74,7 @@ func main() {
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitTextHandlerFunc(awakariClient, cfg.Api.GroupId)))
-	b.Handle(telebot.OnWebApp, func(tgCtx telebot.Context) (err error) {
-		fmt.Printf("webapp data: %+v, callback: %+v\n", tgCtx.Message().WebAppData, tgCtx.Callback())
-		return
-	})
+	b.Handle(telebot.OnWebApp, telegram.ErrorHandlerFunc(telegram.WebAppData(webappHandlers)))
 
 	b.Start()
 }

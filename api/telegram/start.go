@@ -13,12 +13,15 @@ const msgStartPrivate = `
 • To customize these options, choose a button below.
 `
 
+const LabelWebAppSubCreate = "New Custom Subscription"
+const LabelWebAppMsgSend = "New Custom Message"
+
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
 var btnSubNewCustom = telebot.Btn{
 	Data:   "subCreateCustom",
 	Unique: "subCreateCustomUnique",
-	Text:   "New Custom Subscription",
+	Text:   LabelWebAppSubCreate,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
@@ -27,7 +30,7 @@ var btnSubNewCustom = telebot.Btn{
 var btnMsgNewCustom = telebot.Btn{
 	Data:   "msgSendCustom",
 	Unique: "msgSendCustomUnique",
-	Text:   "New Custom Message",
+	Text:   LabelWebAppMsgSend,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/msg-new.html",
 	},
