@@ -12,7 +12,6 @@ var errInvalidCallbackCmd = errors.New("invalid callback command")
 
 func Callback(handlers map[string]func(ctx telebot.Context, args ...string) (err error)) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
-		fmt.Printf("callback: %+v\n", ctx.Callback())
 		data := ctx.Callback().Data
 		parts := strings.Split(data, " ")
 		if len(parts) != 2 {
