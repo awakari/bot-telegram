@@ -71,6 +71,10 @@ func main() {
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitTextHandlerFunc(awakariClient, cfg.Api.GroupId)))
+	b.Handle(telebot.OnWebApp, func(tgCtx telebot.Context) (err error) {
+		fmt.Printf("webapp: %+v\n", tgCtx.Message().WebAppData)
+		return
+	})
 
 	b.Start()
 }
