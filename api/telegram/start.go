@@ -13,8 +13,8 @@ const msgStartPrivate = `
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelWebAppSubCreate = "➕ New Subscription"
-const LabelWebAppMsgSend = "➕ New Message"
+const LabelWebAppSubCreate = "New Subscription"
+const LabelWebAppMsgSend = "New Message"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
