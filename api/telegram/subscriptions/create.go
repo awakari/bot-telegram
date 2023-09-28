@@ -80,11 +80,12 @@ func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 		//
 		var subId string
 		if err == nil {
-			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subscription.Data{
+			subData := subscription.Data{
 				Condition:   cond,
 				Description: req.Description,
 				Enabled:     req.Enabled,
-			})
+			}
+			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subData)
 		}
 		if err == nil {
 			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
