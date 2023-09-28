@@ -48,7 +48,7 @@ func StartHandlerFunc() telebot.HandlerFunc {
 func startPrivate(ctx telebot.Context) (err error) {
 	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 	m.Reply(
-		m.Row(btnSubNewCustom, btnMsgNewCustom),
+		m.Row(btnMsgNewCustom, btnSubNewCustom),
 	)
 	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return
