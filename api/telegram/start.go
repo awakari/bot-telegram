@@ -19,18 +19,14 @@ const LabelWebAppMsgSend = "New Custom Message"
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
 var btnSubNewCustom = telebot.Btn{
-	Data:   "subCreateCustom",
-	Unique: "subCreateCustomUnique",
-	Text:   LabelWebAppSubCreate,
+	Text: LabelWebAppSubCreate,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
 }
 
 var btnMsgNewCustom = telebot.Btn{
-	Data:   "msgSendCustom",
-	Unique: "msgSendCustomUnique",
-	Text:   LabelWebAppMsgSend,
+	Text: LabelWebAppMsgSend,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/msg-new.html",
 	},
