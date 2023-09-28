@@ -40,7 +40,7 @@ func SubmitCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 		if err == nil {
 			switch ackCount {
 			case 1:
-				err = tgCtx.Send(fmt.Sprintf("Message published, id:\n<pre>%s</pre>", evt.Id), telebot.ModeHTML)
+				err = tgCtx.Send(fmt.Sprintf("Message published, id: <pre>%s</pre>", evt.Id), telebot.ModeHTML)
 			default:
 				err = tgCtx.Send("Busy, please retry later")
 			}
