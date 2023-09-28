@@ -7,14 +7,14 @@ import (
 )
 
 const msgStartPrivate = `
-• Send a text to submit a simple message to Awakari.
-• Send a command to create a simple text matching subscription:
-	<pre>/sub &lt;sub_name&gt; &lt;keyword1&gt; &lt;keyword2&gt; ...</pre>
-• To customize these options, choose a button below.
+• Send a message to publish a simple text to Awakari.
+• Send the following command to create a simple text matching subscription:
+	<pre>/sub &lt;sub_name&gt; &lt;word1&gt; &lt;word2&gt; ...</pre>
+• For advanced usage, use the keyboard buttons.
 `
 
-const LabelWebAppSubCreate = "New Custom Subscription"
-const LabelWebAppMsgSend = "New Custom Message"
+const LabelWebAppSubCreate = "➕ New Subscription"
+const LabelWebAppMsgSend = "➕ New Message"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
@@ -48,8 +48,7 @@ func StartHandlerFunc() telebot.HandlerFunc {
 func startPrivate(ctx telebot.Context) (err error) {
 	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 	m.Reply(
-		m.Row(btnSubNewCustom),
-		m.Row(btnMsgNewCustom),
+		m.Row(btnSubNewCustom, btnMsgNewCustom),
 	)
 	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return

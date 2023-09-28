@@ -33,6 +33,15 @@ func main() {
 		Build()
 	defer awakariClient.Close()
 
+	// init handlers
+	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
+	//listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
+	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
+	callbackHandlerFunc := telegram.Callback(callbackHandlers)
+	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
+		telegram.LabelWebAppSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+	}
+
 	// init Telegram bot
 	s := telebot.Settings{
 		Client: &http.Client{
@@ -55,15 +64,6 @@ func main() {
 	b, err = telebot.NewBot(s)
 	if err != nil {
 		panic(err)
-	}
-
-	// init handlers
-	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
-	//listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
-	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
-	callbackHandlerFunc := telegram.Callback(callbackHandlers)
-	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		telegram.LabelWebAppSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
 
 	// assign handlers
