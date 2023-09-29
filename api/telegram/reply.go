@@ -19,9 +19,10 @@ func HandleReply(
 	msgReq := msgResp.ReplyTo
 	txtReq := msgReq.Text
 	argsReq := strings.Split(txtReq, " ")
+	fmt.Printf("args req 0: %+v\n", argsReq)
 	handlerKey := argsReq[0]
 	argsReq = argsReq[1:]
-	fmt.Printf("args req: %+v\n", argsReq)
+	fmt.Printf("args req 1: %+v\n", argsReq)
 	rh, rhOk := replyHandlers[handlerKey]
 	switch rhOk {
 	case false:
