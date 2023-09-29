@@ -42,7 +42,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 						Data: fmt.Sprintf("%s %s", "delete", subId),
 					},
 				))
-				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", padString(sub.Description, 32)), m, telebot.ModeHTML)
+				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", padString(sub.Description, 31)), m, telebot.ModeHTML)
 			}
 		}
 		return
