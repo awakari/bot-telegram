@@ -35,7 +35,7 @@ func main() {
 
 	// init handlers
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
-	//listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
+	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
 	callbackHandlerFunc := telegram.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
@@ -68,10 +68,27 @@ func main() {
 	}
 
 	// assign handlers
+	err = b.SetCommands([]telebot.CommandParams{
+		{
+			Commands: []telebot.Command{
+				{
+					Text:        subscriptions.CmdList,
+					Description: "List My Subscriptions",
+				},
+			},
+			Scope: &telebot.CommandScope{
+				Type: telebot.CommandScopeAllPrivateChats,
+			},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
 	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc()))
+	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), telegram.ErrorHandlerFunc(listSubsHandlerFunc))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.SubmitTextHandlerFunc(awakariClient, cfg.Api.GroupId)))

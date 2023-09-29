@@ -10,7 +10,8 @@ import (
 	"strconv"
 )
 
-const subListLimit = 10 // TODO: implement the proper pagination later
+const CmdList = "list"
+const subListLimit = 256 // TODO: implement the proper pagination later
 const msgStart = "Select a subscription from the list below:"
 
 func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {

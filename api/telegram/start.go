@@ -11,6 +11,7 @@ const msgStartPrivate = `
 • Send a command like: 
   <pre>/sub &lt;sub_name&gt; &lt;word1&gt; &lt;word2&gt; ...</pre>
   to create a simple text matching subscription.
+• Send the <pre>/list</pre> command to list own subscriptions.
 • For advanced usage, use the keyboard buttons.
 `
 
@@ -19,6 +20,11 @@ const LabelSubCreate = "New Subscription"
 const LabelUsageQuota = "My Usage Quota"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
+
+var btnMenu = telebot.MenuButton{
+	Type: telebot.MenuButtonCommands,
+	Text: "☰",
+}
 
 var btnMsgNewCustom = telebot.Btn{
 	Text: LabelMsgSend,
@@ -55,12 +61,15 @@ func StartHandlerFunc() telebot.HandlerFunc {
 }
 
 func startPrivate(ctx telebot.Context) (err error) {
-	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
-	m.Reply(
-		m.Row(btnMsgNewCustom),
-		m.Row(btnSubNewCustom),
-		m.Row(btnUsageQuota),
-	)
-	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
+	err = ctx.Bot().SetMenuButton(ctx.Sender(), &btnMenu)
+	if err == nil {
+		m := &telebot.ReplyMarkup{ResizeKeyboard: true}
+		m.Reply(
+			m.Row(btnMsgNewCustom),
+			m.Row(btnSubNewCustom),
+			m.Row(btnUsageQuota),
+		)
+		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
+	}
 	return
 }
