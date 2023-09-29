@@ -20,6 +20,7 @@ func HandleReply(
 	txtReq := msgReq.Text
 	argsReq := strings.Split(txtReq, " ")
 	handlerKey := argsReq[0]
+	fmt.Printf("handler key: %s\n", handlerKey)
 	rh, rhOk := replyHandlers[handlerKey]
 	switch rhOk {
 	case false:
@@ -30,6 +31,7 @@ func HandleReply(
 			args = append(args, argsReq[1:]...)
 		}
 		args = append(argsReq, txtResp)
+		fmt.Printf("args: %+v", args)
 		err = rh(tgCtx, awakariClient, groupId, args...)
 	}
 	return
