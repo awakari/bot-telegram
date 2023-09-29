@@ -18,14 +18,14 @@ const LabelWebAppMsgSend = "New Message"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
-var BtnSubNewCustom = telebot.Btn{
+var btnSubNewCustom = telebot.Btn{
 	Text: LabelWebAppSubCreate,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
 }
 
-var BtnMsgNewCustom = telebot.Btn{
+var btnMsgNewCustom = telebot.Btn{
 	Text: LabelWebAppMsgSend,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/msg-new.html",
@@ -48,8 +48,8 @@ func StartHandlerFunc() telebot.HandlerFunc {
 func startPrivate(ctx telebot.Context) (err error) {
 	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 	m.Reply(
-		m.Row(BtnMsgNewCustom),
-		m.Row(BtnSubNewCustom),
+		m.Row(btnMsgNewCustom),
+		m.Row(btnSubNewCustom),
 	)
 	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return

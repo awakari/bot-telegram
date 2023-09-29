@@ -22,7 +22,7 @@ const argSep = " "
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
-var msgFmtSubCreated = `Created the new subscription, id: <pre>%s</pre>
+var msgFmtSubCreated = `Subscription created, id: <pre>%s</pre>
 Next, create a group chat with Awakari Reader Bot and select the subscription by the name.`
 
 func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
@@ -64,11 +64,11 @@ func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.H
 	}
 }
 
-func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
-	return func(ctx telebot.Context) (err error) {
+func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+	return func(ctx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
-		data := ctx.Message().WebAppData.Data
+		data := args[0]
 		// TODO: maybe fix this double decoding/encoding of the payload with copy paste decode code
 		var req subscriptions.CreateRequest
 		err = protojson.Unmarshal([]byte(data), &req)

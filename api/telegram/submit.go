@@ -21,11 +21,11 @@ const attrValSpecVersion = "1.0"
 const fmtLinkUser = "tg://user?id=%d"
 const fmtUserName = "%s %s"
 
-func SubmitCustomHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
-	return func(tgCtx telebot.Context) (err error) {
-		data := tgCtx.Message().WebAppData.Data
+func SubmitCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		data := args[0]
 		var w model.Writer[*pb.CloudEvent]
 		var evt pb.CloudEvent
 		w, err = awakariClient.OpenMessagesWriter(groupIdCtx, userId)
@@ -65,7 +65,7 @@ func SubmitTextHandlerFunc(awakariClient api.Client, groupId string) telebot.Han
 		if err == nil {
 			switch ackCount {
 			case 1:
-				err = tgCtx.Send(fmt.Sprintf("Message published, id:\n<pre>%s</pre>", evt.Id), telebot.ModeHTML)
+				err = tgCtx.Send(fmt.Sprintf("Message published, id: <pre>%s</pre>", evt.Id), telebot.ModeHTML)
 			default:
 				err = tgCtx.Send("Busy, please retry later")
 			}
