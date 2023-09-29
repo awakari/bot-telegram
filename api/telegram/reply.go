@@ -22,6 +22,7 @@ func HandleReply(
 	handlerKey := argsReq[0]
 	fmt.Printf("handler key: %s\n", handlerKey)
 	rh, rhOk := replyHandlers[handlerKey]
+	fmt.Printf("rh: %+v, rhOk: %t\n", rh, rhOk)
 	switch rhOk {
 	case false:
 		err = errors.New(fmt.Sprintf("unknown reply handler key: %s", handlerKey))
@@ -31,7 +32,7 @@ func HandleReply(
 			args = append(args, argsReq[1:]...)
 		}
 		args = append(argsReq, txtResp)
-		fmt.Printf("args: %+v", args)
+		fmt.Printf("args: %+v\n", args)
 		err = rh(tgCtx, awakariClient, groupId, args...)
 	}
 	return
