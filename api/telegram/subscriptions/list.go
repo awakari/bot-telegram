@@ -9,6 +9,7 @@ import (
 	"gopkg.in/telebot.v3"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 const CmdList = "list"
@@ -30,7 +31,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				m := &telebot.ReplyMarkup{}
 				m.Inline(m.Row(
 					telebot.Btn{
-						Text: "📥 Inbox",
+						Text: "🔖 Link",
 						Data: fmt.Sprintf("%s %s", "inbox", subId),
 					},
 					telebot.Btn{
@@ -42,11 +43,24 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 						Data: fmt.Sprintf("%s %s", "delete", subId),
 					},
 				))
-				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", padString(sub.Description, 31)), m, telebot.ModeHTML)
+				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", fixLenString(sub.Description, 31)), m, telebot.ModeHTML)
 			}
 		}
 		return
 	}
+}
+
+func fixLenString(s string, l int) string {
+	if len(s) <= l {
+		return padString(s, l)
+	}
+	// truncate, ensure we don't split a UTF-8 character in the middle.
+	for i := l - 3; i > 0; i-- {
+		if utf8.RuneStart(s[i]) {
+			return s[:i] + "..."
+		}
+	}
+	return ""
 }
 
 func padString(input string, length int) string {
