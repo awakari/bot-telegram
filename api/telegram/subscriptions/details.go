@@ -15,10 +15,6 @@ import (
 
 const CmdDetails = "details"
 
-const CmdDescription = "description"
-const CmdDisable = "disable"
-const CmdEnable = "enable"
-
 const msgFmtDetails = `Subscription Details:
 Id: <pre>%s</pre>
 Description: <pre>%s</pre>

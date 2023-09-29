@@ -35,7 +35,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				rows = append(rows, row)
 			}
 			m.Inline(rows...)
-			err = ctx.Send("Subscriptions", m, telebot.ModeHTML)
+			err = ctx.Send("Subscriptions:", m, telebot.ModeHTML)
 		}
 		return
 	}
