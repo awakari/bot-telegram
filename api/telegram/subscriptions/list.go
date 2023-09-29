@@ -32,7 +32,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				m.Inline(m.Row(
 					telebot.Btn{
 						Text: "🖇 Link Chat",
-						URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?stargroup=%s", subId),
+						URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?startgroup=%s", subId),
 					},
 					telebot.Btn{
 						Text: "✎ Details",
