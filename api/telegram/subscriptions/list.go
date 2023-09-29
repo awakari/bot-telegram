@@ -31,8 +31,8 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				m := &telebot.ReplyMarkup{}
 				m.Inline(m.Row(
 					telebot.Btn{
-						Text: "🔖 Link Chat",
-						Data: fmt.Sprintf("%s %s", "inbox", subId),
+						Text: "🖇 Link Chat",
+						URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?stargroup=%s", subId),
 					},
 					telebot.Btn{
 						Text: "✎ Details",
@@ -40,7 +40,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 					},
 					telebot.Btn{
 						Text: "❌ Delete",
-						Data: fmt.Sprintf("%s %s", "delete", subId),
+						Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 					},
 				))
 				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", fixLenString(sub.Description, 31)), m, telebot.ModeHTML)
