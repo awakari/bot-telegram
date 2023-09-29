@@ -48,6 +48,9 @@ func main() {
 		telegram.LabelMsgSend:   telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
 		telegram.LabelSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
+	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
+		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
+	}
 
 	// init Telegram bot
 	s := telebot.Settings{
@@ -81,7 +84,7 @@ func main() {
 	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), telegram.ErrorHandlerFunc(listSubsHandlerFunc))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId)))
+	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, replyHandlers)))
 	b.Handle(telebot.OnWebApp, telegram.ErrorHandlerFunc(telegram.WebAppData(webappHandlers)))
 
 	b.Start()

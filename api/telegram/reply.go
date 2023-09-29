@@ -1,14 +1,36 @@
 package telegram
 
 import (
+	"errors"
 	"fmt"
 	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
+	"strings"
 )
 
-func HandleReply(tgCtx telebot.Context, awakariClient api.Client, groupId string) (err error) {
-	reqMsg := tgCtx.Message()
-	respMsg := reqMsg.ReplyTo
-	err = tgCtx.Send(fmt.Sprintf("Request: %s\nResponse: %s\n", reqMsg.Text, respMsg.Text))
+func HandleReply(
+	tgCtx telebot.Context,
+	awakariClient api.Client,
+	groupId string,
+	replyHandlers map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error,
+) (err error) {
+	msgResp := tgCtx.Message()
+	txtResp := msgResp.Text
+	msgReq := msgResp.ReplyTo
+	txtReq := msgReq.Text
+	argsReq := strings.Split(txtReq, " ")
+	handlerKey := argsReq[0]
+	rh, rhOk := replyHandlers[handlerKey]
+	switch rhOk {
+	case false:
+		err = errors.New(fmt.Sprintf("unknown reply handler key: %s", handlerKey))
+	default:
+		var args []string
+		if len(argsReq) > 1 {
+			args = append(args, argsReq[1:]...)
+		}
+		args = append(argsReq, txtResp)
+		err = rh(tgCtx, awakariClient, groupId, args...)
+	}
 	return
 }
