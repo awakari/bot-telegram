@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/api/telegram/subscriptions"
+	"github.com/awakari/bot-telegram/api/telegram/usage"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
@@ -82,6 +83,7 @@ func main() {
 	})
 	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc()))
 	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), telegram.ErrorHandlerFunc(listSubsHandlerFunc))
+	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), telegram.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, replyHandlers)))

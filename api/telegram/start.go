@@ -12,12 +12,12 @@ const msgStartPrivate = `
   <pre>/sub &lt;sub_name&gt; &lt;word1&gt; &lt;word2&gt; ...</pre>
   to create a simple text matching subscription.
 • Send the <pre>/list</pre> command to list own subscriptions.
+• Send the <pre>/usage</pre> command to see own usage quota.
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelMsgSend = "New Message"
-const LabelSubCreate = "New Subscription"
-const LabelUsageQuota = "My Usage Quota"
+const LabelMsgSend = "Send Custom Message"
+const LabelSubCreate = "Create Custom Subscription"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
@@ -32,13 +32,6 @@ var btnSubNewCustom = telebot.Btn{
 	Text: LabelSubCreate,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
-	},
-}
-
-var btnUsageQuota = telebot.Btn{
-	Text: LabelUsageQuota,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/usage-quota.html",
 	},
 }
 
@@ -61,7 +54,6 @@ func startPrivate(ctx telebot.Context) (err error) {
 		m.Reply(
 			m.Row(btnMsgNewCustom),
 			m.Row(btnSubNewCustom),
-			m.Row(btnUsageQuota),
 		)
 		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	}
