@@ -1,6 +1,7 @@
 package telegram
 
 import (
+	"fmt"
 	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
 )
@@ -8,6 +9,6 @@ import (
 func HandleReply(tgCtx telebot.Context, awakariClient api.Client, groupId string) (err error) {
 	reqMsg := tgCtx.Message()
 	respMsg := reqMsg.ReplyTo
-	err = tgCtx.Send("Request: %s\nResponse: %s\n", reqMsg.Text, respMsg.Text)
+	err = tgCtx.Send(fmt.Sprintf("Request: %s\nResponse: %s\n", reqMsg.Text, respMsg.Text))
 	return
 }
