@@ -21,28 +21,31 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 		subIds, err = awakariClient.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
 		if err == nil {
 			var sub subscription.Data
+			m := &telebot.ReplyMarkup{}
+			var rows []telebot.Row
 			for _, subId := range subIds {
 				sub, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
 				if err != nil {
 					break
 				}
-				m := &telebot.ReplyMarkup{}
-				m.Inline(m.Row(
+				row := m.Row(
 					telebot.Btn{
-						Text: "📥 Inbox",
+						Text: fmt.Sprintf("📥 %s", sub.Description),
 						Data: fmt.Sprintf("%s %s", "inbox", subId),
 					},
 					telebot.Btn{
-						Text: "🖉 Details",
+						Text: "✎",
 						Data: fmt.Sprintf("%s %s", "details", subId),
 					},
 					telebot.Btn{
-						Text: "❌ Delete",
+						Text: "❌",
 						Data: fmt.Sprintf("%s %s", "delete", subId),
 					},
-				))
-				err = ctx.Send(sub.Description, m)
+				)
+				rows = append(rows, row)
 			}
+			m.Inline(rows...)
+			err = ctx.Send("Subscriptions", m)
 		}
 		return
 	}
