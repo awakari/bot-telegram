@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"strings"
 )
 
 const CmdList = "list"
@@ -41,9 +42,18 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 						Data: fmt.Sprintf("%s %s", "delete", subId),
 					},
 				))
-				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>\n<pre>%s</pre>", subId, sub.Description), m, telebot.ModeHTML)
+				err = ctx.Send(fmt.Sprintf("<pre>%s</pre>", padString(sub.Description, 32)), m, telebot.ModeHTML)
 			}
 		}
 		return
 	}
+}
+
+func padString(input string, length int) string {
+	padLength := length - len(input)
+	if padLength > 0 {
+		// Pad the input string with spaces up to the specified length.
+		return input + strings.Repeat(" ", padLength)
+	}
+	return input
 }
