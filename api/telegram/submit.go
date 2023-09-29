@@ -52,29 +52,27 @@ func SubmitCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 	}
 }
 
-func SubmitTextHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
-	return func(tgCtx telebot.Context) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		sender := tgCtx.Sender()
-		userId := strconv.FormatInt(sender.ID, 10)
-		w, err := awakariClient.OpenMessagesWriter(groupIdCtx, userId)
-		var ackCount uint32
-		var evt *pb.CloudEvent
-		if err == nil {
-			defer w.Close()
-			evt = convertMessage(sender, tgCtx.Update(), tgCtx.Message(), tgCtx.Text())
-			ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
-		}
-		if err == nil {
-			switch ackCount {
-			case 1:
-				err = tgCtx.Send(fmt.Sprintf("Message published, id: <pre>%s</pre>", evt.Id), telebot.ModeHTML)
-			default:
-				err = tgCtx.Send("Busy, please retry later")
-			}
-		}
-		return
+func SubmitText(tgCtx telebot.Context, awakariClient api.Client, groupId string) (err error) {
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+	sender := tgCtx.Sender()
+	userId := strconv.FormatInt(sender.ID, 10)
+	w, err := awakariClient.OpenMessagesWriter(groupIdCtx, userId)
+	var ackCount uint32
+	var evt *pb.CloudEvent
+	if err == nil {
+		defer w.Close()
+		evt = convertMessage(sender, tgCtx.Update(), tgCtx.Message(), tgCtx.Text())
+		ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	}
+	if err == nil {
+		switch ackCount {
+		case 1:
+			err = tgCtx.Send(fmt.Sprintf("Message published, id: <pre>%s</pre>", evt.Id), telebot.ModeHTML)
+		default:
+			err = tgCtx.Send("Busy, please retry later")
+		}
+	}
+	return
 }
 
 func convertMessage(sender *telebot.User, upd telebot.Update, msg *telebot.Message, txt string) (evt *pb.CloudEvent) {

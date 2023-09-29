@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"fmt"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
@@ -19,10 +20,14 @@ func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx t
 		var sd subscription.Data
 		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			err = tgCtx.Send("Please enter the new description:", &telebot.ReplyMarkup{
-				ForceReply:  true,
-				Placeholder: sd.Description,
-			})
+			_ = tgCtx.Send("Please enter the new subscription description:")
+			err = tgCtx.Send(
+				fmt.Sprintf("describe %s", subId),
+				&telebot.ReplyMarkup{
+					ForceReply:  true,
+					Placeholder: sd.Description,
+				},
+			)
 		}
 		return
 	}
