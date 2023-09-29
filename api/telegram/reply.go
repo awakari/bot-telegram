@@ -20,16 +20,16 @@ func HandleReply(
 	txtReq := msgReq.Text
 	argsReq := strings.Split(txtReq, " ")
 	handlerKey := argsReq[0]
-	fmt.Printf("handler key: %s\n", handlerKey)
+	argsReq = argsReq[1:]
+	fmt.Printf("args req: %+v\n", argsReq)
 	rh, rhOk := replyHandlers[handlerKey]
-	fmt.Printf("rh: %+v, rhOk: %t\n", rh, rhOk)
 	switch rhOk {
 	case false:
 		err = errors.New(fmt.Sprintf("unknown reply handler key: %s", handlerKey))
 	default:
 		var args []string
 		if len(argsReq) > 1 {
-			args = append(args, argsReq[1:]...)
+			args = append(args, argsReq...)
 		}
 		args = append(argsReq, txtResp)
 		fmt.Printf("args: %+v\n", args)
