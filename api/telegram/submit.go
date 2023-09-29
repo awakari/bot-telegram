@@ -35,6 +35,9 @@ func SubmitCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 		}
 		var ackCount uint32
 		if err == nil {
+			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().ID)
+			evt.SpecVersion = attrValSpecVersion
+			evt.Type = attrValType
 			ackCount, err = w.WriteBatch([]*pb.CloudEvent{&evt})
 		}
 		if err == nil {

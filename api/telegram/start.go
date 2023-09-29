@@ -13,23 +13,38 @@ const msgStartPrivate = `
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelWebAppSubCreate = "New Subscription"
-const LabelWebAppMsgSend = "New Message"
+const LabelMsgSend = "New Message"
+const LabelSubCreate = "New Subscription"
+const LabelSubEdit = "Edit Subscription"
+const LabelSubDelete = "Delete Subscription"
+const LabelUsageQuota = "My Usage Quota"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
+var btnMsgNewCustom = telebot.Btn{
+	Text: LabelMsgSend,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/msg-new.html",
+	},
+}
+
 var btnSubNewCustom = telebot.Btn{
-	Text: LabelWebAppSubCreate,
+	Text: LabelSubCreate,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
 }
 
-var btnMsgNewCustom = telebot.Btn{
-	Text: LabelWebAppMsgSend,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/msg-new.html",
-	},
+var btnSubEdit = telebot.Btn{
+	Text: LabelSubEdit,
+}
+
+var btnSubDelete = telebot.Btn{
+	Text: LabelSubDelete,
+}
+
+var btnUsageQuota = telebot.Btn{
+	Text: LabelUsageQuota,
 }
 
 func StartHandlerFunc() telebot.HandlerFunc {
@@ -50,6 +65,9 @@ func startPrivate(ctx telebot.Context) (err error) {
 	m.Reply(
 		m.Row(btnMsgNewCustom),
 		m.Row(btnSubNewCustom),
+		m.Row(btnSubEdit),
+		m.Row(btnSubDelete),
+		m.Row(btnUsageQuota),
 	)
 	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return

@@ -39,8 +39,8 @@ func main() {
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){}
 	callbackHandlerFunc := telegram.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		telegram.LabelWebAppMsgSend:   telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
-		telegram.LabelWebAppSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		telegram.LabelMsgSend:   telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		telegram.LabelSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
 
 	// init Telegram bot
