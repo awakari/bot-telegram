@@ -20,9 +20,9 @@ const CmdDisable = "disable"
 const CmdEnable = "enable"
 
 const msgFmtDetails = `Subscription Details:
-Id:\t<pre>%s</pre>
-Description:\t<pre>%s</pre>
-Enabled:\t<pre>%t</pre>
+Id: <pre>%s</pre>
+Description: <pre>%s</pre>
+Enabled: <pre>%t</pre>
 Condition:
 <pre>%s</pre>`
 
