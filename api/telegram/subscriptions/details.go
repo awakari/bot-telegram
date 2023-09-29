@@ -37,6 +37,14 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 			m := &telebot.ReplyMarkup{}
 			btns := []telebot.Btn{
 				{
+					Text: "🔗 Link Chat",
+					URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?startgroup=%s", subId),
+				},
+				{
+					Text: "❌ Delete",
+					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
+				},
+				{
 					Text: "Set Description",
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 				},
@@ -53,6 +61,7 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
 				})
 			}
+			btns = append(btns)
 			m.Inline(m.Row(btns...))
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
 			_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, sd.Enabled, condJsonTxt), m, telebot.ModeHTML)
