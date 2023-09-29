@@ -8,7 +8,6 @@ import (
 
 const msgStartPrivate = `
 • Send a text to publish a simple message.
-• Send the <pre>/list</pre> command to list own subscriptions.
 • Send a command like: 
   <pre>/sub &lt;sub_name&gt; &lt;word1&gt; &lt;word2&gt; ...</pre>
   to create a simple text matching subscription.
@@ -56,18 +55,12 @@ func StartHandlerFunc() telebot.HandlerFunc {
 }
 
 func startPrivate(ctx telebot.Context) (err error) {
-	err = ctx.Bot().SetMenuButton(ctx.Sender(), &telebot.MenuButton{
-		Type: telebot.MenuButtonCommands,
-		Text: "☰",
-	})
-	if err == nil {
-		m := &telebot.ReplyMarkup{ResizeKeyboard: true}
-		m.Reply(
-			m.Row(btnMsgNewCustom),
-			m.Row(btnSubNewCustom),
-			m.Row(btnUsageQuota),
-		)
-		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
-	}
+	m := &telebot.ReplyMarkup{ResizeKeyboard: true}
+	m.Reply(
+		m.Row(btnMsgNewCustom),
+		m.Row(btnSubNewCustom),
+		m.Row(btnUsageQuota),
+	)
+	err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	return
 }

@@ -22,8 +22,9 @@ const argSep = " "
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
-var msgFmtSubCreated = `Subscription created, id: <pre>%s</pre>
-Next, create a group chat with Awakari Reader Bot and select the subscription by the name.`
+var msgFmtSubCreated = `Subscription created, next: 
+1. Create a group chat for the created subscription. 
+2. <a href="https://t.me/AwakariSubscriptionsBot?startgroup=%s">Link</a> the subscription to the group.`
 
 func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
