@@ -53,7 +53,7 @@ func padString(input string, length int) string {
 	padLength := length - len(input)
 	if padLength > 0 {
 		// Pad the input string with spaces up to the specified length.
-		return input + strings.Repeat(" ", padLength)
+		return input + strings.Repeat("_", padLength)
 	}
 	return input
 }
