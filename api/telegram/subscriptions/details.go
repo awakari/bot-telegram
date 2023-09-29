@@ -53,12 +53,12 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 			case false:
 				btns = append(btns, telebot.Btn{
 					Text: "🔉 Enable",
-					Data: fmt.Sprintf("%s %s", CmdDisable, subId),
+					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
 				})
 			default:
 				btns = append(btns, telebot.Btn{
 					Text: "🔇 Disable",
-					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
+					Data: fmt.Sprintf("%s %s", CmdDisable, subId),
 				})
 			}
 			rows = append(rows, m.Row(btns...))
