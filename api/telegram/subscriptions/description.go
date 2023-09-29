@@ -19,10 +19,10 @@ func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx t
 		var sd subscription.Data
 		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			err = awakariClient.UpdateSubscription(groupIdCtx, userId, subId, sd)
-		}
-		if err == nil {
-			err = tgCtx.Send("Subscription description updated")
+			err = tgCtx.Send("Please enter the new description:", &telebot.ReplyMarkup{
+				ForceReply:  true,
+				Placeholder: sd.Description,
+			})
 		}
 		return
 	}
