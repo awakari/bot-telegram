@@ -12,7 +12,6 @@ import (
 
 const CmdList = "list"
 const subListLimit = 256 // TODO: implement the proper pagination later
-const msgStart = "Select a subscription from the list below:"
 
 func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
@@ -20,8 +19,6 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
 		var subIds []string
 		subIds, err = awakariClient.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
-		m := &telebot.ReplyMarkup{}
-		var rows []telebot.Row
 		if err == nil {
 			var sub subscription.Data
 			for _, subId := range subIds {
@@ -29,15 +26,24 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				if err != nil {
 					break
 				}
-				row := m.Row(telebot.Btn{
-					Text: sub.Description,
-					Data: fmt.Sprintf("%s %s", "TODO", subId),
-				})
-				rows = append(rows, row)
+				m := &telebot.ReplyMarkup{}
+				m.Inline(m.Row(
+					telebot.Btn{
+						Text: "📥 Inbox",
+						Data: fmt.Sprintf("%s %s", "inbox", subId),
+					},
+					telebot.Btn{
+						Text: "🖉 Details",
+						Data: fmt.Sprintf("%s %s", "details", subId),
+					},
+					telebot.Btn{
+						Text: "❌ Delete",
+						Data: fmt.Sprintf("%s %s", "delete", subId),
+					},
+				))
+				err = ctx.Send(sub.Description, m)
 			}
 		}
-		m.Inline(rows...)
-		err = ctx.Send(msgStart, m)
 		return
 	}
 }
