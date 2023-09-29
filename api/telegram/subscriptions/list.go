@@ -37,7 +37,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 					telebot.Btn{
 						Text: "✎ Details",
 						WebApp: &telebot.WebApp{
-							URL: "https://awakari.app/sub-edit.js",
+							URL: "https://awakari.app/sub-edit.html",
 						},
 					},
 					telebot.Btn{
