@@ -68,6 +68,26 @@ func main() {
 	}
 
 	// assign handlers
+	err = b.SetCommands([]telebot.CommandParams{
+		{
+			Commands: []telebot.Command{
+				{
+					Text:        "start",
+					Description: "Start",
+				},
+				{
+					Text:        "list",
+					Description: "List My Subscriptions",
+				},
+			},
+			Scope: &telebot.CommandScope{
+				Type: telebot.CommandScopeAllPrivateChats,
+			},
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return telegram.LoggingHandlerFunc(next, log)
 	})
