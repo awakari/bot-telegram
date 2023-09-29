@@ -16,7 +16,15 @@ import (
 const CmdDetails = "details"
 
 const CmdDescription = "description"
-const CmdEnabled = "enabled"
+const CmdDisable = "disable"
+const CmdEnable = "enable"
+
+const msgFmtDetails = `Subscription Details:
+Id:\t<pre>%s</pre>
+Description:\t<pre>%s</pre>
+Enabled:\t<pre>%t</pre>
+Condition:
+<pre>%s</pre>`
 
 func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
@@ -26,20 +34,28 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 		var sd subscription.Data
 		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			mDescription := &telebot.ReplyMarkup{}
-			mDescription.Row(telebot.Btn{
-				Text: "✏ Edit",
-				Data: fmt.Sprintf("%s %s", CmdDescription, subId),
-			})
-			_ = tgCtx.Send(fmt.Sprintf("Description: <pre>%s</pre>", sd.Description), mDescription, telebot.ModeHTML)
-			mEnabled := &telebot.ReplyMarkup{}
-			mEnabled.Row(telebot.Btn{
-				Text: "✏ Edit",
-				Data: fmt.Sprintf("%s %s", CmdEnabled, subId),
-			})
-			_ = tgCtx.Send(fmt.Sprintf("Enabled: <pre>%t</pre>", sd.Enabled), mEnabled, telebot.ModeHTML)
+			m := &telebot.ReplyMarkup{}
+			btns := []telebot.Btn{
+				{
+					Text: "Set Description",
+					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+				},
+			}
+			switch sd.Enabled {
+			case false:
+				btns = append(btns, telebot.Btn{
+					Text: "Enable",
+					Data: fmt.Sprintf("%s %s", CmdDisable, subId),
+				})
+			default:
+				btns = append(btns, telebot.Btn{
+					Text: "Disable",
+					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
+				})
+			}
+			m.Inline(m.Row(btns...))
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
-			_ = tgCtx.Send(fmt.Sprintf("Condition:\n<pre>%s</pre>", condJsonTxt), telebot.ModeHTML)
+			_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, sd.Enabled, condJsonTxt), m, telebot.ModeHTML)
 		}
 		return
 	}
