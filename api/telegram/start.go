@@ -21,11 +21,6 @@ const LabelUsageQuota = "My Usage Quota"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
-var btnMenu = telebot.MenuButton{
-	Type: telebot.MenuButtonCommands,
-	Text: "☰",
-}
-
 var btnMsgNewCustom = telebot.Btn{
 	Text: LabelMsgSend,
 	WebApp: &telebot.WebApp{
@@ -61,7 +56,6 @@ func StartHandlerFunc() telebot.HandlerFunc {
 }
 
 func startPrivate(ctx telebot.Context) (err error) {
-	err = ctx.Bot().SetMenuButton(ctx.Sender(), &btnMenu)
 	if err == nil {
 		m := &telebot.ReplyMarkup{ResizeKeyboard: true}
 		m.Reply(

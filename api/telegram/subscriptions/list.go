@@ -11,7 +11,7 @@ import (
 )
 
 const CmdList = "list"
-const subListLimit = 256 // TODO: implement the proper pagination later
+const subListLimit = 256 // TODO: implement the proper pagination
 
 func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
