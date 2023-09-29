@@ -49,19 +49,19 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 			}
 			btns := []telebot.Btn{
 				{
-					Text: "Set Description",
+					Text: "🏷 Set Description",
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 				},
 			}
 			switch sd.Enabled {
 			case false:
 				btns = append(btns, telebot.Btn{
-					Text: "Enable",
+					Text: "🔉 Enable",
 					Data: fmt.Sprintf("%s %s", CmdDisable, subId),
 				})
 			default:
 				btns = append(btns, telebot.Btn{
-					Text: "Disable",
+					Text: "🔇 Disable",
 					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
 				})
 			}
