@@ -37,7 +37,8 @@ func main() {
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		subscriptions.CmdDelete: subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions.CmdDelete:  subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions.CmdDetails: subscriptions.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
 	callbackHandlerFunc := telegram.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
