@@ -12,11 +12,10 @@ import (
 )
 
 const CmdUsage = "usage"
-const msgFmtDetails = `<b>%s</b>:
-<pre>
-&nbsp;&nbsp;Spent: %d
-&nbsp;&nbsp;Quota: %d
-&nbsp;&nbsp;Since: %s
+const msgFmtDetails = `<b>%s</b>:<pre>
+  Spent: %d
+  Quota: %d
+  Since: %s
 </pre>`
 
 var subjects = []usage.Subject{
@@ -36,6 +35,11 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, subj)
 			}
 			if err == nil {
+				m := &telebot.ReplyMarkup{}
+				m.Inline(m.Row(telebot.Btn{
+					Text: "Change Quota",
+					Data: fmt.Sprintf("%s %d %d", CmdQuota, subj, l.Count),
+				}))
 				err = tgCtx.Send(
 					fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count, u.Since.Format(time.RFC3339)),
 					telebot.ModeHTML,
