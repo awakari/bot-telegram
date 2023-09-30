@@ -6,7 +6,8 @@ import (
 
 type Config struct {
 	Api struct {
-		Telegram struct {
+		PaymentProviderToken string `envconfig:"API_PAYMENT_PROVIDER_TOKEN" required:"true"`
+		Telegram             struct {
 			Webhook struct {
 				Host string `envconfig:"API_TELEGRAM_WEBHOOK_HOST" default:"demo.awakari.cloud" required:"true"`
 				Path string `envconfig:"API_TELEGRAM_WEBHOOK_PATH" default:"/" required:"true"`

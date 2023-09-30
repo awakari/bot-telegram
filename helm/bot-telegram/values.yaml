@@ -84,6 +84,9 @@ affinity: {}
 
 api:
   cert: server-cert
+  payment:
+    provider:
+      token: test
   telegram:
     token: telegram-bot-token
 log:

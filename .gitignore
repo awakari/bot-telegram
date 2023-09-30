@@ -25,3 +25,4 @@ vendor/
 tg-bot-token.txt
 *.pem
 *.key
+tg-payment-redsys-test-token.txt

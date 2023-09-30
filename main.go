@@ -52,7 +52,7 @@ func main() {
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
-		usage.ReplyQuotaSet:               usage.HandleNewQuotaReply,
+		usage.ReplyQuotaSet:               usage.HandleNewQuotaReply(cfg.Api.PaymentProviderToken),
 	}
 
 	// init Telegram bot

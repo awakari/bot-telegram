@@ -2,7 +2,6 @@ package usage
 
 import (
 	"fmt"
-	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
 	"gopkg.in/telebot.v3"
@@ -29,19 +28,39 @@ func RequestNewQuota(tgCtx telebot.Context, args ...string) (err error) {
 	return
 }
 
-func HandleNewQuotaReply(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) (err error) {
-	var subjCode int
-	subjCode, err = strconv.Atoi(args[0])
-	var subj usage.Subject
-	var limOld uint64
-	if err == nil {
-		subj = usage.Subject(subjCode)
-		limOld, err = strconv.ParseUint(args[1], 10, 64)
+func HandleNewQuotaReply(paymentProviderToken string) func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) (err error) {
+	return func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) (err error) {
+		var subjCode int
+		subjCode, err = strconv.Atoi(args[0])
+		var subj usage.Subject
+		var limOld uint64
+		if err == nil {
+			subj = usage.Subject(subjCode)
+			limOld, err = strconv.ParseUint(args[1], 10, 64)
+		}
+		var limNew uint64
+		if err == nil {
+			limNew, err = strconv.ParseUint(args[2], 10, 64)
+		}
+		delta := limNew - limOld
+		if delta > 0 {
+			price := int(delta)
+			err = tgCtx.Send(telebot.Invoice{
+				Title:       fmt.Sprintf("%s: quota increase", formatSubject(subj)),
+				Description: fmt.Sprintf("From %d to %d", limOld, limNew),
+				Payload:     "payload0",
+				Currency:    "EUR",
+				Prices: []telebot.Price{{
+					Amount: price,
+					Label:  fmt.Sprintf("%s: quota increase", formatSubject(subj)),
+				}},
+				Token:     paymentProviderToken,
+				Total:     price,
+				NeedName:  true,
+				NeedEmail: true,
+				SendEmail: true,
+			})
+		}
+		return
 	}
-	var limNew uint64
-	if err == nil {
-		limNew, err = strconv.ParseUint(args[2], 10, 64)
-	}
-	_ = tgCtx.Send(fmt.Sprintf("Change %s limit from %d to %d", subj, limOld, limNew), telegram.GetReplyKeyboard())
-	return
 }

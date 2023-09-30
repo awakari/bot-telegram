@@ -8,14 +8,12 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
-	"time"
 )
 
 const CmdUsage = "usage"
 const msgFmtDetails = `<b>%s</b>:<pre>
-  Spent: %d
+  Used:  %d
   Quota: %d
-  Since: %s
 </pre>`
 
 var subjects = []usage.Subject{
@@ -40,10 +38,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 					Text: "Change Quota",
 					Data: fmt.Sprintf("%s %d %d", CmdQuotaReq, subj, l.Count),
 				}))
-				err = tgCtx.Send(
-					fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count, u.Since.Format(time.RFC3339)),
-					m, telebot.ModeHTML,
-				)
+				err = tgCtx.Send(fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count), m, telebot.ModeHTML)
 			}
 		}
 		return

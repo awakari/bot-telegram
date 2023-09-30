@@ -42,6 +42,8 @@ spec:
               value: "{{ .Values.service.port }}"
             - name: API_TELEGRAM_TOKEN
               value: "{{ .Values.api.telegram.token }}"
+            - name: API_PAYMENT_PROVIDER_TOKEN
+              value: "{{ .Values.api.payment.provider.token }}"
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
           securityContext:
