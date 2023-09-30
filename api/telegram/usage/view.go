@@ -42,7 +42,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				}))
 				err = tgCtx.Send(
 					fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count, u.Since.Format(time.RFC3339)),
-					telebot.ModeHTML,
+					m, telebot.ModeHTML,
 				)
 			}
 		}
