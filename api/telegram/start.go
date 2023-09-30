@@ -35,6 +35,17 @@ var btnSubNewCustom = telebot.Btn{
 	},
 }
 
+func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
+	kbd = &telebot.ReplyMarkup{
+		ResizeKeyboard: true,
+	}
+	kbd.Reply(
+		kbd.Row(btnMsgNewCustom),
+		kbd.Row(btnSubNewCustom),
+	)
+	return
+}
+
 func StartHandlerFunc() telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		chat := ctx.Chat()
@@ -50,11 +61,7 @@ func StartHandlerFunc() telebot.HandlerFunc {
 
 func startPrivate(ctx telebot.Context) (err error) {
 	if err == nil {
-		m := &telebot.ReplyMarkup{ResizeKeyboard: true}
-		m.Reply(
-			m.Row(btnMsgNewCustom),
-			m.Row(btnSubNewCustom),
-		)
+		m := GetReplyKeyboard()
 		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	}
 	return
