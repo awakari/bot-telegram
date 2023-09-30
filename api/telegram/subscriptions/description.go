@@ -25,7 +25,7 @@ func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx t
 		if err == nil {
 			_ = tgCtx.Send("Please enter the new subscription description:")
 			err = tgCtx.Send(
-				fmt.Sprintf("describe %s", subId),
+				fmt.Sprintf("%s %s", ReplyKeyDescription, subId),
 				&telebot.ReplyMarkup{
 					ForceReply:  true,
 					Placeholder: sd.Description,

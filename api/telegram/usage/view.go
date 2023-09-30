@@ -38,7 +38,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				m := &telebot.ReplyMarkup{}
 				m.Inline(m.Row(telebot.Btn{
 					Text: "Change Quota",
-					Data: fmt.Sprintf("%s %d %d", CmdQuota, subj, l.Count),
+					Data: fmt.Sprintf("%s %d %d", CmdQuotaReq, subj, l.Count),
 				}))
 				err = tgCtx.Send(
 					fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count, u.Since.Format(time.RFC3339)),

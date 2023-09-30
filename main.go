@@ -43,6 +43,7 @@ func main() {
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(awakariClient, cfg.Api.GroupId),
+		usage.CmdQuotaReq:            usage.RequestNewQuota,
 	}
 	callbackHandlerFunc := telegram.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
@@ -51,6 +52,7 @@ func main() {
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
+		usage.ReplyQuotaSet:               usage.HandleNewQuotaReply,
 	}
 
 	// init Telegram bot
