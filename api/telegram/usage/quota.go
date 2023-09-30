@@ -46,13 +46,13 @@ func HandleNewQuotaReply(paymentProviderToken string) func(tgCtx telebot.Context
 		if delta > 0 {
 			price := int(delta)
 			invoice := telebot.Invoice{
-				Title:       fmt.Sprintf("%s: quota increase", formatSubject(subj)),
-				Description: fmt.Sprintf("From %d to %d", limOld, limNew),
+				Title:       formatSubject(subj),
+				Description: fmt.Sprintf("Quota change from %d to %d", limOld, limNew),
 				Payload:     "payload0",
 				Currency:    "EUR",
 				Prices: []telebot.Price{{
 					Amount: price,
-					Label:  fmt.Sprintf("%s: quota increase", formatSubject(subj)),
+					Label:  fmt.Sprintf("Quota change from %d to %d", limOld, limNew),
 				}},
 				Token:     paymentProviderToken,
 				Total:     price,
