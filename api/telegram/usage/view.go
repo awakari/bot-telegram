@@ -8,48 +8,52 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 const CmdUsage = "usage"
+const msgFmtDetails = `<b>%s</b>:
+<pre>
+&nbsp;&nbsp;Spent: %d
+&nbsp;&nbsp;Quota: %d
+&nbsp;&nbsp;Since: %s
+</pre>`
+
+var subjects = []usage.Subject{
+	usage.SubjectSubscriptions,
+	usage.SubjectPublishEvents,
+}
 
 func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var usageSubs usage.Usage
-		usageSubs, err = awakariClient.ReadUsage(groupIdCtx, userId, usage.SubjectSubscriptions)
-		var limitSubs usage.Limit
-		if err == nil {
-			limitSubs, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, usage.SubjectSubscriptions)
-		}
-		if err == nil {
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"<b>Subscriptions</b>:\nCount: %d\nTotal: %d\nSince: %s\nLimit: %d",
-					usageSubs.Count, usageSubs.CountTotal, usageSubs.Since,
-					limitSubs.Count,
-				),
-				telebot.ModeHTML,
-			)
-		}
-		var usageMsgs usage.Usage
-		if err == nil {
-			usageMsgs, err = awakariClient.ReadUsage(groupIdCtx, userId, usage.SubjectPublishEvents)
-		}
-		var limitMsgs usage.Limit
-		if err == nil {
-			limitMsgs, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, usage.SubjectPublishEvents)
-		}
-		if err == nil {
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"<b>Publish Messages</b>:\nCount: %d\nTotal: %d\nSince: %s\nLimit: %d",
-					usageMsgs.Count, usageMsgs.CountTotal, usageMsgs.Since,
-					limitMsgs.Count,
-				),
-				telebot.ModeHTML,
-			)
+		for _, subj := range subjects {
+			var u usage.Usage
+			u, err = awakariClient.ReadUsage(groupIdCtx, userId, subj)
+			var l usage.Limit
+			if err == nil {
+				l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, subj)
+			}
+			if err == nil {
+				err = tgCtx.Send(
+					fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count, u.Since.Format(time.RFC3339)),
+					telebot.ModeHTML,
+				)
+			}
 		}
 		return
 	}
+}
+
+func formatSubject(subj usage.Subject) (txt string) {
+	switch subj {
+	case usage.SubjectSubscriptions:
+		txt = "Subscription Create"
+	case usage.SubjectPublishEvents:
+		txt = "Message Publish"
+	default:
+		txt = "Undefined"
+	}
+	return
 }
