@@ -60,7 +60,7 @@ func HandleNewQuotaReply(paymentProviderToken string) func(tgCtx telebot.Context
 				NeedEmail: true,
 				SendEmail: true,
 			}
-			err = tgCtx.Send("Invoice", &invoice)
+			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
 		return
 	}
