@@ -48,9 +48,9 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 func formatSubject(subj usage.Subject) (txt string) {
 	switch subj {
 	case usage.SubjectSubscriptions:
-		txt = "Enabled Subscription Count"
+		txt = "Enabled Subscriptions"
 	case usage.SubjectPublishEvents:
-		txt = "Message Publication Rate"
+		txt = "Message Daily Publications"
 	default:
 		txt = "Undefined"
 	}

@@ -2,6 +2,7 @@ package usage
 
 import (
 	"encoding/json"
+	"fmt"
 	"gopkg.in/telebot.v3"
 )
 
@@ -34,6 +35,14 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) func(tgCtx telebot.Con
 			SendEmail: true,
 		}
 		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		return
+	}
+}
+
+func ExtendLimitsPreCheckout(groupId string) telebot.HandlerFunc {
+	return func(tgCtx telebot.Context) (err error) {
+		q := tgCtx.Update().PreCheckoutQuery
+		err = tgCtx.Send(fmt.Sprintf("PreCheckoutQuery:\n%+v", q))
 		return
 	}
 }

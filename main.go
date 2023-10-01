@@ -89,7 +89,7 @@ func main() {
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, replyHandlers)))
 	b.Handle(telebot.OnWebApp, telegram.ErrorHandlerFunc(telegram.WebAppData(webappHandlers)))
-	//b.Handle(telebot.OnCheckout, telegram.ErrorHandlerFunc(usage))
+	b.Handle(telebot.OnCheckout, telegram.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
 
 	b.Start()
 }
