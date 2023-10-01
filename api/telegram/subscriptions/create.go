@@ -53,7 +53,7 @@ func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.H
 				BuildTextCondition()
 			subData.Description = name
 			subData.Enabled = true
-			err = validateCondition(subData.Condition, true)
+			err = validateSubscriptionData(subData)
 		}
 		var subId string
 		if err == nil {
@@ -83,13 +83,15 @@ func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 			cond, err = decodeCondition(req.Cond)
 		}
 		//
+		var subData subscription.Data
+		if err == nil {
+			subData.Condition = cond
+			subData.Description = req.Description
+			subData.Enabled = req.Enabled
+			err = validateSubscriptionData(subData)
+		}
 		var subId string
 		if err == nil {
-			subData := subscription.Data{
-				Condition:   cond,
-				Description: req.Description,
-				Enabled:     req.Enabled,
-			}
 			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subData)
 		}
 		if err == nil {
@@ -154,6 +156,16 @@ func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
 		dst = condition.NumOpUndefined
 	}
 	return
+}
+
+func validateSubscriptionData(sd subscription.Data) (err error) {
+	if sd.Description == "" {
+		err = errors.New("invalid subscription: empty subscription")
+	}
+	if err == nil {
+		err = validateCondition(sd.Condition, true)
+	}
+	return err
 }
 
 func validateCondition(cond condition.Condition, root bool) (err error) {
