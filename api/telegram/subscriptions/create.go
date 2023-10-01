@@ -64,7 +64,7 @@ func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.H
 		if err == nil {
 			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
 		} else {
-			err = fmt.Errorf("failed to create the subscription: %w", err)
+			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
 		return
 	}
@@ -97,7 +97,7 @@ func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 		if err == nil {
 			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
 		} else {
-			err = fmt.Errorf("failed to create the subscription: %w", err)
+			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
 		return
 	}
@@ -160,7 +160,7 @@ func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
 
 func validateSubscriptionData(sd subscription.Data) (err error) {
 	if sd.Description == "" {
-		err = errors.New("invalid subscription: empty subscription")
+		err = errors.New("invalid subscription:\nempty description")
 	}
 	if err == nil {
 		err = validateCondition(sd.Condition, true)
@@ -175,7 +175,7 @@ func validateCondition(cond condition.Condition, root bool) (err error) {
 		countChildren := len(children)
 		if root && tc.GetLogic() == condition.GroupLogicOr && countChildren > limitRootGroupOrCondChildrenCount {
 			err = fmt.Errorf(
-				"%w: root group condition with logic \"Or\" child condition count is %d, limit is %d,\nconsider to use an additional subscription",
+				"%w:\nchildren condition count for the root group condition with \"Or\" logic is %d, limit is %d,\nconsider to use an additional subscription",
 				errInvalidCondition,
 				countChildren,
 				limitRootGroupOrCondChildrenCount,
@@ -192,7 +192,7 @@ func validateCondition(cond condition.Condition, root bool) (err error) {
 		lenTerms := len(tc.GetTerm())
 		if lenTerms > limitTextCondTermsLength {
 			err = fmt.Errorf(
-				"%w: text condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
+				"%w:\ntext condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
 				errInvalidCondition,
 				lenTerms,
 				limitRootGroupOrCondChildrenCount,
