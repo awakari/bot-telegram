@@ -18,8 +18,11 @@ import (
 
 const CmdPrefixSubCreateSimplePrefix = "/sub"
 const argSep = " "
+const limitRootGroupOrCondChildrenCount = 4
+const limitTextCondTermsLength = 256
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
+var errInvalidCondition = errors.New("invalid subscription condition")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Subscription created, next: 
@@ -41,19 +44,21 @@ func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.H
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
 		}
+		var subData subscription.Data
+		if err == nil {
+			name := args[0]
+			keywords := args[1]
+			subData.Condition = condition.NewBuilder().
+				AnyOfWords(keywords).
+				BuildTextCondition()
+			subData.Description = name
+			subData.Enabled = true
+			err = validateCondition(subData.Condition, true)
+		}
 		var subId string
 		if err == nil {
 			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 			userId := strconv.FormatInt(ctx.Sender().ID, 10)
-			name := args[0]
-			keywords := args[1]
-			subData := subscription.Data{
-				Condition: condition.NewBuilder().
-					AnyOfWords(keywords).
-					BuildTextCondition(),
-				Description: name,
-				Enabled:     true,
-			}
 			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subData)
 		}
 		if err == nil {
@@ -147,6 +152,40 @@ func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
 		dst = condition.NumOpLt
 	default:
 		dst = condition.NumOpUndefined
+	}
+	return
+}
+
+func validateCondition(cond condition.Condition, root bool) (err error) {
+	switch tc := cond.(type) {
+	case condition.GroupCondition:
+		children := tc.GetGroup()
+		countChildren := len(children)
+		if root && tc.GetLogic() == condition.GroupLogicOr && countChildren > limitRootGroupOrCondChildrenCount {
+			err = fmt.Errorf(
+				"%w: root group condition with logic \"Or\" child condition count is %d, limit is %d,\nconsider to use an additional subscription",
+				errInvalidCondition,
+				countChildren,
+				limitRootGroupOrCondChildrenCount,
+			)
+		} else {
+			for _, child := range children {
+				err = validateCondition(child, false)
+				if err != nil {
+					break
+				}
+			}
+		}
+	case condition.TextCondition:
+		lenTerms := len(tc.GetTerm())
+		if lenTerms > limitTextCondTermsLength {
+			err = fmt.Errorf(
+				"%w: text condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
+				errInvalidCondition,
+				lenTerms,
+				limitRootGroupOrCondChildrenCount,
+			)
+		}
 	}
 	return
 }
