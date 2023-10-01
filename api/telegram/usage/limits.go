@@ -20,15 +20,15 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) func(tgCtx telebot.Con
 			Prices: []telebot.Price{
 				{
 					Label:  "Message Publication Rate",
-					Amount: int(o.Price.MsgRate / subCurrencyFactor),
+					Amount: int(o.Price.MsgRate * subCurrencyFactor),
 				},
 				{
 					Label:  "Enabled Subscription Count",
-					Amount: int(o.Price.SubCount / subCurrencyFactor),
+					Amount: int(o.Price.SubCount * subCurrencyFactor),
 				},
 			},
 			Token:     paymentProviderToken,
-			Total:     int(o.Price.Total / subCurrencyFactor),
+			Total:     int(o.Price.Total * subCurrencyFactor),
 			NeedName:  true,
 			NeedEmail: true,
 			SendEmail: true,
