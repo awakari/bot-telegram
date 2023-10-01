@@ -8,10 +8,12 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/subject"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/timestamppb"
+	"time"
 )
 
 type Service interface {
-	SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64) (err error)
+	SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64, expires time.Time) (err error)
 }
 
 type service struct {
@@ -28,12 +30,13 @@ func NewService(client ServiceClient) Service {
 	}
 }
 
-func (svc service) SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64) (err error) {
+func (svc service) SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64, expires time.Time) (err error) {
 	req := SetLimitsRequest{
 		GroupId: groupId,
 		UserId:  userId,
 		Subj:    grpcSubject.Subject(subj),
 		Count:   count,
+		Expires: timestamppb.New(expires.UTC()),
 	}
 	_, err = svc.client.SetLimits(ctx, &req)
 	err = decodeError(err)
