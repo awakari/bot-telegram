@@ -11,9 +11,11 @@ import (
 )
 
 const CmdUsage = "usage"
-const msgFmtDetails = `<b>%s</b>:<pre>
-  Used:  %d
-  Quota: %d
+const msgFmtDetails = `
+<pre>
+  %s:
+    Used:  %d
+    Limit: %d
 </pre>`
 
 var subjects = []usage.Subject{
@@ -25,6 +27,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		msgTxt := "Current usage:"
 		for _, subj := range subjects {
 			var u usage.Usage
 			u, err = awakariClient.ReadUsage(groupIdCtx, userId, subj)
@@ -33,14 +36,11 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, subj)
 			}
 			if err == nil {
-				m := &telebot.ReplyMarkup{}
-				m.Inline(m.Row(telebot.Btn{
-					Text: "Change Quota",
-					Data: fmt.Sprintf("%s %d %d", CmdQuotaReq, subj, l.Count),
-				}))
-				err = tgCtx.Send(fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count), m, telebot.ModeHTML)
+				msgTxt += fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count)
 			}
 		}
+		msgTxt += "\nTap the \"Extend Usage Limits\" keyboard button to change."
+		err = tgCtx.Send(msgTxt, telebot.ModeHTML)
 		return
 	}
 }
@@ -48,9 +48,9 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 func formatSubject(subj usage.Subject) (txt string) {
 	switch subj {
 	case usage.SubjectSubscriptions:
-		txt = "Subscription Create"
+		txt = "Enabled Subscription Count"
 	case usage.SubjectPublishEvents:
-		txt = "Message Publish"
+		txt = "Message Publication Rate"
 	default:
 		txt = "Undefined"
 	}

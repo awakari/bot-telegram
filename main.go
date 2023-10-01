@@ -43,16 +43,15 @@ func main() {
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(awakariClient, cfg.Api.GroupId),
-		usage.CmdQuotaReq:            usage.RequestNewQuota,
 	}
 	callbackHandlerFunc := telegram.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		telegram.LabelMsgSend:   telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
-		telegram.LabelSubCreate: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		telegram.LabelMsgSend:           telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		telegram.LabelSubCreate:         subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		telegram.LabelUsageLimitsExtend: usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
-		usage.ReplyQuotaSet:               usage.HandleNewQuotaReply(cfg.Api.PaymentProviderToken),
 	}
 
 	// init Telegram bot
