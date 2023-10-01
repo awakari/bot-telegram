@@ -30,7 +30,6 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) func(tgCtx telebot.Con
 			},
 			Token:     paymentProviderToken,
 			Total:     int(o.Price.Total * subCurrencyFactor),
-			NeedName:  true,
 			NeedEmail: true,
 			SendEmail: true,
 		}
