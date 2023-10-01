@@ -16,7 +16,7 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) func(tgCtx telebot.Con
 		invoice := telebot.Invoice{
 			Title:       "Invoice",
 			Description: "Usage Limits Extension",
-			Payload:     "payload0",
+			Payload:     args[0],
 			Currency:    o.Price.Unit,
 			Prices: []telebot.Price{
 				{
@@ -41,8 +41,9 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) func(tgCtx telebot.Con
 
 func ExtendLimitsPreCheckout(groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		q := tgCtx.Update().PreCheckoutQuery
-		err = tgCtx.Send(fmt.Sprintf("PreCheckoutQuery:\n%+v", q))
+		pcq := tgCtx.PreCheckoutQuery()
+		fmt.Printf("PreCheckoutQuery for %d:\n%s", pcq.Sender.ID, pcq.Payload)
+		err = tgCtx.Accept()
 		return
 	}
 }
