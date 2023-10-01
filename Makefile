@@ -8,9 +8,9 @@ COVERAGE_TMP_FILE_NAME=cover.tmp
 proto:
 	go install github.com/golang/protobuf/protoc-gen-go@latest
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.2.0
-#	PATH=${PATH}:~/go/bin protoc --go_out=plugins=grpc:. --go_opt=paths=source_relative \
-#		grpc/admin/*.proto \
-#		grpc/reader/*.proto
+	PATH=${PATH}:~/go/bin protoc --go_out=plugins=grpc:. --go_opt=paths=source_relative \
+		api/grpc/admin/*.proto \
+		api/grpc/subject/*.proto
 
 vet: proto
 	go vet

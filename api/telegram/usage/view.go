@@ -11,8 +11,7 @@ import (
 )
 
 const CmdUsage = "usage"
-const msgFmtDetails = `
-<pre>
+const msgFmtDetails = `<pre>
   %s:
     Used:  %d
     Limit: %d
@@ -27,7 +26,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		msgTxt := "Current usage:"
+		msgTxt := "Current usage:\n"
 		for _, subj := range subjects {
 			var u usage.Usage
 			u, err = awakariClient.ReadUsage(groupIdCtx, userId, subj)

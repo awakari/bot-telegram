@@ -3,11 +3,14 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
+	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/api/telegram"
 	"github.com/awakari/bot-telegram/api/telegram/subscriptions"
 	"github.com/awakari/bot-telegram/api/telegram/usage"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
@@ -33,6 +36,18 @@ func main() {
 		ApiUri(cfg.Api.Uri).
 		Build()
 	defer awakariClient.Close()
+
+	// init Awakari admin client
+	connAdmin, err := grpc.Dial(cfg.Api.Admin.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		log.Info("connected the limits admin service")
+		defer connAdmin.Close()
+	} else {
+		log.Error("failed to connect the limits admin service", err)
+	}
+	clientAdmin := grpcApiAdmin.NewServiceClient(connAdmin)
+	svcAdmin := grpcApiAdmin.NewService(clientAdmin)
+	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
 	// init handlers
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)

@@ -21,6 +21,7 @@
 go.work
 
 vendor/
+**/*.pb.go
 ./bot-telegram
 tg-bot-token.txt
 *.pem

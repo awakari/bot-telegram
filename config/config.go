@@ -6,6 +6,9 @@ import (
 
 type Config struct {
 	Api struct {
+		Admin struct {
+			Uri string `envconfig:"API_ADMIN_URI" default:"api:56789" required:"true"`
+		}
 		PaymentProviderToken string `envconfig:"API_PAYMENT_PROVIDER_TOKEN" required:"true"`
 		Telegram             struct {
 			Webhook struct {

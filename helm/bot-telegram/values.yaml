@@ -83,6 +83,9 @@ tolerations: []
 affinity: {}
 
 api:
+  admin:
+    uri: "api:56789"
+  uri: "api:50051"
   cert: server-cert
   payment:
     provider:
