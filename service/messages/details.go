@@ -13,10 +13,10 @@ import (
 )
 
 func DetailsHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
-	return func(ctx telebot.Context) (err error) {
+	return func(tgCtx telebot.Context) (err error) {
 		//
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(ctx.Sender().ID, 10)
+		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		//
 		var respTxt string
 		var u usage.Usage
@@ -41,6 +41,7 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) telebot.Handle
 				expires = l.Expires.Format(time.RFC3339)
 			}
 			respTxt += fmt.Sprintf(service.UsageLimitsFmt, u.Count, l.Count, t, expires)
+			err = tgCtx.Send(respTxt, telebot.ModeHTML)
 		}
 		//
 		return
