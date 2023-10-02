@@ -37,7 +37,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 			var until string
 			switch l.Expires.IsZero() {
 			case true:
-				until = "<not set>"
+				until = "&lt;not set&gt;"
 			default:
 				until = l.Expires.Format(time.RFC3339)
 			}
