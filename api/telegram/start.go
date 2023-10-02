@@ -17,8 +17,8 @@ const msgStartPrivate = `
 `
 
 const LabelSubCreate = "🞤 Advanced"
-const LabelMsgSend = "▷ Advanced"
-const LabelUsageLimitsExtend = "△ Quota"
+const LabelMsgSend = "⮞ Advanced"
+const LabelUsageLimitsExtend = "▲ Quota"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
@@ -42,7 +42,7 @@ var btnMsgs = telebot.Btn{
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: "⯈ Basic",
+	Text: "⮞ Basic",
 }
 
 var btnMsgNewCustom = telebot.Btn{
