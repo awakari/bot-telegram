@@ -20,7 +20,7 @@ const CmdPrefixSubCreateSimplePrefix = "/sub"
 const argSep = " "
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
-const ReqSubCreateBasic = "Reply with new subscription name followed by keywords"
+const ReqSubCreateBasic = "sub_create_basic"
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
@@ -31,6 +31,7 @@ var msgFmtSubCreated = `Subscription created, next:
 2. <a href="https://t.me/AwakariSubscriptionsBot?startgroup=%s">Link</a> the subscription to the group.`
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
+	_ = tgCtx.Send("Reply with new subscription name followed by keywords")
 	m := &telebot.ReplyMarkup{
 		ForceReply:  true,
 		Placeholder: "<name> <keyword1> <keyword2> ...",
@@ -41,13 +42,13 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 
 func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		if len(args) < 2 {
+		if len(args) < 3 {
 			err = errCreateSubNotEnoughArgs
 		}
 		var sd subscription.Data
 		if err == nil {
-			name := args[0]
-			keywords := strings.Join(args[1:], " ")
+			name := args[1]
+			keywords := args[2]
 			sd.Condition = condition.NewBuilder().
 				AnyOfWords(keywords).
 				BuildTextCondition()

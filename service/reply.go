@@ -15,17 +15,12 @@ func HandleReply(
 	txtResp := msgResp.Text
 	msgReq := msgResp.ReplyTo
 	txtReq := msgReq.Text
-	argsReq := strings.Split(txtReq, " ")
-	handlerKey := argsReq[0]
-	argsReq = argsReq[1:]
+	args := strings.Split(txtReq, " ")
+	handlerKey := args[0]
 	rh, rhOk := replyHandlers[handlerKey]
 	switch rhOk {
 	case true:
-		var args []string
-		if len(argsReq) > 1 {
-			args = append(args, argsReq...)
-		}
-		args = append(argsReq, txtResp)
+		args = append(args, txtResp)
 		err = rh(tgCtx, args...)
 	default:
 		err = errors.New(fmt.Sprintf("unknown reply handler key: %s", handlerKey))

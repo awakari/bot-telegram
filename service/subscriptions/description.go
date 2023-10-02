@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
@@ -23,7 +24,7 @@ func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx t
 		var sd subscription.Data
 		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			_ = tgCtx.Send("Please reply on the next message with a new description:")
+			_ = tgCtx.Send("Reply with a new description:")
 			err = tgCtx.Send(
 				fmt.Sprintf("%s %s", ReqDescribe, subId),
 				&telebot.ReplyMarkup{
@@ -38,7 +39,10 @@ func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx t
 
 func DescriptionReplyHandlerFunc(awakariClient api.Client, groupId string) func(tgCtx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		subId, descr := args[0], args[1]
+		if len(args) != 3 {
+			err = errors.New("invalid argument count")
+		}
+		subId, descr := args[1], args[2]
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var sd subscription.Data
