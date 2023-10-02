@@ -65,10 +65,10 @@ func main() {
 		telegram.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
 		telegram.LabelLimitIncrease:   usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
+	txtHandlers := map[string]telebot.HandlerFunc{
+		telegram.LabelSubList: listSubsHandlerFunc,
+	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
-		telegram.LabelSubList: func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error {
-			return tgCtx.Send("list subscriptions here")
-		},
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
 	}
 
@@ -105,7 +105,7 @@ func main() {
 	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), telegram.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, replyHandlers)))
+	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, txtHandlers, replyHandlers)))
 	b.Handle(telebot.OnWebApp, telegram.ErrorHandlerFunc(telegram.WebAppData(webappHandlers)))
 	b.Handle(telebot.OnCheckout, telegram.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
 
