@@ -43,14 +43,17 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 
 func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		fmt.Printf("create basic args: %+v\n", args)
-		if len(args) < 3 {
+		if len(args) < 2 {
+			err = errCreateSubNotEnoughArgs
+		}
+		args = strings.SplitN(args[1], " ", 2)
+		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
 		}
 		var sd subscription.Data
 		if err == nil {
-			name := args[1]
-			keywords := args[2]
+			name := args[0]
+			keywords := args[1]
 			sd.Condition = condition.NewBuilder().
 				AnyOfWords(keywords).
 				BuildTextCondition()
