@@ -16,8 +16,8 @@ const msgStartPrivate = `
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelSubCreate = "+ Advanced"
-const LabelMsgSend = "🖂 Advanced"
+const LabelSubCreate = "➕ Advanced"
+const LabelMsgSend = "🖅 Advanced"
 const LabelUsageLimitsExtend = "⬆ Extend Limits"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
@@ -27,7 +27,7 @@ var btnSubList = telebot.Btn{
 }
 
 var btnSubNewBasic = telebot.Btn{
-	Text: "+ Basic",
+	Text: "➕ Basic",
 }
 
 var btnSubNewCustom = telebot.Btn{
@@ -42,7 +42,7 @@ var btnMsgs = telebot.Btn{
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: "+ Basic",
+	Text: "🖅 Basic",
 }
 
 var btnMsgNewCustom = telebot.Btn{
