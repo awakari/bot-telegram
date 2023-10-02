@@ -60,12 +60,12 @@ var btnUsageLimitsExtend = telebot.Btn{
 }
 
 func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
-	kbd = &telebot.ReplyMarkup{
-		ResizeKeyboard: true,
-	}
+	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
-		kbd.Row(btnSubList, btnSubNewBasic, btnSubNewCustom),
-		kbd.Row(btnMsgs, btnMsgNewBasic, btnMsgNewCustom),
+		kbd.Row(btnSubList),
+		kbd.Row(btnSubNewBasic, btnSubNewCustom),
+		kbd.Row(btnMsgs),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom),
 		kbd.Row(btnUsageLimitsExtend),
 	)
 	return
