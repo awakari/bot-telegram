@@ -42,7 +42,7 @@ var btnMsgs = telebot.Btn{
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: "> Basic",
+	Text: "⯈ Basic",
 }
 
 var btnMsgNewCustom = telebot.Btn{
