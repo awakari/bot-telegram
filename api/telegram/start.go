@@ -17,8 +17,8 @@ const msgStartPrivate = `
 `
 
 const LabelSubCreate = "+ Advanced"
-const LabelMsgSend = "Advanced Publish"
-const LabelUsageLimitsExtend = "Extend Limits"
+const LabelMsgSend = "✉ Advanced"
+const LabelUsageLimitsExtend = "⬆ Extend Limits"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
@@ -40,7 +40,7 @@ var btnSubNewCustom = telebot.Btn{
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: "Publish Message",
+	Text: "✉ Publish Message",
 	Data: "msg_new_basic",
 }
 
