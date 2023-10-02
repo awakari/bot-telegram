@@ -8,12 +8,13 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 const CmdUsage = "usage"
 const msgFmtDetails = `<pre>
   %s:
-    Used:  %d
+	Used:  %d
     Limit: %d
 </pre>`
 
@@ -27,6 +28,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		msgTxt := "Current usage:\n"
+		var expires time.Time
 		for _, subj := range subjects {
 			var u usage.Usage
 			u, err = awakariClient.ReadUsage(groupIdCtx, userId, subj)
@@ -35,11 +37,29 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 				l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, subj)
 			}
 			if err == nil {
+				if l.Expires.After(expires) {
+					expires = l.Expires
+				}
 				msgTxt += fmt.Sprintf(msgFmtDetails, formatSubject(subj), u.Count, l.Count)
 			}
 		}
-		msgTxt += "\nTap the \"Extend Usage Limits\" keyboard button to change."
-		err = tgCtx.Send(msgTxt, telebot.ModeHTML)
+		if !expires.IsZero() {
+			msgTxt += fmt.Sprintf("\n<pre>  Expires: %s</pre>", expires.Format(time.RFC3339))
+		}
+		sendOpts := []any{
+			telebot.ModeHTML,
+		}
+		if expires.Before(time.Now()) {
+			m := &telebot.ReplyMarkup{}
+			m.Inline(m.Row(telebot.Btn{
+				Text: "Extend",
+				WebApp: &telebot.WebApp{
+					URL: "https://awakari.app/price-calc.html",
+				},
+			}))
+			sendOpts = append(sendOpts, m)
+		}
+		err = tgCtx.Send(msgTxt, sendOpts...)
 		return
 	}
 }

@@ -45,7 +45,7 @@ func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx teleb
 			}
 			btns := []telebot.Btn{
 				{
-					Text: "🏷 Set Description",
+					Text: "🏷 Describe",
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 				},
 			}
