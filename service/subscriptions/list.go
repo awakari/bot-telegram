@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/usage"
@@ -14,12 +15,6 @@ import (
 
 const CmdList = "list"
 const subListLimit = 256 // TODO: implement the proper pagination
-const respFmt = `<pre>Usage:
-  Used:      %d
-  Limit:     %d
-    Type:    %s
-    Expires: %s
-</pre>`
 
 func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
@@ -49,7 +44,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 			default:
 				expires = l.Expires.Format(time.RFC3339)
 			}
-			respTxt += fmt.Sprintf(respFmt, u.Count, l.Count, t, expires)
+			respTxt += fmt.Sprintf(service.UsageLimitsFmt, u.Count, l.Count, t, expires)
 		}
 		//
 		var subIds []string

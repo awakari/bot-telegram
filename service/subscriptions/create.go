@@ -17,8 +17,6 @@ import (
 	"strings"
 )
 
-const CmdPrefixSubCreateSimplePrefix = "/sub"
-const argSep = " "
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
 const ReqSubCreateBasic = "sub_create_basic"
@@ -46,7 +44,7 @@ func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
 		}
-		args = strings.SplitN(args[1], " ", 2)
+		args = strings.SplitN(whiteSpaceRegex.ReplaceAllString(args[1], " "), " ", 2)
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
 		}
@@ -69,47 +67,6 @@ func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(
 		}
 		if err == nil {
 			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), service.GetReplyKeyboard(), telebot.ModeHTML)
-		} else {
-			err = fmt.Errorf("failed to create the subscription:\n%w", err)
-		}
-		return
-	}
-}
-
-func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
-	return func(ctx telebot.Context) (err error) {
-		txt := ctx.Text()
-		argStr, ok := strings.CutPrefix(txt, CmdPrefixSubCreateSimplePrefix+" ")
-		if !ok {
-			err = errCreateSubNotEnoughArgs
-		}
-		var args []string
-		if err == nil {
-			argStr = whiteSpaceRegex.ReplaceAllString(argStr, argSep)
-			args = strings.SplitN(argStr, argSep, 2)
-		}
-		if len(args) < 2 {
-			err = errCreateSubNotEnoughArgs
-		}
-		var subData subscription.Data
-		if err == nil {
-			name := args[0]
-			keywords := args[1]
-			subData.Condition = condition.NewBuilder().
-				AnyOfWords(keywords).
-				BuildTextCondition()
-			subData.Description = name
-			subData.Enabled = true
-			err = validateSubscriptionData(subData)
-		}
-		var subId string
-		if err == nil {
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-			userId := strconv.FormatInt(ctx.Sender().ID, 10)
-			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subData)
-		}
-		if err == nil {
-			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}

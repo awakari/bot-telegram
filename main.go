@@ -6,6 +6,7 @@ import (
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
@@ -50,7 +51,6 @@ func main() {
 	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
 	// init handlers
-	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
@@ -68,6 +68,7 @@ func main() {
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        listSubsHandlerFunc,
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
+		service.LabelMsgDetails:     messages.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, args ...string) error{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(awakariClient, cfg.Api.GroupId),
@@ -105,7 +106,6 @@ func main() {
 	b.Handle("/start", service.ErrorHandlerFunc(service.StartHandlerFunc()))
 	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), service.ErrorHandlerFunc(listSubsHandlerFunc))
 	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), service.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
-	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, service.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(callbackHandlerFunc))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers)))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))

@@ -6,6 +6,13 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+const UsageLimitsFmt = `<pre>Usage:
+  Used:      %d
+  Limit:     %d
+    Type:    %s
+    Expires: %s
+</pre>`
+
 const msgStartPrivate = "Use the keyboard buttons."
 
 const LabelSubList = "Subscriptions"
