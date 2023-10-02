@@ -23,7 +23,7 @@ const LabelUsageLimitsExtend = "⬆ Extend Limits"
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
 var btnSubList = telebot.Btn{
-	Text: "Subscriptions",
+	Text: "Subscription\nDetails",
 }
 
 var btnSubNewBasic = telebot.Btn{
@@ -38,7 +38,7 @@ var btnSubNewCustom = telebot.Btn{
 }
 
 var btnMsgs = telebot.Btn{
-	Text: "Messages",
+	Text: "Messages\nPublishing",
 }
 
 var btnMsgNewBasic = telebot.Btn{
@@ -62,10 +62,8 @@ var btnUsageLimitsExtend = telebot.Btn{
 func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
-		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom),
-		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom),
+		kbd.Row(btnSubList, btnSubNewBasic, btnSubNewCustom),
+		kbd.Row(btnMsgs, btnMsgNewBasic, btnMsgNewCustom),
 		kbd.Row(btnUsageLimitsExtend),
 	)
 	return
