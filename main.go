@@ -4,10 +4,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
-	"github.com/awakari/bot-telegram/api/telegram"
-	"github.com/awakari/bot-telegram/api/telegram/subscriptions"
-	"github.com/awakari/bot-telegram/api/telegram/usage"
 	"github.com/awakari/bot-telegram/config"
+	service2 "github.com/awakari/bot-telegram/service"
+	subscriptions2 "github.com/awakari/bot-telegram/service/subscriptions"
+	usage2 "github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -50,26 +50,26 @@ func main() {
 	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
 	// init handlers
-	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
-	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
+	createSimpleSubHandlerFunc := subscriptions2.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
+	listSubsHandlerFunc := subscriptions2.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions2.CmdDelete:      subscriptions2.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions2.CmdDetails:     subscriptions2.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions2.CmdDescription: subscriptions2.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions2.CmdDisable:     subscriptions2.DisableHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions2.CmdEnable:      subscriptions2.EnableHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
-	callbackHandlerFunc := telegram.Callback(callbackHandlers)
+	callbackHandlerFunc := service2.Callback(callbackHandlers)
 	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		telegram.LabelMsgSendCustom:   telegram.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
-		telegram.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
-		telegram.LabelLimitIncrease:   usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
+		service2.LabelMsgSendCustom:   service2.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		service2.LabelSubCreateCustom: subscriptions2.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+		service2.LabelLimitIncrease:   usage2.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		telegram.LabelSubList: listSubsHandlerFunc,
+		service2.LabelSubList: listSubsHandlerFunc,
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
-		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
+		subscriptions2.ReplyKeyDescription: subscriptions2.HandleDescriptionReply,
 	}
 
 	// init Telegram bot
@@ -98,16 +98,16 @@ func main() {
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
-		return telegram.LoggingHandlerFunc(next, log)
+		return service2.LoggingHandlerFunc(next, log)
 	})
-	b.Handle("/start", telegram.ErrorHandlerFunc(telegram.StartHandlerFunc()))
-	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), telegram.ErrorHandlerFunc(listSubsHandlerFunc))
-	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), telegram.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
-	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, telegram.ErrorHandlerFunc(createSimpleSubHandlerFunc))
-	b.Handle(telebot.OnCallback, telegram.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnText, telegram.ErrorHandlerFunc(telegram.TextHandlerFunc(awakariClient, cfg.Api.GroupId, txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnWebApp, telegram.ErrorHandlerFunc(telegram.WebAppData(webappHandlers)))
-	b.Handle(telebot.OnCheckout, telegram.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
+	b.Handle("/start", service2.ErrorHandlerFunc(service2.StartHandlerFunc()))
+	b.Handle(fmt.Sprintf("/%s", subscriptions2.CmdList), service2.ErrorHandlerFunc(listSubsHandlerFunc))
+	b.Handle(fmt.Sprintf("/%s", usage2.CmdUsage), service2.ErrorHandlerFunc(usage2.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
+	b.Handle(subscriptions2.CmdPrefixSubCreateSimplePrefix, service2.ErrorHandlerFunc(createSimpleSubHandlerFunc))
+	b.Handle(telebot.OnCallback, service2.ErrorHandlerFunc(callbackHandlerFunc))
+	b.Handle(telebot.OnText, service2.ErrorHandlerFunc(service2.TextHandlerFunc(awakariClient, cfg.Api.GroupId, txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnWebApp, service2.ErrorHandlerFunc(service2.WebAppData(webappHandlers)))
+	b.Handle(telebot.OnCheckout, service2.ErrorHandlerFunc(usage2.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
 
 	b.Start()
 }

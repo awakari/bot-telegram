@@ -3,7 +3,7 @@ package subscriptions
 import (
 	"context"
 	"fmt"
-	"github.com/awakari/bot-telegram/api/telegram"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
@@ -48,7 +48,7 @@ func HandleDescriptionReply(tgCtx telebot.Context, awakariClient api.Client, gro
 	}
 	if err == nil {
 		// force reply removes the keyboard, hence don't forget to restore it
-		err = tgCtx.Send("Subscription description updated", telegram.GetReplyKeyboard())
+		err = tgCtx.Send("Subscription description updated", service.GetReplyKeyboard())
 	}
 	return
 }

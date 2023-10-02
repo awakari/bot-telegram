@@ -1,4 +1,4 @@
-package telegram
+package service
 
 import "gopkg.in/telebot.v3"
 
