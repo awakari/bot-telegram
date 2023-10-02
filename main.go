@@ -66,7 +66,8 @@ func main() {
 		service.LabelLimitIncrease:   usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelSubList: listSubsHandlerFunc,
+		service.LabelSubList:        listSubsHandlerFunc,
+		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,

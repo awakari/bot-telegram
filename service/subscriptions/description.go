@@ -13,7 +13,7 @@ import (
 
 const CmdDescription = "description"
 
-const ReplyKeyDescription = "describe"
+const ReplyKeyDescription = "sub_describe"
 
 func DescriptionHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {

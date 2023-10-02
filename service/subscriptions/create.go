@@ -20,6 +20,7 @@ const CmdPrefixSubCreateSimplePrefix = "/sub"
 const argSep = " "
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
+const ReqSubCreateBasic = "Reply with new subscription name followed by space and list of space separated keywords"
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
@@ -28,6 +29,18 @@ var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Subscription created, next: 
 1. Create a group chat for the created subscription. 
 2. <a href="https://t.me/AwakariSubscriptionsBot?startgroup=%s">Link</a> the subscription to the group.`
+
+func CreateBasicRequest(tgCtx telebot.Context) (err error) {
+	err = tgCtx.Send(ReqSubCreateBasic, telebot.ForceReply)
+	return
+}
+
+func HandleCreateBasic(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+
+		return
+	}
+}
 
 func CreateSimpleHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {

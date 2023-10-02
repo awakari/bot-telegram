@@ -15,9 +15,10 @@ import (
 const CmdList = "list"
 const subListLimit = 256 // TODO: implement the proper pagination
 const respFmt = `<pre>Usage:
-  Used:  %d
-  Limit: %d
-  Until: %s
+  Used:      %d
+  Limit:     %d
+	Type:    %s
+    Expires: %s
 </pre>`
 
 func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
@@ -34,14 +35,21 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 			l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, usage.SubjectSubscriptions)
 		}
 		if err == nil {
-			var until string
+			var t string
+			switch l.UserId {
+			case "":
+				t = "default"
+			default:
+				t = "custom"
+			}
+			var expires string
 			switch l.Expires.IsZero() {
 			case true:
-				until = "&lt;not set&gt;"
+				expires = "&lt;not set&gt;"
 			default:
-				until = l.Expires.Format(time.RFC3339)
+				expires = l.Expires.Format(time.RFC3339)
 			}
-			respTxt += fmt.Sprintf(respFmt, u.Count, l.Count, until)
+			respTxt += fmt.Sprintf(respFmt, u.Count, l.Count, t, expires)
 		}
 		//
 		var subIds []string
