@@ -17,8 +17,8 @@ const msgStartPrivate = `
 `
 
 const LabelSubCreate = "+ Advanced"
-const LabelMsgSend = "> Advanced"
-const LabelUsageLimitsExtend = "↑ Quota"
+const LabelMsgSend = "⯈ Advanced"
+const LabelUsageLimitsExtend = "▲ Quota"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
@@ -60,7 +60,9 @@ var btnUsageLimitsExtend = telebot.Btn{
 }
 
 func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
-	kbd = &telebot.ReplyMarkup{}
+	kbd = &telebot.ReplyMarkup{
+		ResizeKeyboard: true,
+	}
 	kbd.Reply(
 		kbd.Row(btnSubList),
 		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsageLimitsExtend),
