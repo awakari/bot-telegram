@@ -3,17 +3,8 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/awakari/client-sdk-go/model/usage"
 	"gopkg.in/telebot.v3"
-	"time"
 )
-
-const fmtUsageLimit = `<pre>Usage:
-  Count:     %d
-  Limit:     %d
-    Type:    %s
-    Expires: %s
-</pre>`
 
 const msgStartPrivate = "Use the keyboard buttons."
 
@@ -57,60 +48,40 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-var btnUsageLimitsExtend = telebot.Btn{
+var btnLimitIncrSubs = telebot.Btn{
 	Text: LabelLimitIncrease,
 	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/price-calc.html",
+		URL: "https://awakari.app/price-calc-subs.html",
 	},
 }
 
-func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
+var btnLimitIncrMsgs = telebot.Btn{
+	Text: LabelLimitIncrease,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/price-calc-msgs.html",
+	},
+}
+
+func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
 		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsageLimitsExtend),
+		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnLimitIncrSubs),
 		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnUsageLimitsExtend),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnLimitIncrMsgs),
 	)
 	return
 }
 
-func StartHandlerFunc() telebot.HandlerFunc {
+func StartHandlerFunc(kbd *telebot.ReplyMarkup) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		chat := ctx.Chat()
 		switch chat.Type {
 		case telebot.ChatPrivate:
-			err = startPrivate(ctx)
+			err = ctx.Send(msgStartPrivate, kbd, telebot.ModeHTML)
 		default:
 			err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
 		}
 		return
 	}
-}
-
-func startPrivate(ctx telebot.Context) (err error) {
-	if err == nil {
-		m := GetReplyKeyboard()
-		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
-	}
-	return
-}
-
-func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
-	var t string
-	switch l.UserId {
-	case "":
-		t = "group"
-	default:
-		t = "user"
-	}
-	var expires string
-	switch l.Expires.IsZero() {
-	case true:
-		expires = "never"
-	default:
-		expires = l.Expires.Format(time.RFC3339)
-	}
-	txt = fmt.Sprintf(fmtUsageLimit, u.Count, l.Count, t, expires)
-	return
 }

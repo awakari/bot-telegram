@@ -6,10 +6,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-func TextHandlerFunc(
-	txtHandlers map[string]telebot.HandlerFunc,
-	replyHandlers map[string]func(tgCtx telebot.Context, args ...string) error,
-) telebot.HandlerFunc {
+func TextHandlerFunc(txtHandlers map[string]telebot.HandlerFunc, replyHandlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		switch tgCtx.Message().IsReply() {
 		case true:

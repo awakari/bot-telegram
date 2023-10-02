@@ -19,6 +19,7 @@ import (
 
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
+
 const ReqSubCreateBasic = "sub_create_basic"
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
@@ -39,7 +40,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	return
 }
 
-func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *telebot.ReplyMarkup) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
@@ -63,10 +64,10 @@ func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(
 		if err == nil {
 			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, sd)
+			subId, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
 		}
 		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), service.GetReplyKeyboard(), telebot.ModeHTML)
+			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), kbd, telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
@@ -74,7 +75,7 @@ func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(
 	}
 }
 
-func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(ctx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
@@ -96,7 +97,7 @@ func CreateCustomHandlerFunc(awakariClient api.Client, groupId string) func(ctx 
 		}
 		var subId string
 		if err == nil {
-			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, subData)
+			subId, err = clientAwk.CreateSubscription(groupIdCtx, userId, subData)
 		}
 		if err == nil {
 			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)

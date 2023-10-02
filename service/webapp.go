@@ -8,7 +8,7 @@ import (
 
 var errInvalidLabel = errors.New("no handler for webapp label")
 
-func WebAppData(handlers map[string]func(ctx telebot.Context, args ...string) (err error)) telebot.HandlerFunc {
+func WebAppData(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		data := tgCtx.Message().WebAppData
 		label := data.Text

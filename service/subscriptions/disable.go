@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
@@ -11,16 +12,16 @@ import (
 
 const CmdDisable = "disable"
 
-func DisableHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func DisableHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var sd subscription.Data
-		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
+		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
 			sd.Enabled = false
-			err = awakariClient.UpdateSubscription(groupIdCtx, userId, subId, sd)
+			err = clientAwk.UpdateSubscription(groupIdCtx, userId, subId, sd)
 		}
 		if err == nil {
 			err = tgCtx.Send("Subscription disabled")

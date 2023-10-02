@@ -3,43 +3,42 @@ package subscriptions
 import (
 	"context"
 	"fmt"
-	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
-	"github.com/awakari/client-sdk-go/model/usage"
+	awkUsage "github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
 )
 
-const CmdList = "list"
 const subListLimit = 256 // TODO: implement the proper pagination
 
-func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFunc {
+func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		//
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(ctx.Sender().ID, 10)
 		//
 		var respTxt string
-		var u usage.Usage
-		u, err = awakariClient.ReadUsage(groupIdCtx, userId, usage.SubjectSubscriptions)
-		var l usage.Limit
+		var u awkUsage.Usage
+		u, err = clientAwk.ReadUsage(groupIdCtx, userId, awkUsage.SubjectSubscriptions)
+		var l awkUsage.Limit
 		if err == nil {
-			l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, usage.SubjectSubscriptions)
+			l, err = clientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectSubscriptions)
 		}
 		if err == nil {
-			respTxt += service.FormatUsageLimit(u, l)
+			respTxt += usage.FormatUsageLimit(u, l)
 		}
 		//
 		var subIds []string
-		subIds, err = awakariClient.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
+		subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
 		m := &telebot.ReplyMarkup{}
 		if err == nil {
 			var sub subscription.Data
 			var rows []telebot.Row
 			for _, subId := range subIds {
-				sub, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
+				sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 				if err != nil {
 					break
 				}

@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
@@ -22,13 +23,13 @@ Enabled: <pre>%t</pre>
 Condition:
 <pre>%s</pre>`
 
-func DetailsHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var sd subscription.Data
-		sd, err = awakariClient.ReadSubscription(groupIdCtx, userId, subId)
+		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
 			rows := []telebot.Row{

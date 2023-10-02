@@ -32,11 +32,11 @@ func main() {
 	log := slog.New(slog.NewTextHandler(os.Stdout, &opts))
 
 	// init Awakari client
-	awakariClient, err := api.
+	clientAwk, err := api.
 		NewClientBuilder().
 		ApiUri(cfg.Api.Uri).
 		Build()
-	defer awakariClient.Close()
+	defer clientAwk.Close()
 
 	// init Awakari admin client
 	connAdmin, err := grpc.Dial(cfg.Api.Admin.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -51,28 +51,29 @@ func main() {
 	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
 	// init handlers
-	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
-	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(awakariClient, cfg.Api.GroupId),
+	callbackHandlers := map[string]service.ArgHandlerFunc{
+		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(clientAwk, cfg.Api.GroupId),
 	}
-	callbackHandlerFunc := service.Callback(callbackHandlers)
-	webappHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		service.LabelMsgSendCustom:   service.SubmitCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
-		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(awakariClient, cfg.Api.GroupId),
+	webappHandlers := map[string]service.ArgHandlerFunc{
+		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, cfg.Api.GroupId),
+		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, cfg.Api.GroupId),
 		service.LabelLimitIncrease:   usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelSubList:        listSubsHandlerFunc,
+		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, cfg.Api.GroupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
-		service.LabelMsgDetails:     messages.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
+		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, cfg.Api.GroupId),
+		service.LabelMsgSendBasic:   messages.PublishBasicRequest,
 	}
-	replyHandlers := map[string]func(tgCtx telebot.Context, args ...string) error{
-		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(awakariClient, cfg.Api.GroupId),
-		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(awakariClient, cfg.Api.GroupId),
+	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
+	replyHandlers := map[string]service.ArgHandlerFunc{
+		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
+		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
+		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
 	}
 
 	// init Telegram bot
@@ -103,13 +104,11 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	b.Handle("/start", service.ErrorHandlerFunc(service.StartHandlerFunc()))
-	b.Handle(fmt.Sprintf("/%s", subscriptions.CmdList), service.ErrorHandlerFunc(listSubsHandlerFunc))
-	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), service.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
-	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))
-	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
+	b.Handle("/start", service.ErrorHandlerFunc(service.StartHandlerFunc(menuKbd), menuKbd))
+	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
+	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
+	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
+	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId), menuKbd))
 
 	b.Start()
 }

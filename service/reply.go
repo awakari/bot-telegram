@@ -7,10 +7,7 @@ import (
 	"strings"
 )
 
-func HandleReply(
-	tgCtx telebot.Context,
-	replyHandlers map[string]func(tgCtx telebot.Context, args ...string) error,
-) (err error) {
+func HandleReply(tgCtx telebot.Context, replyHandlers map[string]ArgHandlerFunc) (err error) {
 	msgResp := tgCtx.Message()
 	txtResp := msgResp.Text
 	msgReq := msgResp.ReplyTo
