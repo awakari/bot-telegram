@@ -3,11 +3,13 @@ package service
 import (
 	"errors"
 	"fmt"
+	"github.com/awakari/client-sdk-go/model/usage"
 	"gopkg.in/telebot.v3"
+	"time"
 )
 
-const UsageLimitsFmt = `<pre>Usage:
-  Used:      %d
+const fmtUsageLimit = `<pre>Usage:
+  Count:     %d
   Limit:     %d
     Type:    %s
     Expires: %s
@@ -91,5 +93,24 @@ func startPrivate(ctx telebot.Context) (err error) {
 		m := GetReplyKeyboard()
 		err = ctx.Send(msgStartPrivate, m, telebot.ModeHTML)
 	}
+	return
+}
+
+func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
+	var t string
+	switch l.UserId {
+	case "":
+		t = "group"
+	default:
+		t = "user"
+	}
+	var expires string
+	switch l.Expires.IsZero() {
+	case true:
+		expires = "never"
+	default:
+		expires = l.Expires.Format(time.RFC3339)
+	}
+	txt = fmt.Sprintf(fmtUsageLimit, u.Count, l.Count, t, expires)
 	return
 }

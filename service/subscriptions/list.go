@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
-	"time"
 )
 
 const CmdList = "list"
@@ -30,21 +29,7 @@ func ListHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 			l, err = awakariClient.ReadUsageLimit(groupIdCtx, userId, usage.SubjectSubscriptions)
 		}
 		if err == nil {
-			var t string
-			switch l.UserId {
-			case "":
-				t = "default"
-			default:
-				t = "custom"
-			}
-			var expires string
-			switch l.Expires.IsZero() {
-			case true:
-				expires = "&lt;not set&gt;"
-			default:
-				expires = l.Expires.Format(time.RFC3339)
-			}
-			respTxt += fmt.Sprintf(service.UsageLimitsFmt, u.Count, l.Count, t, expires)
+			respTxt += service.FormatUsageLimit(u, l)
 		}
 		//
 		var subIds []string
