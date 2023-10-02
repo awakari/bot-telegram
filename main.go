@@ -69,8 +69,9 @@ func main() {
 		service.LabelSubList:        listSubsHandlerFunc,
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 	}
-	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
-		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
+	replyHandlers := map[string]func(tgCtx telebot.Context, args ...string) error{
+		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(awakariClient, cfg.Api.GroupId),
+		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(awakariClient, cfg.Api.GroupId),
 	}
 
 	// init Telegram bot
@@ -106,7 +107,7 @@ func main() {
 	b.Handle(fmt.Sprintf("/%s", usage.CmdUsage), service.ErrorHandlerFunc(usage.ViewHandlerFunc(awakariClient, cfg.Api.GroupId)))
 	b.Handle(subscriptions.CmdPrefixSubCreateSimplePrefix, service.ErrorHandlerFunc(createSimpleSubHandlerFunc))
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(callbackHandlerFunc))
-	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(awakariClient, cfg.Api.GroupId, txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers)))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(cfg.Api.GroupId)))
 

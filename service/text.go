@@ -3,19 +3,18 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
 )
 
 func TextHandlerFunc(
-	awakariClient api.Client,
-	groupId string,
 	txtHandlers map[string]telebot.HandlerFunc,
-	replyHandlers map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error,
+	replyHandlers map[string]func(tgCtx telebot.Context, args ...string) error,
 ) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		switch tgCtx.Message().IsReply() {
-		case false:
+		case true:
+			err = HandleReply(tgCtx, replyHandlers)
+		default:
 			txt := tgCtx.Text()
 			h, hOk := txtHandlers[txt]
 			switch hOk {
@@ -24,8 +23,6 @@ func TextHandlerFunc(
 			default:
 				err = errors.New(fmt.Sprintf("unrecognized command, use the reply keyboard"))
 			}
-		default:
-			err = HandleReply(tgCtx, awakariClient, groupId, replyHandlers)
 		}
 		return
 	}

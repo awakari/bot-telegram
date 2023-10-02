@@ -20,7 +20,7 @@ const CmdPrefixSubCreateSimplePrefix = "/sub"
 const argSep = " "
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
-const ReqSubCreateBasic = "Reply with new subscription name followed by space and list of space separated keywords"
+const ReqSubCreateBasic = "Reply with new subscription name followed by keywords"
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
@@ -31,13 +31,41 @@ var msgFmtSubCreated = `Subscription created, next:
 2. <a href="https://t.me/AwakariSubscriptionsBot?startgroup=%s">Link</a> the subscription to the group.`
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
-	err = tgCtx.Send(ReqSubCreateBasic, telebot.ForceReply)
+	m := &telebot.ReplyMarkup{
+		ForceReply:  true,
+		Placeholder: "<name> <keyword1> <keyword2> ...",
+	}
+	err = tgCtx.Send(ReqSubCreateBasic, m)
 	return
 }
 
-func HandleCreateBasic(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
+func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-
+		if len(args) < 2 {
+			err = errCreateSubNotEnoughArgs
+		}
+		var sd subscription.Data
+		if err == nil {
+			name := args[0]
+			keywords := strings.Join(args[1:], " ")
+			sd.Condition = condition.NewBuilder().
+				AnyOfWords(keywords).
+				BuildTextCondition()
+			sd.Description = name
+			sd.Enabled = true
+			err = validateSubscriptionData(sd)
+		}
+		var subId string
+		if err == nil {
+			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, sd)
+		}
+		if err == nil {
+			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
+		} else {
+			err = fmt.Errorf("failed to create the subscription:\n%w", err)
+		}
 		return
 	}
 }
