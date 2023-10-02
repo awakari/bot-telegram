@@ -64,10 +64,8 @@ func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom),
-		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom),
+		kbd.Row(btnSubList, btnSubNewBasic, btnSubNewCustom),
+		kbd.Row(btnMsgs, btnMsgNewBasic, btnMsgNewCustom),
 		kbd.Row(btnUsageLimitsExtend),
 	)
 	return
