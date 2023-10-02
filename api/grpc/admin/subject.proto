@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package awakari.api.admin;
+
+option go_package = "api/grpc/admin";
+
+enum Subject {
+  Undefined = 0;
+  Subscriptions = 1;
+  PublishEvents = 2;
+}

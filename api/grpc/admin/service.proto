@@ -4,7 +4,7 @@ package awakari.api.admin;
 
 option go_package = "api/grpc/admin";
 
-import "api/grpc/subject/subject.proto";
+import "api/grpc/admin/subject.proto";
 import "google/protobuf/timestamp.proto";
 
 service Service {
@@ -14,7 +14,7 @@ service Service {
 message SetLimitsRequest {
   string groupId = 1;
   string userId = 2;
-  subject.Subject subj = 3;
+  Subject subj = 3;
   int64 count = 4;
   google.protobuf.Timestamp expires = 5;
 }
