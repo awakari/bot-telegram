@@ -16,44 +16,48 @@ const msgStartPrivate = `
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelSubCreate = "+ Custom"
-const LabelMsgSend = "🠺🠾🢒▶ Custom"
-const LabelUsageLimitsExtend = "▲ Limit"
+const LabelSubList = "Subscriptions"
+const LabelSubCreateBasic = "+ Basic"
+const LabelSubCreateCustom = "+ Custom"
+const LabelMsgDetails = "Messages Publishing"
+const LabelMsgSendBasic = "> Basic"
+const LabelMsgSendCustom = "⊿◿◢▸⏵ Custom"
+const LabelLimitIncrease = "▲ Limit"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
 var btnSubList = telebot.Btn{
-	Text: "Subscriptions",
+	Text: LabelSubList,
 }
 
 var btnSubNewBasic = telebot.Btn{
-	Text: "+ Basic",
+	Text: LabelSubCreateBasic,
 }
 
 var btnSubNewCustom = telebot.Btn{
-	Text: LabelSubCreate,
+	Text: LabelSubCreateCustom,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
 }
 
 var btnMsgs = telebot.Btn{
-	Text: "Messages Publishing",
+	Text: LabelMsgDetails,
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: "> Basic",
+	Text: LabelMsgSendBasic,
 }
 
 var btnMsgNewCustom = telebot.Btn{
-	Text: LabelMsgSend,
+	Text: LabelMsgSendCustom,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/msg-new.html",
 	},
 }
 
 var btnUsageLimitsExtend = telebot.Btn{
-	Text: LabelUsageLimitsExtend,
+	Text: LabelLimitIncrease,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/price-calc.html",
 	},
