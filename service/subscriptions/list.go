@@ -17,7 +17,7 @@ const subListLimit = 256 // TODO: implement the proper pagination
 const respFmt = `<pre>Usage:
   Used:      %d
   Limit:     %d
-	Type:    %s
+    Type:    %s
     Expires: %s
 </pre>`
 

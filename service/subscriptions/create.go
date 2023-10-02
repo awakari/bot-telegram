@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
@@ -42,6 +43,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 
 func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(ctx telebot.Context, args ...string) (err error) {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
+		fmt.Printf("create basic args: %+v\n", args)
 		if len(args) < 3 {
 			err = errCreateSubNotEnoughArgs
 		}
@@ -63,7 +65,7 @@ func CreateBasicReplyHandlerFunc(awakariClient api.Client, groupId string) func(
 			subId, err = awakariClient.CreateSubscription(groupIdCtx, userId, sd)
 		}
 		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
+			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), service.GetReplyKeyboard(), telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
