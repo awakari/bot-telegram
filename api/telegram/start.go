@@ -6,15 +6,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const msgStartPrivate = `
-• Send a text to publish a simple message.
-• Send a command like: 
-  <pre>/sub &lt;sub_name&gt; &lt;word1&gt; &lt;word2&gt; ...</pre>
-  to create a simple text matching subscription.
-• Send the <pre>/list</pre> command to list own subscriptions.
-• Send the <pre>/usage</pre> command to see own usage limits.
-• For advanced usage, use the keyboard buttons.
-`
+const msgStartPrivate = "Use the keyboard buttons."
 
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
@@ -64,9 +56,7 @@ var btnUsageLimitsExtend = telebot.Btn{
 }
 
 func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
-	kbd = &telebot.ReplyMarkup{
-		ResizeKeyboard: true,
-	}
+	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
 		kbd.Row(btnSubList),
 		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsageLimitsExtend),
