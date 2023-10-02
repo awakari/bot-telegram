@@ -23,7 +23,7 @@ const LabelUsageLimitsExtend = "⬆ Extend Limits"
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
 var btnSubList = telebot.Btn{
-	Text: "🔖 Subscriptions",
+	Text: "Subscriptions",
 }
 
 var btnSubNewBasic = telebot.Btn{
