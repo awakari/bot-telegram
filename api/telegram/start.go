@@ -12,8 +12,8 @@ const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
 const LabelMsgDetails = "Messages Publishing"
-const LabelMsgSendBasic = "> Basic"
-const LabelMsgSendCustom = "⊿◿◢▸⏵ Custom"
+const LabelMsgSendBasic = "▸ Basic"
+const LabelMsgSendCustom = "▸ Custom"
 const LabelLimitIncrease = "▲ Limit"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
