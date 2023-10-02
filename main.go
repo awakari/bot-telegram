@@ -53,10 +53,6 @@ func main() {
 	createSimpleSubHandlerFunc := subscriptions.CreateSimpleHandlerFunc(awakariClient, cfg.Api.GroupId)
 	listSubsHandlerFunc := subscriptions.ListHandlerFunc(awakariClient, cfg.Api.GroupId)
 	callbackHandlers := map[string]func(ctx telebot.Context, args ...string) (err error){
-		telegram.LabelSubList: func(ctx telebot.Context, args ...string) (err error) {
-			ctx.Send("list subscriptions here")
-			return
-		},
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(awakariClient, cfg.Api.GroupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(awakariClient, cfg.Api.GroupId),
@@ -70,6 +66,9 @@ func main() {
 		telegram.LabelLimitIncrease:   usage.ExtendLimitsHandlerFunc(cfg.Api.PaymentProviderToken),
 	}
 	replyHandlers := map[string]func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error{
+		telegram.LabelSubList: func(tgCtx telebot.Context, awakariClient api.Client, groupId string, args ...string) error {
+			return tgCtx.Send("list subscriptions here")
+		},
 		subscriptions.ReplyKeyDescription: subscriptions.HandleDescriptionReply,
 	}
 
