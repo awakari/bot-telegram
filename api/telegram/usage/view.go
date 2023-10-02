@@ -46,20 +46,7 @@ func ViewHandlerFunc(awakariClient api.Client, groupId string) telebot.HandlerFu
 		if !expires.IsZero() {
 			msgTxt += fmt.Sprintf("\n<pre>  Expires: %s</pre>", expires.Format(time.RFC3339))
 		}
-		sendOpts := []any{
-			telebot.ModeHTML,
-		}
-		if expires.Before(time.Now()) {
-			m := &telebot.ReplyMarkup{}
-			m.Inline(m.Row(telebot.Btn{
-				Text: "Extend",
-				WebApp: &telebot.WebApp{
-					URL: "https://awakari.app/price-calc.html",
-				},
-			}))
-			sendOpts = append(sendOpts, m)
-		}
-		err = tgCtx.Send(msgTxt, sendOpts...)
+		err = tgCtx.Send(msgTxt, telebot.ModeHTML)
 		return
 	}
 }

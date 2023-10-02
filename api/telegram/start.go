@@ -16,11 +16,33 @@ const msgStartPrivate = `
 • For advanced usage, use the keyboard buttons.
 `
 
-const LabelMsgSend = "Send Custom Message"
-const LabelSubCreate = "Create Custom Subscription"
-const LabelUsageLimitsExtend = "Extend Usage Limits"
+const LabelSubCreate = "+ Advanced"
+const LabelMsgSend = "Advanced"
+const LabelUsageLimitsExtend = "Extend"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
+
+var btnSubList = telebot.Btn{
+	Text: "Subscriptions",
+	Data: "sub_list",
+}
+
+var btnSubNewBasic = telebot.Btn{
+	Text: "+ Basic",
+	Data: "sub_new_basic",
+}
+
+var btnSubNewCustom = telebot.Btn{
+	Text: LabelSubCreate,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/sub-new.html",
+	},
+}
+
+var btnMsgNewBasic = telebot.Btn{
+	Text: "Publish Message",
+	Data: "msg_new_basic",
+}
 
 var btnMsgNewCustom = telebot.Btn{
 	Text: LabelMsgSend,
@@ -29,11 +51,9 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-var btnSubNewCustom = telebot.Btn{
-	Text: LabelSubCreate,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/sub-new.html",
-	},
+var btnUsageLimitsView = telebot.Btn{
+	Text: "Usage Limits",
+	Data: "usage",
 }
 
 var btnUsageLimitsExtend = telebot.Btn{
@@ -48,9 +68,9 @@ func GetReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(btnMsgNewCustom),
-		kbd.Row(btnSubNewCustom),
-		kbd.Row(btnUsageLimitsExtend),
+		kbd.Row(btnSubList, btnSubNewBasic, btnSubNewCustom),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom),
+		kbd.Row(btnUsageLimitsView, btnUsageLimitsExtend),
 	)
 	return
 }
