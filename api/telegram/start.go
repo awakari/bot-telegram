@@ -38,7 +38,7 @@ var btnSubNewCustom = telebot.Btn{
 }
 
 var btnMsgs = telebot.Btn{
-	Text: "Publishing",
+	Text: "Messages Publishing",
 }
 
 var btnMsgNewBasic = telebot.Btn{
