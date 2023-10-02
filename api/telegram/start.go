@@ -18,7 +18,7 @@ const msgStartPrivate = `
 
 const LabelSubCreate = "+ Advanced"
 const LabelMsgSend = "✉ Advanced"
-const LabelUsageLimitsExtend = "⬆ Extend Limits"
+const LabelUsageLimitsExtend = "⬆ Extend Usage Limits"
 
 var ErrChatType = errors.New("unsupported chat type (supported options: \"private\")")
 
