@@ -16,10 +16,9 @@ import (
 )
 
 const fmtUsageLimit = `<pre>Usage:
-  Count:     %d
-  Limit:     %d
-    Type:    %s
-    Expires: %s
+  Count:   %d
+  Limit:   %d
+  Expires: %s
 </pre>`
 
 const subCurrencyFactor = 100 // this is valid for roubles, dollars, euros
@@ -114,13 +113,6 @@ func formatUsageSubject(subj usage.Subject) (s string) {
 }
 
 func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
-	var t string
-	switch l.UserId {
-	case "":
-		t = "group"
-	default:
-		t = "user"
-	}
 	var expires string
 	switch l.Expires.IsZero() {
 	case true:
@@ -128,6 +120,6 @@ func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
 	default:
 		expires = l.Expires.Format(time.RFC3339)
 	}
-	txt = fmt.Sprintf(fmtUsageLimit, u.Count, l.Count, t, expires)
+	txt = fmt.Sprintf(fmtUsageLimit, u.Count, l.Count, expires)
 	return
 }
