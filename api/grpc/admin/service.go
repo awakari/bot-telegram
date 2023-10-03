@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/awakari/client-sdk-go/api/grpc/subject"
+	"github.com/awakari/bot-telegram/api/grpc/subject"
+	"github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -12,7 +13,7 @@ import (
 )
 
 type Service interface {
-	SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64, expires time.Time) (err error)
+	SetLimits(ctx context.Context, groupId, userId string, subj usage.Subject, count int64, expires time.Time) (err error)
 }
 
 type service struct {
@@ -29,11 +30,11 @@ func NewService(client ServiceClient) Service {
 	}
 }
 
-func (svc service) SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64, expires time.Time) (err error) {
+func (svc service) SetLimits(ctx context.Context, groupId, userId string, subj usage.Subject, count int64, expires time.Time) (err error) {
 	req := SetLimitsRequest{
 		GroupId: groupId,
 		UserId:  userId,
-		Subj:    Subject(subj),
+		Subj:    subject.Subject(subj),
 		Count:   count,
 		Expires: timestamppb.New(expires.UTC()),
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
@@ -33,8 +34,8 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) service.ArgHandlerFunc
 		}
 		if err == nil {
 			invoice := telebot.Invoice{
-				Title:       "Invoice",
-				Description: "Usage Limit Increase",
+				Title:       "Usage Limit Increase",
+				Description: formatUsageSubject(o.Limit.Subject),
 				Payload:     args[0],
 				Currency:    o.Price.Unit,
 				Prices: []telebot.Price{
@@ -43,10 +44,8 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) service.ArgHandlerFunc
 						Amount: int(o.Price.Total * subCurrencyFactor),
 					},
 				},
-				Token:     paymentProviderToken,
-				Total:     int(o.Price.Total * subCurrencyFactor),
-				NeedEmail: true,
-				SendEmail: true,
+				Token: paymentProviderToken,
+				Total: int(o.Price.Total * subCurrencyFactor),
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
@@ -56,10 +55,10 @@ func ExtendLimitsHandlerFunc(paymentProviderToken string) service.ArgHandlerFunc
 
 func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		pcq := tgCtx.PreCheckoutQuery()
-		userId := strconv.FormatInt(pcq.Sender.ID, 10)
+		q := tgCtx.PreCheckoutQuery()
+		userId := strconv.FormatInt(q.Sender.ID, 10)
 		var o Order
-		err = json.Unmarshal([]byte(pcq.Payload), &o)
+		err = json.Unmarshal([]byte(q.Payload), &o)
 		var currentLimit usage.Limit
 		if err == nil {
 			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
@@ -80,6 +79,23 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.Handl
 		}
 		if err == nil {
 			err = tgCtx.Accept()
+		}
+		return
+	}
+}
+
+func ExtendLimits(clientAdmin admin.Service, groupId string) telebot.HandlerFunc {
+	return func(tgCtx telebot.Context) (err error) {
+		q := tgCtx.Update().ShippingQuery
+		userId := strconv.FormatInt(q.Sender.ID, 10)
+		var o Order
+		err = json.Unmarshal([]byte(q.Payload), &o)
+		if err == nil {
+			expires := time.Now().Add(time.Duration(o.Limit.TimeDays) * time.Hour * 24)
+			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, o.Limit.Subject, int64(o.Limit.Count), expires)
+		}
+		if err == nil {
+			err = tgCtx.Send("Limit has been successfully increased")
 		}
 		return
 	}

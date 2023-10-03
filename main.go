@@ -109,6 +109,7 @@ func main() {
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(clientAwk, cfg.Api.GroupId), menuKbd))
+	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(usage.ExtendLimits(svcAdmin, cfg.Api.GroupId), menuKbd))
 
 	b.Start()
 }
