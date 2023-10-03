@@ -25,7 +25,7 @@ const fmtUsageLimit = `<pre>Usage:
 const subCurrencyFactor = 100 // this is valid for roubles, dollars, euros
 const readUsageLimitTimeout = 10 * time.Second
 
-func ExtendLimitsHandlerFunc(paymentProviderToken string) service.ArgHandlerFunc {
+func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var o Order
 		err = json.Unmarshal([]byte(args[0]), &o)

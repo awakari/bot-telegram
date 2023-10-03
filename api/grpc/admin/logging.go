@@ -3,7 +3,7 @@ package admin
 import (
 	"context"
 	"fmt"
-	"github.com/awakari/client-sdk-go/api/grpc/subject"
+	"github.com/awakari/client-sdk-go/model/usage"
 	"log/slog"
 	"time"
 )
@@ -20,7 +20,7 @@ func NewServiceLogging(svc Service, log *slog.Logger) Service {
 	}
 }
 
-func (sl serviceLogging) SetLimits(ctx context.Context, groupId, userId string, subj subject.Subject, count int64, expires time.Time) (err error) {
+func (sl serviceLogging) SetLimits(ctx context.Context, groupId, userId string, subj usage.Subject, count int64, expires time.Time) (err error) {
 	err = sl.svc.SetLimits(ctx, groupId, userId, subj, count, expires)
 	switch err {
 	case nil:
