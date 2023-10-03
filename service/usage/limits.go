@@ -3,7 +3,6 @@ package usage
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/service"
@@ -68,7 +67,7 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.Handl
 		if err == nil {
 			cle := currentLimit.Expires.UTC()
 			if !cle.IsZero() && cle.After(time.Now().UTC()) {
-				err = errors.New(
+				err = tgCtx.Accept(
 					fmt.Sprintf(
 						"can not apply new limit, current is not expired yet (expires: %s)",
 						cle.Format(time.RFC3339),
