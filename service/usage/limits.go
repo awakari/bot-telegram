@@ -1,11 +1,16 @@
 package usage
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
+	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"strconv"
 	"time"
 )
 
@@ -17,38 +22,65 @@ const fmtUsageLimit = `<pre>Usage:
 </pre>`
 
 const subCurrencyFactor = 100 // this is valid for roubles, dollars, euros
+const readUsageLimitTimeout = 10 * time.Second
 
 func ExtendLimitsHandlerFunc(paymentProviderToken string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		// TODO check the calculation and limits correctness 1st
 		var o Order
 		err = json.Unmarshal([]byte(args[0]), &o)
-		invoice := telebot.Invoice{
-			Title:       "Invoice",
-			Description: "Usage Limit Increase",
-			Payload:     args[0],
-			Currency:    o.Price.Unit,
-			Prices: []telebot.Price{
-				{
-					Label:  formatUsageSubject(o.Limit.Subject),
-					Amount: int(o.Price.Total * subCurrencyFactor),
-				},
-			},
-			Token:     paymentProviderToken,
-			Total:     int(o.Price.Total * subCurrencyFactor),
-			NeedEmail: true,
-			SendEmail: true,
+		if err == nil {
+			err = o.validate()
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		if err == nil {
+			invoice := telebot.Invoice{
+				Title:       "Invoice",
+				Description: "Usage Limit Increase",
+				Payload:     args[0],
+				Currency:    o.Price.Unit,
+				Prices: []telebot.Price{
+					{
+						Label:  formatUsageSubject(o.Limit.Subject),
+						Amount: int(o.Price.Total * subCurrencyFactor),
+					},
+				},
+				Token:     paymentProviderToken,
+				Total:     int(o.Price.Total * subCurrencyFactor),
+				NeedEmail: true,
+				SendEmail: true,
+			}
+			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		}
 		return
 	}
 }
 
-func ExtendLimitsPreCheckout(groupId string) telebot.HandlerFunc {
+func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		pcq := tgCtx.PreCheckoutQuery()
-		fmt.Printf("PreCheckoutQuery for %d:\n%s", pcq.Sender.ID, pcq.Payload)
-		err = tgCtx.Accept()
+		userId := strconv.FormatInt(pcq.Sender.ID, 10)
+		var o Order
+		err = json.Unmarshal([]byte(pcq.Payload), &o)
+		var currentLimit usage.Limit
+		if err == nil {
+			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
+			ctx = metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+			defer cancel()
+			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, o.Limit.Subject)
+		}
+		if err == nil {
+			cle := currentLimit.Expires.UTC()
+			if !cle.IsZero() && cle.After(time.Now().UTC()) {
+				err = errors.New(
+					fmt.Sprintf(
+						"can not apply new limit, current is not expired yet (expires: %s)",
+						cle.Format(time.RFC3339),
+					),
+				)
+			}
+		}
+		if err == nil {
+			err = tgCtx.Accept()
+		}
 		return
 	}
 }
