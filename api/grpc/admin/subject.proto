@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package awakari.api.admin;
 
-option go_package = "api/grpc/admin";
+option go_package = "github.com/bot-telegram/api/grpc/admin";
 
 enum Subject {
   Undefined = 0;

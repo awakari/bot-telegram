@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/awakari/bot-telegram/api/grpc/subject"
 	"github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +33,7 @@ func (svc service) SetLimits(ctx context.Context, groupId, userId string, subj u
 	req := SetLimitsRequest{
 		GroupId: groupId,
 		UserId:  userId,
-		Subj:    subject.Subject(subj),
+		Subj:    Subject(subj),
 		Count:   count,
 		Expires: timestamppb.New(expires.UTC()),
 	}
