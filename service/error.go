@@ -6,7 +6,7 @@ func ErrorHandlerFunc(h telebot.HandlerFunc, kbd *telebot.ReplyMarkup) telebot.H
 	return func(ctx telebot.Context) (err error) {
 		err = h(ctx)
 		if err != nil {
-			err = ctx.Send(err.Error(), kbd)
+			_ = ctx.Send(err.Error(), kbd)
 		}
 		return
 	}
