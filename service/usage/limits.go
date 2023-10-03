@@ -85,11 +85,10 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.Handl
 
 func ExtendLimits(clientAdmin admin.Service, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		q := tgCtx.Update().ShippingQuery
+		p := tgCtx.Message().Payment
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var o Order
-		fmt.Printf("Query:\n%+v\nPayload:\n%s", q, q.Payload)
-		err = json.Unmarshal([]byte(q.Payload), &o)
+		err = json.Unmarshal([]byte(p.Payload), &o)
 		if err == nil {
 			expires := time.Now().Add(time.Duration(o.Limit.TimeDays) * time.Hour * 24)
 			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, o.Limit.Subject, int64(o.Limit.Count), expires)
