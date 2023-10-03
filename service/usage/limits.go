@@ -86,7 +86,7 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.Handl
 func ExtendLimits(clientAdmin admin.Service, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		q := tgCtx.Update().ShippingQuery
-		userId := strconv.FormatInt(q.Sender.ID, 10)
+		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var o Order
 		err = json.Unmarshal([]byte(q.Payload), &o)
 		if err == nil {
