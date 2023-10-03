@@ -88,6 +88,7 @@ func ExtendLimits(clientAdmin admin.Service, groupId string) telebot.HandlerFunc
 		q := tgCtx.Update().ShippingQuery
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var o Order
+		fmt.Printf("Query:\n%+v\nPayload:\n%s", q, q.Payload)
 		err = json.Unmarshal([]byte(q.Payload), &o)
 		if err == nil {
 			expires := time.Now().Add(time.Duration(o.Limit.TimeDays) * time.Hour * 24)
