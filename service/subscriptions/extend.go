@@ -84,6 +84,7 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 				Token: paymentProviderToken,
 				Total: int(float64(countDays) * pricePerDay * service.SubCurrencyFactor),
 			}
+			err = tgCtx.Send("To proceed, please pay the below invoice", kbd)
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
 		return
