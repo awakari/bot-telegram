@@ -12,6 +12,7 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 const CmdDetails = "details"
@@ -19,7 +20,7 @@ const CmdDetails = "details"
 const msgFmtDetails = `Subscription Details:
 Id: <pre>%s</pre>
 Description: <pre>%s</pre>
-Enabled: <pre>%t</pre>
+Expires: <pre>%s</pre>
 Condition:
 <pre>%s</pre>`
 
@@ -65,7 +66,14 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			rows = append(rows, m.Row(btns...))
 			m.Inline(rows...)
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
-			_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, sd.Enabled, condJsonTxt), m, telebot.ModeHTML)
+			var expires string
+			switch {
+			case sd.Expires.IsZero():
+				expires = "never"
+			default:
+				expires = sd.Expires.Format(time.RFC3339)
+			}
+			_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, expires, condJsonTxt), m, telebot.ModeHTML)
 		}
 		return
 	}
