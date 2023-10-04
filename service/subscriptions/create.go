@@ -9,7 +9,9 @@ import (
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"regexp"
@@ -24,6 +26,7 @@ const ReqSubCreateBasic = "sub_create_basic"
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
+var errLimitReached = errors.New("subscription count limit reached")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Subscription created, next: 
@@ -62,9 +65,7 @@ func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 		}
 		var subId string
 		if err == nil {
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-			subId, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
+			subId, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
 			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), kbd, telebot.ModeHTML)
@@ -76,9 +77,7 @@ func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 }
 
 func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
-	return func(ctx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(ctx.Sender().ID, 10)
+	return func(tgCtx telebot.Context, args ...string) (err error) {
 		data := args[0]
 		// TODO: maybe fix this double decoding/encoding of the payload with copy paste decode code
 		var req subscriptions.CreateRequest
@@ -88,24 +87,40 @@ func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHa
 			cond, err = decodeCondition(req.Cond)
 		}
 		//
-		var subData subscription.Data
+		var sd subscription.Data
 		if err == nil {
-			subData.Condition = cond
-			subData.Description = req.Description
-			subData.Enabled = req.Enabled
-			err = validateSubscriptionData(subData)
+			sd.Condition = cond
+			sd.Description = req.Description
+			sd.Enabled = req.Enabled
+			err = validateSubscriptionData(sd)
 		}
 		var subId string
 		if err == nil {
-			subId, err = clientAwk.CreateSubscription(groupIdCtx, userId, subData)
+			subId, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
-			err = ctx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
+			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
 		return
 	}
+}
+
+func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subscription.Data) (id string, err error) {
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
+	switch status.Code(err) {
+	case codes.ResourceExhausted:
+		err = fmt.Errorf(
+			"%w, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
+			errLimitReached,
+			service.LabelLimitIncrease,
+			service.LabelSubList,
+		)
+	}
+	return
 }
 
 func decodeCondition(src *subscriptions.Condition) (dst condition.Condition, err error) {

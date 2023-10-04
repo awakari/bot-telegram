@@ -104,7 +104,7 @@ func formatUsageSubject(subj usage.Subject) (s string) {
 	case usage.SubjectPublishEvents:
 		s = "Message Daily Publications"
 	case usage.SubjectSubscriptions:
-		s = "Enabled Subscriptions Count"
+		s = "Subscriptions Count"
 	default:
 		s = "undefined"
 	}
