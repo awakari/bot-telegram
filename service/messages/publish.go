@@ -2,13 +2,16 @@ package messages
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"strconv"
@@ -18,11 +21,12 @@ const ReqMsgPubBasic = "msg_pub_basic"
 
 const attrKeyAuthor = "author"
 const attrKeyMsgId = "telegrammessageid"
-const attrKeyUpdId = "telegramupdateid"
 const attrValType = "com.github.awakari.bot-telegram"
 const attrValSpecVersion = "1.0"
 const fmtLinkUser = "tg://user?id=%d"
 const fmtUserName = "%s %s"
+
+var errLimitReached = errors.New("message daily publishing limit reached")
 
 var publishBasicMarkup = &telebot.ReplyMarkup{
 	ForceReply:  true,
@@ -46,7 +50,7 @@ func PublishBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tel
 		if err == nil {
 			defer w.Close()
 			evt = toCloudEvent(sender, tgCtx.Message(), args[1])
-			ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
+			ackCount, err = publish(tgCtx, w, evt)
 		}
 		if err == nil {
 			switch ackCount {
@@ -102,7 +106,7 @@ func PublishCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgH
 			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().ID)
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = attrValType
-			ackCount, err = w.WriteBatch([]*pb.CloudEvent{&evt})
+			ackCount, err = publish(tgCtx, w, &evt)
 		}
 		if err == nil {
 			switch ackCount {
@@ -114,4 +118,17 @@ func PublishCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgH
 		}
 		return
 	}
+}
+
+func publish(tgCtx telebot.Context, w model.Writer[*pb.CloudEvent], evt *pb.CloudEvent) (ackCount uint32, err error) {
+	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
+	if ackCount == 0 && status.Code(err) == codes.ResourceExhausted {
+		err = fmt.Errorf(
+			"%s, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
+			errLimitReached,
+			service.LabelLimitIncrease,
+			service.LabelMsgDetails,
+		)
+	}
+	return
 }
