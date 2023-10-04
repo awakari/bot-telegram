@@ -69,11 +69,11 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 				Prices: []telebot.Price{
 					{
 						Label:  fmt.Sprintf("Add %d days to the subscription %s", countDays, subId),
-						Amount: int(pricePerDay * service.SubCurrencyFactor),
+						Amount: int(float64(countDays) * pricePerDay * service.SubCurrencyFactor),
 					},
 				},
 				Token: paymentProviderToken,
-				Total: int(pricePerDay * service.SubCurrencyFactor),
+				Total: int(float64(countDays) * pricePerDay * service.SubCurrencyFactor),
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice, kbd)
 		}

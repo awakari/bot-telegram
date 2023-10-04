@@ -33,22 +33,12 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
-			rows := []telebot.Row{
-				m.Row(
-					telebot.Btn{
-						Text: "🔗 Link Chat",
-						URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?startgroup=%s", subId),
-					},
-					telebot.Btn{
-						Text: "❌ Delete",
-						Data: fmt.Sprintf("%s %s", CmdDelete, subId),
-					},
-				),
-			}
+			var rows []telebot.Row
+			// row 1
 			btns := []telebot.Btn{
 				{
-					Text: "🏷 Describe",
-					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+					Text: "🔗 Link Chat",
+					URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?startgroup=%s", subId),
 				},
 			}
 			if !sd.Expires.IsZero() {
@@ -58,6 +48,18 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 				})
 			}
 			rows = append(rows, m.Row(btns...))
+			// row 2
+			rows = append(rows, m.Row(
+				telebot.Btn{
+					Text: "🏷 Describe",
+					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+				},
+				telebot.Btn{
+					Text: "❌ Delete",
+					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
+				},
+			),
+			)
 			m.Inline(rows...)
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
 			var expires string

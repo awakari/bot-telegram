@@ -18,6 +18,7 @@ const SubCurrencyFactor = 100 // this is valid for roubles, dollars, euros
 func PreCheckout(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		q := tgCtx.PreCheckoutQuery()
+		fmt.Printf("PRE-CHECKOUT: %+v\n", q)
 		var o Order
 		err = json.Unmarshal([]byte(q.Payload), &o)
 		if err == nil {
