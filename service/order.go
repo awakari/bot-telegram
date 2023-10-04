@@ -43,7 +43,7 @@ func Payment(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 			h, hOk := handlers[o.Purpose]
 			switch hOk {
 			case true:
-				err = h(tgCtx, p.Payload)
+				err = h(tgCtx, o.Payload)
 			default:
 				err = errors.New(fmt.Sprintf("unknown payment purpose key: %s", o.Purpose))
 			}
