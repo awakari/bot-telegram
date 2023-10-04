@@ -30,11 +30,15 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 		if err == nil {
 			err = op.validate()
 		}
+		var orderPayloadData []byte
+		if err == nil {
+			orderPayloadData, err = json.Marshal(op.Limit)
+		}
 		var orderData []byte
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeLimits,
-				Payload: args[0],
+				Payload: string(orderPayloadData),
 			}
 			orderData, err = json.Marshal(o)
 		}
@@ -63,14 +67,14 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
-		var op OrderPayload
-		err = json.Unmarshal([]byte(args[0]), &op)
+		var ol OrderLimit
+		err = json.Unmarshal([]byte(args[0]), &ol)
 		var currentLimit usage.Limit
 		if err == nil {
 			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
 			ctx = metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 			defer cancel()
-			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, op.Limit.Subject)
+			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, ol.Subject)
 		}
 		if err == nil {
 			cle := currentLimit.Expires.UTC()
@@ -93,11 +97,11 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHa
 func ExtendLimits(clientAdmin admin.Service, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var op OrderPayload
-		err = json.Unmarshal([]byte(args[0]), &op)
+		var ol OrderLimit
+		err = json.Unmarshal([]byte(args[0]), &ol)
 		if err == nil {
-			expires := time.Now().Add(time.Duration(op.Limit.TimeDays) * time.Hour * 24)
-			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, op.Limit.Subject, int64(op.Limit.Count), expires)
+			expires := time.Now().Add(time.Duration(ol.TimeDays) * time.Hour * 24)
+			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, ol.Subject, int64(ol.Count), expires)
 		}
 		if err == nil {
 			err = tgCtx.Send("Limit has been successfully increased")

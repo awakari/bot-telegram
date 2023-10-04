@@ -108,11 +108,9 @@ func ExtendPayment(clientAwk api.Client, groupId string) service.ArgHandlerFunc 
 		err = json.Unmarshal([]byte(args[0]), &op)
 		var sd subscription.Data
 		if err == nil {
-			fmt.Printf("add %d days\n", op.DaysAdd)
 			sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, op.SubId)
 		}
 		if err == nil {
-			fmt.Printf("old expires: %s\n", sd.Expires.Format(time.RFC3339))
 			now := time.Now().UTC()
 			if sd.Expires.Before(now) {
 				sd.Expires = now
