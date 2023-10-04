@@ -51,16 +51,10 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 				},
 			}
-			switch sd.Enabled {
-			case false:
+			if !sd.Expires.IsZero() {
 				btns = append(btns, telebot.Btn{
-					Text: "🔉 Enable",
-					Data: fmt.Sprintf("%s %s", CmdEnable, subId),
-				})
-			default:
-				btns = append(btns, telebot.Btn{
-					Text: "🔇 Disable",
-					Data: fmt.Sprintf("%s %s", CmdDisable, subId),
+					Text: "▲ Extend",
+					Data: fmt.Sprintf("%s %s", "extend", subId),
 				})
 			}
 			rows = append(rows, m.Row(btns...))
