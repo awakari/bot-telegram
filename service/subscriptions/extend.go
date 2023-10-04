@@ -1,12 +1,17 @@
 package subscriptions
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/model/subscription"
+	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 type ExtendOrder struct {
@@ -80,6 +85,40 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 				Total: int(float64(countDays) * pricePerDay * service.SubCurrencyFactor),
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		}
+		return
+	}
+}
+
+func ExtendPreCheckout() service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		if err == nil {
+			err = tgCtx.Accept()
+		}
+		return
+	}
+}
+
+func ExtendPayment(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		var op ExtendOrder
+		err = json.Unmarshal([]byte(args[0]), &op)
+		var sd subscription.Data
+		if err == nil {
+			sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, op.SubId)
+		}
+		if err == nil {
+			now := time.Now().UTC()
+			if sd.Expires.Before(now) {
+				sd.Expires = now
+			}
+			sd.Expires = sd.Expires.Add(time.Duration(op.DaysAdd) * 24 * time.Hour)
+			err = clientAwk.UpdateSubscription(groupIdCtx, userId, op.SubId, sd)
+		}
+		if err == nil {
+			err = tgCtx.Send("Subscription has been successfully extended")
 		}
 		return
 	}

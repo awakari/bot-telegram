@@ -77,10 +77,11 @@ func main() {
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, cfg.Api.GroupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendReplyHandlerFunc(cfg.Api.PaymentProviderToken, menuKbd),
+		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits: usage.ExtendLimits(svcAdmin, cfg.Api.GroupId),
+		usage.PurposeLimits:         usage.ExtendLimits(svcAdmin, cfg.Api.GroupId),
+		subscriptions.PurposeExtend: subscriptions.ExtendPayment(clientAwk, cfg.Api.GroupId),
 	}
 
 	// init Telegram bot
