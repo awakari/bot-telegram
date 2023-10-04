@@ -49,14 +49,18 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 				err = errors.New(fmt.Sprintf("invalid days count, should be %d-%d", daysMin, daysMax))
 			}
 		}
+		var orderPayloadData []byte
+		if err == nil {
+			orderPayloadData, err = json.Marshal(ExtendOrder{
+				SubId:   subId,
+				DaysAdd: countDays,
+			})
+		}
 		var orderData []byte
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeExtend,
-				Payload: ExtendOrder{
-					SubId:   subId,
-					DaysAdd: countDays,
-				},
+				Payload: string(orderPayloadData),
 			}
 			orderData, err = json.Marshal(o)
 		}

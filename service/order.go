@@ -9,7 +9,7 @@ import (
 
 type Order struct {
 	Purpose string `json:"purpose"`
-	Payload any    `json:"payload"`
+	Payload string `json:"payload"`
 }
 
 const Currency = "EUR"
@@ -25,7 +25,7 @@ func PreCheckout(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 			h, hOk := handlers[o.Purpose]
 			switch hOk {
 			case true:
-				err = h(tgCtx, q.Payload)
+				err = h(tgCtx, o.Payload)
 			default:
 				err = errors.New(fmt.Sprintf("unknown pre-checkout purpose key: %s", o.Purpose))
 			}

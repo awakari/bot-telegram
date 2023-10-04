@@ -34,7 +34,7 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeLimits,
-				Payload: op,
+				Payload: args[0],
 			}
 			orderData, err = json.Marshal(o)
 		}
@@ -62,14 +62,14 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
-		var o service.Order
-		err = json.Unmarshal([]byte(args[0]), &o)
+		var op OrderPayload
+		err = json.Unmarshal([]byte(args[0]), &op)
 		var currentLimit usage.Limit
 		if err == nil {
 			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
 			ctx = metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 			defer cancel()
-			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, o.Payload.(OrderPayload).Limit.Subject)
+			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, op.Limit.Subject)
 		}
 		if err == nil {
 			cle := currentLimit.Expires.UTC()
@@ -92,10 +92,9 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHa
 func ExtendLimits(clientAdmin admin.Service, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var o service.Order
-		err = json.Unmarshal([]byte(args[0]), &o)
+		var op OrderPayload
+		err = json.Unmarshal([]byte(args[0]), &op)
 		if err == nil {
-			op := o.Payload.(OrderPayload)
 			expires := time.Now().Add(time.Duration(op.Limit.TimeDays) * time.Hour * 24)
 			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, op.Limit.Subject, int64(op.Limit.Count), expires)
 		}
