@@ -114,6 +114,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 	//
 	var existingIds []string
 	existingIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, 1, "")
+	fmt.Printf("existing subscription ids: %+v\n", existingIds)
 	if err == nil {
 		switch len(existingIds) {
 		case 0: // leave expires = 0 (means "never") when user has no subscriptions
@@ -122,6 +123,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		}
 	}
 	//
+	fmt.Printf("new subscription expiration: %s\n", sd.Expires)
 	if err == nil {
 		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
 		switch {
