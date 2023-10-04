@@ -122,13 +122,18 @@ func PublishCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgH
 
 func publish(tgCtx telebot.Context, w model.Writer[*pb.CloudEvent], evt *pb.CloudEvent) (ackCount uint32, err error) {
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
-	if ackCount == 0 && status.Code(err) == codes.ResourceExhausted {
-		err = fmt.Errorf(
-			"%s, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
-			errLimitReached,
-			service.LabelLimitIncrease,
-			service.LabelMsgDetails,
-		)
+	if ackCount == 0 {
+		switch status.Code(err) {
+		case codes.ResourceExhausted:
+			err = fmt.Errorf(
+				"%s, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
+				errLimitReached,
+				service.LabelLimitIncrease,
+				service.LabelMsgDetails,
+			)
+		default:
+			fmt.Println(status.Code(err))
+		}
 	}
 	return
 }
