@@ -21,7 +21,8 @@ import (
 
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
-const expiresDefault = time.Hour * 24 * 30 // ~ month
+const expiresDefaultDays = 30
+const expiresDefaultDuration = time.Hour * 24 * expiresDefaultDays // ~ month
 
 const ReqSubCreateBasic = "sub_create_basic"
 
@@ -118,7 +119,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		switch len(existingIds) {
 		case 0: // leave expires = 0 (means "never") when user has no subscriptions
 		default:
-			sd.Expires = time.Now().Add(expiresDefault) // expire in a fixed period
+			sd.Expires = time.Now().Add(expiresDefaultDuration) // expire in a fixed period
 		}
 	}
 	//

@@ -6,7 +6,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/usage"
 )
 
-type Order struct {
+type OrderPayload struct {
 	Limit OrderLimit `json:"limit"`
 	Price OrderPrice `json:"price"`
 }
@@ -28,7 +28,7 @@ const orderLimitCountMin = 2
 
 var errInvalidOrder = errors.New("invalid order")
 
-func (o Order) validate() (err error) {
+func (o OrderPayload) validate() (err error) {
 	if err == nil && (o.Limit.TimeDays < orderLimitTimeDaysMin || o.Limit.TimeDays > orderLimitTimeDaysMax) {
 		err = fmt.Errorf(
 			"%w: limit duration is %d days, should be in the range [%d; %d]",

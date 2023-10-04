@@ -14,36 +14,44 @@ import (
 	"time"
 )
 
+const PurposeLimits = "limits"
+
 const fmtUsageLimit = `<pre>Usage:
   Count:   %d
   Limit:   %d
   Expires: %s
 </pre>`
-
-const subCurrencyFactor = 100 // this is valid for roubles, dollars, euros
 const readUsageLimitTimeout = 10 * time.Second
 
 func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		var o Order
-		err = json.Unmarshal([]byte(args[0]), &o)
+		var op OrderPayload
+		err = json.Unmarshal([]byte(args[0]), &op)
 		if err == nil {
-			err = o.validate()
+			err = op.validate()
+		}
+		var orderData []byte
+		if err == nil {
+			o := service.Order{
+				Purpose: PurposeLimits,
+				Payload: op,
+			}
+			orderData, err = json.Marshal(o)
 		}
 		if err == nil {
 			invoice := telebot.Invoice{
 				Title:       "Usage Limit Increase",
-				Description: formatUsageSubject(o.Limit.Subject),
-				Payload:     args[0],
-				Currency:    o.Price.Unit,
+				Description: formatUsageSubject(op.Limit.Subject),
+				Payload:     string(orderData),
+				Currency:    op.Price.Unit,
 				Prices: []telebot.Price{
 					{
-						Label:  formatUsageSubject(o.Limit.Subject),
-						Amount: int(o.Price.Total * subCurrencyFactor),
+						Label:  formatUsageSubject(op.Limit.Subject),
+						Amount: int(op.Price.Total * service.SubCurrencyFactor),
 					},
 				},
 				Token: paymentProviderToken,
-				Total: int(o.Price.Total * subCurrencyFactor),
+				Total: int(op.Price.Total * service.SubCurrencyFactor),
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
@@ -51,18 +59,17 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 	}
 }
 
-func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.HandlerFunc {
-	return func(tgCtx telebot.Context) (err error) {
-		q := tgCtx.PreCheckoutQuery()
-		userId := strconv.FormatInt(q.Sender.ID, 10)
-		var o Order
-		err = json.Unmarshal([]byte(q.Payload), &o)
+func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
+		var o service.Order
+		err = json.Unmarshal([]byte(args[0]), &o)
 		var currentLimit usage.Limit
 		if err == nil {
 			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
 			ctx = metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 			defer cancel()
-			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, o.Limit.Subject)
+			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, o.Payload.(OrderPayload).Limit.Subject)
 		}
 		if err == nil {
 			cle := currentLimit.Expires.UTC()
@@ -82,15 +89,15 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) telebot.Handl
 	}
 }
 
-func ExtendLimits(clientAdmin admin.Service, groupId string) telebot.HandlerFunc {
-	return func(tgCtx telebot.Context) (err error) {
-		p := tgCtx.Message().Payment
+func ExtendLimits(clientAdmin admin.Service, groupId string) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var o Order
-		err = json.Unmarshal([]byte(p.Payload), &o)
+		var o service.Order
+		err = json.Unmarshal([]byte(args[0]), &o)
 		if err == nil {
-			expires := time.Now().Add(time.Duration(o.Limit.TimeDays) * time.Hour * 24)
-			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, o.Limit.Subject, int64(o.Limit.Count), expires)
+			op := o.Payload.(OrderPayload)
+			expires := time.Now().Add(time.Duration(op.Limit.TimeDays) * time.Hour * 24)
+			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, op.Limit.Subject, int64(op.Limit.Count), expires)
 		}
 		if err == nil {
 			err = tgCtx.Send("Limit has been successfully increased")

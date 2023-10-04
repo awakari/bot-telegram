@@ -55,8 +55,7 @@ func main() {
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, cfg.Api.GroupId),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, cfg.Api.GroupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, cfg.Api.GroupId),
-		subscriptions.CmdDisable:     subscriptions.DisableHandlerFunc(clientAwk, cfg.Api.GroupId),
-		subscriptions.CmdEnable:      subscriptions.EnableHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, cfg.Api.GroupId),
@@ -74,6 +73,14 @@ func main() {
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
+		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Api.PaymentProviderToken, menuKbd),
+	}
+	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
+		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, cfg.Api.GroupId),
+		subscriptions.PurposeExtend: subscriptions.ExtendReplyHandlerFunc(cfg.Api.PaymentProviderToken, menuKbd),
+	}
+	paymentHandlers := map[string]service.ArgHandlerFunc{
+		usage.PurposeLimits: usage.ExtendLimits(svcAdmin, cfg.Api.GroupId),
 	}
 
 	// init Telegram bot
@@ -108,8 +115,8 @@ func main() {
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
-	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(usage.ExtendLimitsPreCheckout(clientAwk, cfg.Api.GroupId), menuKbd))
-	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(usage.ExtendLimits(svcAdmin, cfg.Api.GroupId), menuKbd))
+	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
+	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
 
 	b.Start()
 }

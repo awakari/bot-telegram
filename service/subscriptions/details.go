@@ -54,9 +54,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			if !sd.Expires.IsZero() {
 				btns = append(btns, telebot.Btn{
 					Text: "▲ Extend",
-					WebApp: &telebot.WebApp{
-						URL: fmt.Sprintf("https://awakari.app/price-calc-sub-extend.html?expires=%s&subId=%s", sd.Expires.Format(time.DateOnly), subId),
-					},
+					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
 				})
 			}
 			rows = append(rows, m.Row(btns...))
