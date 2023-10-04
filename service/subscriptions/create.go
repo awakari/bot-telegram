@@ -17,10 +17,12 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const limitRootGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
+const expiresDefault = time.Hour * 24 * 30 // ~ month
 
 const ReqSubCreateBasic = "sub_create_basic"
 
@@ -110,15 +112,28 @@ func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHa
 func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subscription.Data) (id string, err error) {
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-	id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
-	switch status.Code(err) {
-	case codes.ResourceExhausted:
-		err = fmt.Errorf(
-			"%w, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
-			errLimitReached,
-			service.LabelLimitIncrease,
-			service.LabelSubList,
-		)
+	//
+	var existingIds []string
+	existingIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, 1, "")
+	if err == nil {
+		switch len(existingIds) {
+		case 0: // leave expires = 0 (means "never") when user has no subscriptions
+		default:
+			sd.Expires = time.Now().Add(expiresDefault) // expire in a fixed period
+		}
+	}
+	//
+	if err == nil {
+		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
+		switch status.Code(err) {
+		case codes.ResourceExhausted:
+			err = fmt.Errorf(
+				"%w, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
+				errLimitReached,
+				service.LabelLimitIncrease,
+				service.LabelSubList,
+			)
+		}
 	}
 	return
 }
