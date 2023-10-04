@@ -39,6 +39,7 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 			orderData, err = json.Marshal(o)
 		}
 		if err == nil {
+			fmt.Printf("invoice payload: %s\n", string(orderData))
 			invoice := telebot.Invoice{
 				Title:       "Usage Limit Increase",
 				Description: formatUsageSubject(op.Limit.Subject),
