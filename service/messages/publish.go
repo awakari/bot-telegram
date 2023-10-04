@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -123,8 +123,8 @@ func PublishCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgH
 func publish(tgCtx telebot.Context, w model.Writer[*pb.CloudEvent], evt *pb.CloudEvent) (ackCount uint32, err error) {
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	if ackCount == 0 {
-		switch status.Code(err) {
-		case codes.ResourceExhausted:
+		switch {
+		case errors.Is(err, limits.ErrReached):
 			err = fmt.Errorf(
 				"%s, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
 				errLimitReached,

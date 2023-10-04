@@ -6,12 +6,11 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"regexp"
@@ -125,8 +124,8 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 	//
 	if err == nil {
 		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
-		switch status.Code(err) {
-		case codes.ResourceExhausted:
+		switch {
+		case errors.Is(err, limits.ErrReached):
 			err = fmt.Errorf(
 				"%w, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
 				errLimitReached,
