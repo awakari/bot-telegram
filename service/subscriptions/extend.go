@@ -145,7 +145,7 @@ func ExtendPaid(
 			})
 		}
 		if err == nil {
-			err = tgCtx.Send("Subscription has been successfully extended")
+			err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd))
 		}
 		return
 	}

@@ -34,7 +34,7 @@ const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
 const msgLimitReached = `Message daily publishing limit reached. 
 Payment is required to proceed.
-The message is saved for 1 week.`
+Note: the message is being kept for 1 week.`
 const msgFmtPublishMissing = "message to publish is missing: %s"
 const msgFmtRunOnceFailed = "failed to publish event: %s, cause: %s, retrying in: %s"
 

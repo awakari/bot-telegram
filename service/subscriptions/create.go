@@ -32,7 +32,7 @@ var errLimitReached = errors.New("subscription count limit reached")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Subscription created, next: 
-1. Create a group chat for the created subscription. 
+1. Create a target group chat to receive the matching messages. 
 2. <a href="https://t.me/AwakariSubscriptionsBot?startgroup=%s">Link</a> the subscription to the group.`
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {

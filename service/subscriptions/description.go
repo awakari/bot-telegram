@@ -13,7 +13,6 @@ import (
 )
 
 const CmdDescription = "description"
-
 const ReqDescribe = "sub_describe"
 
 func DescriptionHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
@@ -53,7 +52,7 @@ func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 		}
 		if err == nil {
 			// force reply removes the keyboard, hence don't forget to restore it
-			err = tgCtx.Send("Subscription description updated", kbd)
+			err = tgCtx.Send(fmt.Sprintf("Subscription description changed to \"%s\"", descr), kbd)
 		}
 		return
 	}

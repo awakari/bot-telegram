@@ -6,7 +6,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const msgStartPrivate = "Use the keyboard buttons."
+const msgStartPrivate = "Use the reply keyboard buttons."
 
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"

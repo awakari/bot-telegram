@@ -22,7 +22,7 @@ const PurposeLimits = "limits"
 const msgFmtUsageLimit = `<pre>Usage:
   Count:   %d
   Limit:   %d
-  Expires: %s
+    Expires: %s
 </pre>`
 const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
 
