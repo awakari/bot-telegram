@@ -11,9 +11,9 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
-	"github.com/prometheus/common/log"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -119,7 +119,12 @@ func ExtendPreCheckout(clientAwk api.Client, groupId string, cfgPayment config.P
 	}
 }
 
-func ExtendPaid(clientAwk api.Client, groupId string, cfgBackoff config.BackoffConfig) service.ArgHandlerFunc {
+func ExtendPaid(
+	clientAwk api.Client,
+	groupId string,
+	log *slog.Logger,
+	cfgBackoff config.BackoffConfig,
+) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var op ExtendOrder
 		err = json.Unmarshal([]byte(args[0]), &op)

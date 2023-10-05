@@ -11,9 +11,9 @@ import (
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
-	"github.com/prometheus/common/log"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -103,7 +103,12 @@ func ExtendLimitsPreCheckout(
 	}
 }
 
-func ExtendLimitsPaid(clientAdmin admin.Service, groupId string, cfgBackoff config.BackoffConfig) service.ArgHandlerFunc {
+func ExtendLimitsPaid(
+	clientAdmin admin.Service,
+	groupId string,
+	log *slog.Logger,
+	cfgBackoff config.BackoffConfig,
+) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var ol OrderLimit

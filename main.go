@@ -102,9 +102,9 @@ func main() {
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId),
-		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log),
+		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId, log, cfg.Payment.Backoff),
+		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
+		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}
 
 	// init Telegram bot
