@@ -8,6 +8,7 @@ import (
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
+	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
@@ -45,6 +46,7 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 		if err == nil {
 			fmt.Printf("invoice payload: %s\n", string(orderData))
 			invoice := telebot.Invoice{
+				Start:       uuid.NewString(),
 				Title:       "Usage Limit Increase",
 				Description: formatUsageSubject(op.Limit.Subject),
 				Payload:     string(orderData),

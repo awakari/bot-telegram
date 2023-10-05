@@ -51,37 +51,39 @@ func main() {
 	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
 	// init handlers
+	groupId := cfg.Api.GroupId
+	paymentProviderToken := cfg.Api.PaymentProviderToken
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, cfg.Api.GroupId),
-		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, cfg.Api.GroupId),
-		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, cfg.Api.GroupId),
+		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, groupId),
+		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
+		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, cfg.Api.GroupId),
-		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, cfg.Api.GroupId),
-		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(cfg.Api.PaymentProviderToken),
+		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId),
+		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
+		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(paymentProviderToken),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, cfg.Api.GroupId),
+		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
-		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, cfg.Api.GroupId),
+		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelMsgSendBasic:   messages.PublishBasicRequest,
 	}
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
-		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
-		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, cfg.Api.GroupId, menuKbd),
-		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Api.PaymentProviderToken, menuKbd),
+		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(paymentProviderToken, menuKbd),
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, cfg.Api.GroupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(),
+		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId),
+		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.ExtendLimits(svcAdmin, cfg.Api.GroupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendPayment(clientAwk, cfg.Api.GroupId),
+		usage.PurposeLimits:         usage.ExtendLimits(svcAdmin, groupId),
+		subscriptions.PurposeExtend: subscriptions.ExtendPayment(clientAwk, groupId),
 	}
 
 	// init Telegram bot
