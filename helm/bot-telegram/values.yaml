@@ -99,3 +99,22 @@ api:
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4
+payment:
+  backoff:
+    init: 100ms
+    factor: 2
+    limitTotal: 15m
+  currency:
+    code: EUR
+    subFactor: 100
+  preCheckout:
+    timeout: 10s
+  price:
+    messagePublishing:
+      dailyLimit: 0.1
+      extra: 1
+    subscription:
+      countLimit: 0.1
+      extension: 0.1
+  provider:
+    token: payment-provider-token

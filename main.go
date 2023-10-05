@@ -72,7 +72,7 @@ func main() {
 
 	// init handlers
 	groupId := cfg.Api.GroupId
-	paymentProviderToken := cfg.Api.PaymentProviderToken
+	paymentProviderToken := cfg.Payment.Provider.Token
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),

@@ -49,11 +49,40 @@ spec:
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
             - name: API_TELEGRAM_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ "bot-telegram.fullname" }}-tokens"
+                  key: telegram
               value: "{{ .Values.api.telegram.token }}"
             - name: API_PAYMENT_PROVIDER_TOKEN
               value: "{{ .Values.api.payment.provider.token }}"
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
+            - name: PAYMENT_BACKOFF_FACTOR
+              value: "{{ .Values.payment.backoff.factor }}"
+            - name: PAYMENT_BACKOFF_INIT
+              value: "{{ .Values.payment.backoff.init }}"
+            - name: PAYMENT_BACKOFF_LIMIT_TOTAL
+              value: "{{ .Values.payment.backoff.limitTotal }}"
+            - name: PAYMENT_CURRENCY_CODE
+              value: "{{ .Values.payment.currency.code }}"
+            - name: PAYMENT_CURRENCY_SUB_FACTOR
+              value: "{{ .Values.payment.currency.subFactor }}"
+            - name: PAYMENT_PRE_CHECKOUT_TIMEOUT
+              value: "{{ .Values.payment.preCheckout.timeout }}"
+            - name: PAYMENT_PRICE_MESSAGE_PUBLISHING_DAILY_LIMIT
+              value: "{{ .Values.payment.price.messagePublishing.dailyLimit }}"
+            - name: PAYMENT_PRICE_MESSAGE_PUBLISHING_EXTRA
+              value: "{{ .Values.payment.price.messagePublishing.extra }}"
+            - name: PAYMENT_PRICE_SUBSCRIPTION_COUNT_LIMIT
+              value: "{{ .Values.payment.price.subscription.countLimit }}"
+            - name: PAYMENT_PRICE_SUBSCRIPTION_EXTENSION
+              value: "{{ .Values.payment.price.subscription.extension }}"
+            - name: PAYMENT_PROVIDER_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ "bot-telegram.fullname" }}-tokens"
+                  key: payment
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
