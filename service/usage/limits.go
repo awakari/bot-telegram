@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
+	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"github.com/prometheus/common/log"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
@@ -16,14 +19,14 @@ import (
 )
 
 const PurposeLimits = "limits"
-
-const fmtUsageLimit = `<pre>Usage:
+const msgFmtUsageLimit = `<pre>Usage:
   Count:   %d
   Limit:   %d
   Expires: %s
 </pre>`
+const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
 
-func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
+func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var op OrderPayload
 		err = json.Unmarshal([]byte(args[0]), &op)
@@ -46,6 +49,7 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 			"%s: %d x %d days", formatUsageSubject(op.Limit.Subject), op.Limit.Count, op.Limit.TimeDays,
 		)
 		if err == nil {
+			price := int(op.Price.Total * cfgPayment.Currency.SubFactor)
 			invoice := telebot.Invoice{
 				Start:       uuid.NewString(),
 				Title:       fmt.Sprintf("%s limit", formatUsageSubject(op.Limit.Subject)),
@@ -55,11 +59,11 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 				Prices: []telebot.Price{
 					{
 						Label:  label,
-						Amount: int(op.Price.Total * service.SubCurrencyFactor),
+						Amount: price,
 					},
 				},
-				Token: paymentProviderToken,
-				Total: int(op.Price.Total * service.SubCurrencyFactor),
+				Token: cfgPayment.Provider.Token,
+				Total: price,
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
@@ -67,14 +71,16 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 	}
 }
 
-func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
+func ExtendLimitsPreCheckout(
+	clientAwk api.Client, groupId string, cfgPayment config.PaymentConfig,
+) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
 		var ol OrderLimit
 		err = json.Unmarshal([]byte(args[0]), &ol)
 		var currentLimit usage.Limit
 		if err == nil {
-			ctx, cancel := context.WithTimeout(context.TODO(), service.PreCheckoutTimeout)
+			ctx, cancel := context.WithTimeout(context.TODO(), cfgPayment.PreCheckout.Timeout)
 			defer cancel()
 			ctx = metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", groupId)
 			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, ol.Subject)
@@ -97,20 +103,46 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHa
 	}
 }
 
-func ExtendLimits(clientAdmin admin.Service, groupId string) service.ArgHandlerFunc {
+func ExtendLimitsPaid(clientAdmin admin.Service, groupId string, cfgBackoff config.BackoffConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var ol OrderLimit
 		err = json.Unmarshal([]byte(args[0]), &ol)
 		if err == nil {
 			expires := time.Now().Add(time.Duration(ol.TimeDays) * time.Hour * 24)
-			err = clientAdmin.SetLimits(context.TODO(), groupId, userId, ol.Subject, int64(ol.Count), expires)
+			a := extendLimitsAction{
+				clientAdmin: clientAdmin,
+				groupId:     groupId,
+				userId:      userId,
+				ol:          ol,
+				expires:     expires,
+			}
+			b := backoff.NewExponentialBackOff()
+			b.InitialInterval = cfgBackoff.Init
+			b.Multiplier = cfgBackoff.Factor
+			b.MaxElapsedTime = cfgBackoff.LimitTotal
+			err = backoff.RetryNotify(a.runOnce, b, func(err error, d time.Duration) {
+				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, userId, err, d))
+			})
 		}
 		if err == nil {
 			err = tgCtx.Send("Limit has been successfully increased")
 		}
 		return
 	}
+}
+
+type extendLimitsAction struct {
+	clientAdmin admin.Service
+	groupId     string
+	userId      string
+	ol          OrderLimit
+	expires     time.Time
+}
+
+func (a extendLimitsAction) runOnce() (err error) {
+	err = a.clientAdmin.SetLimits(context.TODO(), a.groupId, a.userId, a.ol.Subject, int64(a.ol.Count), a.expires)
+	return
 }
 
 func formatUsageSubject(subj usage.Subject) (s string) {
@@ -133,6 +165,6 @@ func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
 	default:
 		expires = l.Expires.Format(time.RFC3339)
 	}
-	txt = fmt.Sprintf(fmtUsageLimit, u.Count, l.Count, expires)
+	txt = fmt.Sprintf(msgFmtUsageLimit, u.Count, l.Count, expires)
 	return
 }

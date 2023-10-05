@@ -72,7 +72,6 @@ func main() {
 
 	// init handlers
 	groupId := cfg.Api.GroupId
-	paymentProviderToken := cfg.Payment.Provider.Token
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -80,9 +79,9 @@ func main() {
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, paymentProviderToken),
+		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(paymentProviderToken),
+		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(cfg.Payment),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, groupId),
@@ -94,25 +93,27 @@ func main() {
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, paymentProviderToken, menuKbd),
-		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(paymentProviderToken, menuKbd),
+		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
+		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId),
-		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs),
+		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
+		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
+		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.ExtendLimits(svcAdmin, groupId),
-		subscriptions.PurposeExtend: subscriptions.ExtendPayment(clientAwk, groupId),
-		messages.PurposePublish:     messages.PublishPayment(svcMsgs, clientAwkInternal, groupId, log),
+		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId),
+		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId),
+		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log),
 	}
 
 	// init Telegram bot
 	s := telebot.Settings{
 		Client: &http.Client{
 			Transport: &http.Transport{
-				TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
 			},
 		},
 		Poller: &telebot.Webhook{

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/messages"
+	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
@@ -34,7 +35,6 @@ const msgFmtPublished = "Message published, id: <pre>%s</pre>"
 const msgLimitReached = `Message daily publishing limit reached. 
 Payment is required to proceed.
 The message is saved for 1 week.`
-const pricePublish = 1.0
 const msgFmtPublishMissing = "message to publish is missing: %s"
 const msgFmtRunOnceFailed = "failed to publish event: %s, cause: %s, retrying in: %s"
 
@@ -53,7 +53,7 @@ func PublishBasicReplyHandlerFunc(
 	clientAwk api.Client,
 	groupId string,
 	svcMsgs messages.Service,
-	paymentProviderToken string,
+	cfgPayment config.PaymentConfig,
 	kbd *telebot.ReplyMarkup,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
@@ -65,7 +65,7 @@ func PublishBasicReplyHandlerFunc(
 		if err == nil {
 			defer w.Close()
 			evt = toCloudEvent(sender, tgCtx.Message(), args[1])
-			err = publish(tgCtx, w, evt, svcMsgs, paymentProviderToken, kbd)
+			err = publish(tgCtx, w, evt, svcMsgs, cfgPayment, kbd)
 		}
 		return
 	}
@@ -100,7 +100,7 @@ func PublishCustomHandlerFunc(
 	clientAwk api.Client,
 	groupId string,
 	svcMsgs messages.Service,
-	paymentProviderToken string,
+	cfgPayment config.PaymentConfig,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
@@ -117,7 +117,7 @@ func PublishCustomHandlerFunc(
 			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().ID)
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = attrValType
-			err = publish(tgCtx, w, &evt, svcMsgs, paymentProviderToken, nil)
+			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)
 		}
 		return
 	}
@@ -128,14 +128,14 @@ func publish(
 	w model.Writer[*pb.CloudEvent],
 	evt *pb.CloudEvent,
 	svcMsgs messages.Service,
-	paymentProviderToken string,
+	cfgPayment config.PaymentConfig,
 	kbd *telebot.ReplyMarkup,
 ) (err error) {
 	var ackCount uint32
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	switch {
 	case ackCount == 0 && errors.Is(err, limits.ErrReached):
-		ackCount, err = publishPaid(tgCtx, evt, svcMsgs, paymentProviderToken, kbd)
+		ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
 	case ackCount == 1:
 		if kbd == nil {
 			err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
@@ -156,11 +156,11 @@ func publish(
 	return
 }
 
-func publishPaid(
+func publishInvoice(
 	tgCtx telebot.Context,
 	evt *pb.CloudEvent,
 	svcMsgs messages.Service,
-	paymentProviderToken string,
+	cfgPayment config.PaymentConfig,
 	kbd *telebot.ReplyMarkup,
 ) (ackCount uint32, err error) {
 	ackCount, err = svcMsgs.PutBatch(context.TODO(), []*pb.CloudEvent{evt})
@@ -182,15 +182,15 @@ func publishPaid(
 				Title:       "Publish Message",
 				Description: label,
 				Payload:     string(orderData),
-				Currency:    service.Currency,
+				Currency:    cfgPayment.Currency.Code,
 				Prices: []telebot.Price{
 					{
 						Label:  label,
-						Amount: int(pricePublish * service.SubCurrencyFactor),
+						Amount: int(cfgPayment.Price.MessagePublishing.Extra * cfgPayment.Currency.SubFactor),
 					},
 				},
-				Token: paymentProviderToken,
-				Total: int(pricePublish * service.SubCurrencyFactor),
+				Token: cfgPayment.Provider.Token,
+				Total: int(cfgPayment.Price.MessagePublishing.Extra * cfgPayment.Currency.SubFactor),
 			}
 			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 		}
@@ -198,9 +198,9 @@ func publishPaid(
 	return
 }
 
-func PublishPreCheckout(svcMsgs messages.Service) service.ArgHandlerFunc {
+func PublishPreCheckout(svcMsgs messages.Service, cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		ctx, cancel := context.WithTimeout(context.TODO(), service.PreCheckoutTimeout)
+		ctx, cancel := context.WithTimeout(context.TODO(), cfgPayment.PreCheckout.Timeout)
 		defer cancel()
 		evtId := args[0]
 		var evts []*pb.CloudEvent
@@ -217,7 +217,13 @@ func PublishPreCheckout(svcMsgs messages.Service) service.ArgHandlerFunc {
 	}
 }
 
-func PublishPayment(svcMsgs messages.Service, clientAwk api.Client, groupId string, log *slog.Logger) service.ArgHandlerFunc {
+func PublishPaid(
+	svcMsgs messages.Service,
+	clientAwk api.Client,
+	groupId string,
+	log *slog.Logger,
+	cfgBackoff config.BackoffConfig,
+) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		evtId := args[0]
 		var evts []*pb.CloudEvent
@@ -236,6 +242,9 @@ func PublishPayment(svcMsgs messages.Service, clientAwk api.Client, groupId stri
 		if err == nil {
 			defer w.Close()
 			b := backoff.NewExponentialBackOff()
+			b.InitialInterval = cfgBackoff.Init
+			b.Multiplier = cfgBackoff.Factor
+			b.MaxElapsedTime = cfgBackoff.LimitTotal
 			ew := evtWriter{
 				e: evts[0],
 				w: w,

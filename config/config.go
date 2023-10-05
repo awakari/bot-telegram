@@ -34,11 +34,7 @@ type Config struct {
 }
 
 type PaymentConfig struct {
-	Backoff struct {
-		Init       time.Duration `envconfig:"PAYMENT_BACKOFF_INIT" default:"100ms"`
-		Factor     float64       `envconfig:"PAYMENT_BACKOFF_FACTOR" default:"2"`
-		LimitTotal time.Duration `envconfig:"PAYMENT_BACKOFF_LIMIT_TOTAL" default:"15m"`
-	}
+	Backoff  BackoffConfig
 	Currency struct {
 		Code      string  `envconfig:"PAYMENT_CURRENCY_CODE" required:"true" default:"EUR"`
 		SubFactor float64 `envconfig:"PAYMENT_CURRENCY_SUB_FACTOR" required:"true" default:"100"`
@@ -50,6 +46,12 @@ type PaymentConfig struct {
 	Provider struct {
 		Token string `envconfig:"PAYMENT_PROVIDER_TOKEN" required:"true"`
 	}
+}
+
+type BackoffConfig struct {
+	Init       time.Duration `envconfig:"PAYMENT_BACKOFF_INIT" default:"100ms"`
+	Factor     float64       `envconfig:"PAYMENT_BACKOFF_FACTOR" default:"2"`
+	LimitTotal time.Duration `envconfig:"PAYMENT_BACKOFF_LIMIT_TOTAL" default:"15m"`
 }
 
 type PriceConfig struct {
