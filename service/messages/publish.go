@@ -136,12 +136,14 @@ func publish(
 			err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML, kbd)
 		}
 	}
-	switch ackCount {
-	case 0:
-		if kbd == nil {
-			err = tgCtx.Send(msgBusy)
-		} else {
-			err = tgCtx.Send(msgBusy, kbd)
+	if err == nil {
+		switch ackCount {
+		case 0:
+			if kbd == nil {
+				err = tgCtx.Send(msgBusy)
+			} else {
+				err = tgCtx.Send(msgBusy, kbd)
+			}
 		}
 	}
 	return
