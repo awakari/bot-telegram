@@ -34,6 +34,10 @@ spec:
               value: "{{ .Values.api.uri }}"
             - name: API_ADMIN_URI
               value: "{{ .Values.api.admin.uri }}"
+            - name: API_MESSAGES_URI
+              value: "{{ .Values.api.messages.uri }}"
+            - name: API_WRITER_URI
+              value: "{{ .Values.api.writer.uri }}"
             {{- range .Values.ingress.hosts }}
             - name: API_TELEGRAM_WEBHOOK_HOST
               value: {{ .host }}
