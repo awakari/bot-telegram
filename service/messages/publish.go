@@ -245,6 +245,7 @@ func PublishPayment(svcMsgs messages.Service, clientAwk api.Client, groupId stri
 			})
 		}
 		if err == nil {
+			_ = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evtId))
 			_, err = svcMsgs.DeleteBatch(context.TODO(), []string{evtId})
 		}
 		return
