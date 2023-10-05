@@ -245,7 +245,7 @@ func PublishPayment(svcMsgs messages.Service, clientAwk api.Client, groupId stri
 			})
 		}
 		if err == nil {
-			_ = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evtId))
+			_ = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evtId), telebot.ModeHTML)
 			_, err = svcMsgs.DeleteBatch(context.TODO(), []string{evtId})
 		}
 		return
