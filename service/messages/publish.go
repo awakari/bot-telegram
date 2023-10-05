@@ -10,12 +10,15 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/model"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"strconv"
+	"time"
 )
 
 const ReqMsgPubBasic = "msg_pub_basic"
@@ -28,8 +31,12 @@ const fmtLinkUser = "tg://user?id=%d"
 const fmtUserName = "%s %s"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
-const msgLimitReached = "Message daily publishing limit reached. Payment is required to proceed."
+const msgLimitReached = `Message daily publishing limit reached. 
+Payment is required to proceed.
+The message is saved for 1 week.`
 const pricePublish = 1.0
+const msgFmtPublishMissing = "message to publish is missing: %s"
+const msgFmtRunOnceFailed = "failed to publish event: %s, cause: %s, retrying in: %s"
 
 var publishBasicMarkup = &telebot.ReplyMarkup{
 	ForceReply:  true,
@@ -189,4 +196,57 @@ func publishPaid(
 		}
 	}
 	return
+}
+
+func PublishPreCheckout(svcMsgs messages.Service) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		ctx, cancel := context.WithTimeout(context.TODO(), service.PreCheckoutTimeout)
+		defer cancel()
+		evtId := args[0]
+		var evts []*pb.CloudEvent
+		evts, err = svcMsgs.GetBatch(ctx, []string{evtId})
+		switch {
+		case err != nil:
+			err = tgCtx.Accept(err.Error())
+		case len(evts) == 0:
+			err = tgCtx.Accept(fmt.Sprintf(msgFmtPublishMissing, evtId))
+		default:
+			err = tgCtx.Accept()
+		}
+		return
+	}
+}
+
+func PublishPayment(svcMsgs messages.Service, clientAwk api.Client, groupId string, log *slog.Logger) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		evtId := args[0]
+		var evts []*pb.CloudEvent
+		evts, err = svcMsgs.GetBatch(context.TODO(), []string{evtId})
+		if err == nil {
+			if len(evts) == 0 {
+				err = fmt.Errorf(msgFmtPublishMissing, evtId)
+			}
+		}
+		var w model.Writer[*pb.CloudEvent]
+		if err == nil {
+			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+			w, err = clientAwk.OpenMessagesWriter(groupIdCtx, userId)
+		}
+		if err == nil {
+			defer w.Close()
+			b := backoff.NewExponentialBackOff()
+			ew := evtWriter{
+				e: evts[0],
+				w: w,
+			}
+			err = backoff.RetryNotify(ew.runOnce, b, func(err error, d time.Duration) {
+				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, evtId, err, d))
+			})
+		}
+		if err == nil {
+			_, err = svcMsgs.DeleteBatch(context.TODO(), []string{evtId})
+		}
+		return
+	}
 }

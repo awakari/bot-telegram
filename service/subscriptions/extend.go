@@ -96,7 +96,9 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 
 func ExtendPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+		ctx, cancel := context.WithTimeout(context.TODO(), service.PreCheckoutTimeout)
+		defer cancel()
+		groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
 		var op ExtendOrder
 		err = json.Unmarshal([]byte(args[0]), &op)

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"gopkg.in/telebot.v3"
+	"time"
 )
 
 type Order struct {
@@ -14,6 +15,8 @@ type Order struct {
 
 const Currency = "EUR"
 const SubCurrencyFactor = 100 // this is valid for roubles, dollars, euros
+
+var PreCheckoutTimeout = 10 * time.Second
 
 func PreCheckout(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {

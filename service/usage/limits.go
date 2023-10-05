@@ -22,7 +22,6 @@ const fmtUsageLimit = `<pre>Usage:
   Limit:   %d
   Expires: %s
 </pre>`
-const readUsageLimitTimeout = 10 * time.Second
 
 func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
@@ -75,9 +74,9 @@ func ExtendLimitsPreCheckout(clientAwk api.Client, groupId string) service.ArgHa
 		err = json.Unmarshal([]byte(args[0]), &ol)
 		var currentLimit usage.Limit
 		if err == nil {
-			ctx, cancel := context.WithTimeout(context.TODO(), readUsageLimitTimeout)
-			ctx = metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+			ctx, cancel := context.WithTimeout(context.TODO(), service.PreCheckoutTimeout)
 			defer cancel()
+			ctx = metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", groupId)
 			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, ol.Subject)
 		}
 		if err == nil {

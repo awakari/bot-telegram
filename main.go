@@ -100,10 +100,12 @@ func main() {
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId),
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId),
+		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimits(svcAdmin, groupId),
 		subscriptions.PurposeExtend: subscriptions.ExtendPayment(clientAwk, groupId),
+		messages.PurposePublish:     messages.PublishPayment(svcMsgs, clientAwkInternal, groupId, log),
 	}
 
 	// init Telegram bot
