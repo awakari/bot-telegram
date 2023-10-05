@@ -1,3 +1,8 @@
+api:
+  messages:
+    uri: "core-messages:50051"
+  writer:
+    uri: "core-writer:50051"
 ingress:
   hosts:
     - host: demo.tgbot.awakari.cloud

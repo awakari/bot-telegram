@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package awakari.messages;
+
+option go_package = "./api/grpc/messages";
+
+import "api/grpc/cloudevents/cloudevent.proto";
+
+service Service {
+
+  rpc GetBatch(GetBatchRequest) returns (GetBatchResponse);
+  rpc PutBatch(PutBatchRequest) returns (PutBatchResponse);
+  rpc DeleteBatch(DeleteBatchRequest) returns (DeleteBatchResponse);
+}
+
+message GetBatchRequest {
+  repeated string ids = 1;
+}
+
+message GetBatchResponse {
+  repeated pb.CloudEvent msgs = 1;
+}
+
+message PutBatchRequest {
+  repeated pb.CloudEvent msgs = 1;
+}
+
+message PutBatchResponse {
+  uint32 ackCount = 1;
+}
+
+message DeleteBatchRequest {
+  repeated string ids = 1;
+}
+
+message DeleteBatchResponse {
+  uint32 ackCount = 1;
+}

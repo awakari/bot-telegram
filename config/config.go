@@ -9,6 +9,12 @@ type Config struct {
 		Admin struct {
 			Uri string `envconfig:"API_ADMIN_URI" default:"api:56789" required:"true"`
 		}
+		Messages struct {
+			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
+		}
+		Writer struct {
+			Uri string `envconfig:"API_WRITER_URI" default:"resolver:50051" required:"true"`
+		}
 		PaymentProviderToken string `envconfig:"API_PAYMENT_PROVIDER_TOKEN" required:"true"`
 		Telegram             struct {
 			Webhook struct {

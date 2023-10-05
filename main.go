@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
+	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
@@ -50,6 +51,25 @@ func main() {
 	svcAdmin := grpcApiAdmin.NewService(clientAdmin)
 	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
 
+	// init the internal Awakari messages storage client
+	connMsgs, err := grpc.Dial(cfg.Api.Messages.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		log.Info("connected the messages service")
+		defer connMsgs.Close()
+	} else {
+		log.Error("failed to connect the messages service", err)
+	}
+	clientMsgs := grpcApiMsgs.NewServiceClient(connMsgs)
+	svcMsgs := grpcApiMsgs.NewService(clientMsgs)
+	svcMsgs = grpcApiMsgs.NewServiceLogging(svcMsgs, log)
+
+	// init the internal Awakari messages writer client that bypasses the limits
+	clientAwkInternal, err := api.
+		NewClientBuilder().
+		WriterUri(cfg.Api.Writer.Uri).
+		Build()
+	defer clientAwkInternal.Close()
+
 	// init handlers
 	groupId := cfg.Api.GroupId
 	paymentProviderToken := cfg.Api.PaymentProviderToken
@@ -60,7 +80,7 @@ func main() {
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId),
+		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, paymentProviderToken),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(paymentProviderToken),
 	}
@@ -74,7 +94,7 @@ func main() {
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, paymentProviderToken, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(paymentProviderToken, menuKbd),
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{

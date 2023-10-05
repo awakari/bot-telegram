@@ -85,6 +85,10 @@ affinity: {}
 api:
   admin:
     uri: "api:56789"
+  messages:
+    uri: "messages:50051"
+  writer:
+    uri: "resolver:50051"
   uri: "api:50051"
   cert: server-cert
   payment:
