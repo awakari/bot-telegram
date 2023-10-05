@@ -51,7 +51,7 @@ spec:
             - name: API_TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: "{{ include "bot-telegram.fullname" . }}-tokens"
+                  name: bot-telegram-tokens
                   key: telegram
               value: "{{ .Values.api.telegram.token }}"
             - name: API_PAYMENT_PROVIDER_TOKEN
@@ -81,7 +81,7 @@ spec:
             - name: PAYMENT_PROVIDER_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: "{{ include "bot-telegram.fullname" . }}-tokens"
+                  name: bot-telegram-tokens
                   key: payment
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
