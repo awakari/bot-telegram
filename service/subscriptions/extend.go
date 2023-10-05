@@ -71,15 +71,16 @@ func ExtendReplyHandlerFunc(paymentProviderToken string, kbd *telebot.ReplyMarku
 			orderData, err = json.Marshal(o)
 		}
 		if err == nil {
+			label := fmt.Sprintf("Subscription %s: add %d days", subId, countDays)
 			invoice := telebot.Invoice{
 				Start:       uuid.NewString(),
-				Title:       "Subscription Extension",
-				Description: fmt.Sprintf("Add %d days to the subscription %s", countDays, subId),
+				Title:       fmt.Sprintf("Extend subscription by %d days", countDays),
+				Description: label,
 				Payload:     string(orderData),
 				Currency:    service.Currency,
 				Prices: []telebot.Price{
 					{
-						Label:  fmt.Sprintf("Add %d days to the subscription %s", countDays, subId),
+						Label:  label,
 						Amount: int(float64(countDays) * pricePerDay * service.SubCurrencyFactor),
 					},
 				},
@@ -102,8 +103,11 @@ func ExtendPreCheckout(clientAwk api.Client, groupId string) service.ArgHandlerF
 		if err == nil {
 			_, err = clientAwk.ReadSubscription(groupIdCtx, userId, op.SubId)
 		}
-		if err == nil {
+		switch err {
+		case nil:
 			err = tgCtx.Accept()
+		default:
+			err = tgCtx.Accept(err.Error())
 		}
 		return
 	}
@@ -125,7 +129,6 @@ func ExtendPayment(clientAwk api.Client, groupId string) service.ArgHandlerFunc 
 				sd.Expires = now
 			}
 			sd.Expires = sd.Expires.Add(time.Duration(op.DaysAdd) * 24 * time.Hour)
-			fmt.Printf("new expires: %s\n", sd.Expires.Format(time.RFC3339))
 			err = clientAwk.UpdateSubscription(groupIdCtx, userId, op.SubId, sd)
 		}
 		if err == nil {

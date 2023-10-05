@@ -43,17 +43,25 @@ func ExtendLimitsInvoice(paymentProviderToken string) service.ArgHandlerFunc {
 			}
 			orderData, err = json.Marshal(o)
 		}
+		title := fmt.Sprintf(
+			"Set %s limit to %d for the next %d days",
+			formatUsageSubject(op.Limit.Subject),
+			op.Limit.Count,
+			op.Limit.TimeDays,
+		)
+		label := fmt.Sprintf(
+			"%s: %d x %d days", formatUsageSubject(op.Limit.Subject), op.Limit.Count, op.Limit.TimeDays,
+		)
 		if err == nil {
-			fmt.Printf("invoice payload: %s\n", string(orderData))
 			invoice := telebot.Invoice{
 				Start:       uuid.NewString(),
-				Title:       "Usage Limit Increase",
-				Description: formatUsageSubject(op.Limit.Subject),
+				Title:       title,
+				Description: label,
 				Payload:     string(orderData),
 				Currency:    op.Price.Unit,
 				Prices: []telebot.Price{
 					{
-						Label:  formatUsageSubject(op.Limit.Subject),
+						Label:  label,
 						Amount: int(op.Price.Total * service.SubCurrencyFactor),
 					},
 				},
