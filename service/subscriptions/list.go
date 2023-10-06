@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 const subListLimit = 256 // TODO: implement the proper pagination
@@ -41,6 +42,16 @@ func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 				sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 				if err != nil {
 					break
+				}
+				descr := sub.Description
+				now := time.Now().UTC()
+				switch {
+				case sub.Expires.IsZero(): // never expires
+					descr += " ∞"
+				case sub.Expires.Before(now):
+					descr += " ⊘"
+				case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
+					descr += " ⚠"
 				}
 				row := m.Row(telebot.Btn{
 					Text: sub.Description,
