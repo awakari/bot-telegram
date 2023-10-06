@@ -155,7 +155,7 @@ func main() {
 					Text:        "/help",
 				},
 				{
-					Description: "Terms",
+					Description: "Terms of Service",
 					Text:        "/terms",
 				},
 				{
@@ -182,7 +182,7 @@ func main() {
 		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/terms", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/terms.html\">terms link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/tos.html\">terms link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/privacy", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.app/privacy.html\">privacy link</a>", telebot.ModeHTML)
