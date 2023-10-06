@@ -22,7 +22,7 @@ type Config struct {
 				Path string `envconfig:"API_TELEGRAM_WEBHOOK_PATH" default:"/" required:"true"`
 				Port uint16 `envconfig:"API_TELEGRAM_WEBHOOK_PORT" default:"8080" required:"true"`
 			}
-			SupportChatId int64  `envconfig:"API_TELEGRAM_SUPPORT_GROUP_ID" required:"true"`
+			SupportChatId int64  `envconfig:"API_TELEGRAM_SUPPORT_CHAT_ID" required:"true"`
 			Token         string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 		}
 		GroupId string `envconfig:"API_GROUP_ID" default:"com.github.awakari.bot-telegram" required:"true"`
