@@ -96,9 +96,14 @@ func main() {
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 		"support": func(tgCtx telebot.Context, args ...string) (err error) {
-			err = tgCtx.ForwardTo(&telebot.Chat{
-				ID: cfg.Api.Telegram.SupportChatId,
+			tgCtxSupport := tgCtx.Bot().NewContext(telebot.Update{
+				Message: &telebot.Message{
+					Chat: &telebot.Chat{
+						ID: cfg.Api.Telegram.SupportChatId,
+					},
+				},
 			})
+			err = tgCtxSupport.Send(fmt.Sprintf("Support request from @%s:\n%s", tgCtx.Sender().Username, args[len(args)-1]))
 			if err == nil {
 				err = tgCtx.Send("Your request has been sent, the support will contact you as soon as possible.")
 			}
@@ -141,37 +146,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	// set commands
-	err = b.SetCommands([]telebot.CommandParams{
-		{
-			Commands: []telebot.Command{
-				{
-					Description: "Start",
-					Text:        "/start",
-				},
-				{
-					Description: "Help",
-					Text:        "/help",
-				},
-				{
-					Description: "Terms of Service",
-					Text:        "/terms",
-				},
-				{
-					Description: "Privacy",
-					Text:        "/privacy",
-				},
-				{
-					Description: "Support",
-					Text:        "/support",
-				},
-			},
-			Scope: &telebot.CommandScope{
-				Type: telebot.CommandScopeAllPrivateChats,
-			},
-		},
-	})
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
