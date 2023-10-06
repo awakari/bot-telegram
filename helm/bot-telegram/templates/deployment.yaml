@@ -48,6 +48,8 @@ spec:
             {{- end }}
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
+            - name: API_TELEGRAM_SUPPORT_CHAT_ID
+
             - name: API_TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:

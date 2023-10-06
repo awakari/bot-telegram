@@ -95,6 +95,9 @@ api:
     provider:
       token: test
   telegram:
+    support:
+      chat:
+        id: 0
     token: telegram-bot-token
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level

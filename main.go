@@ -95,6 +95,11 @@ func main() {
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
+		"support": func(tgCtx telebot.Context, args ...string) (err error) {
+			return tgCtx.ForwardTo(&telebot.Chat{
+				ID: cfg.Api.Telegram.SupportChatId,
+			})
+		},
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
@@ -133,11 +138,55 @@ func main() {
 		panic(err)
 	}
 
+	// set commands
+	err = b.SetCommands([]telebot.CommandParams{
+		{
+			Commands: []telebot.Command{
+				{
+					Description: "Start",
+					Text:        "/start",
+				},
+				{
+					Description: "Help",
+					Text:        "/help",
+				},
+				{
+					Description: "Terms",
+					Text:        "/terms",
+				},
+				{
+					Description: "Privacy",
+					Text:        "/privacy",
+				},
+				{
+					Description: "Support",
+					Text:        "/support",
+				},
+			},
+			Scope: &telebot.CommandScope{
+				Type: telebot.CommandScopeAllPrivateChats,
+			},
+		},
+	})
+
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
 	b.Handle("/start", service.ErrorHandlerFunc(service.StartHandlerFunc(menuKbd), menuKbd))
+	b.Handle("/help", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
+	})
+	b.Handle("/terms", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/terms.html\">terms link</a>", telebot.ModeHTML)
+	})
+	b.Handle("/privacy", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/privacy.html\">privacy link</a>", telebot.ModeHTML)
+	})
+	b.Handle("/support", func(tgCtx telebot.Context) error {
+		_ = tgCtx.Send("Describe the issue in the reply to the next message")
+		return tgCtx.Send("support")
+	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
