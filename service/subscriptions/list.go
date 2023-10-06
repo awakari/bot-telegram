@@ -54,7 +54,7 @@ func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 					descr += " ⚠"
 				}
 				row := m.Row(telebot.Btn{
-					Text: sub.Description,
+					Text: descr,
 					Data: fmt.Sprintf("%s %s", CmdDetails, subId),
 				})
 				rows = append(rows, row)
