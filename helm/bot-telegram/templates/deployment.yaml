@@ -49,7 +49,7 @@ spec:
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
             - name: API_TELEGRAM_SUPPORT_CHAT_ID
-              value: "{{ .Values.api.telegram.support.chat.id }}"
+              value: {{ .Values.api.telegram.support.chat.id }}
             - name: API_TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:
