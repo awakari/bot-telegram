@@ -96,9 +96,13 @@ func main() {
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 		"support": func(tgCtx telebot.Context, args ...string) (err error) {
-			return tgCtx.ForwardTo(&telebot.Chat{
+			err = tgCtx.ForwardTo(&telebot.Chat{
 				ID: cfg.Api.Telegram.SupportChatId,
 			})
+			if err == nil {
+				err = tgCtx.Send("Your request has been sent, the support will contact you as soon as possible.")
+			}
+			return
 		},
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
