@@ -22,7 +22,7 @@ const PurposeLimits = "limits"
 const msgFmtUsageLimit = `<pre>Usage:
   Count:   %d
   Limit:   %d
-    Expires: %s
+  Expires: %s
 </pre>`
 const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
 
@@ -128,6 +128,9 @@ func ExtendLimitsPaid(
 			b.MaxElapsedTime = cfgBackoff.LimitTotal
 			err = backoff.RetryNotify(a.runOnce, b, func(err error, d time.Duration) {
 				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, userId, err, d))
+				if d > 1*time.Second {
+					_ = tgCtx.Send("Updating the usage limit, please wait...")
+				}
 			})
 		}
 		if err == nil {

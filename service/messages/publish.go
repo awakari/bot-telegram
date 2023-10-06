@@ -251,6 +251,9 @@ func PublishPaid(
 			}
 			err = backoff.RetryNotify(ew.runOnce, b, func(err error, d time.Duration) {
 				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, evtId, err, d))
+				if d > 1*time.Second {
+					_ = tgCtx.Send("Publishing the message, please wait...")
+				}
 			})
 		}
 		if err == nil {

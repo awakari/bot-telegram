@@ -142,6 +142,9 @@ func ExtendPaid(
 			b.MaxElapsedTime = cfgBackoff.LimitTotal
 			err = backoff.RetryNotify(e.runOnce, b, func(err error, d time.Duration) {
 				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, op.SubId, userId, err, d))
+				if d > 1*time.Second {
+					_ = tgCtx.Send("Extending the subscription, please wait...")
+				}
 			})
 		}
 		if err == nil {
