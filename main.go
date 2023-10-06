@@ -185,7 +185,9 @@ func main() {
 	})
 	b.Handle("/support", func(tgCtx telebot.Context) error {
 		_ = tgCtx.Send("Describe the issue in the reply to the next message")
-		return tgCtx.Send("support")
+		return tgCtx.Send("support", &telebot.ReplyMarkup{
+			ForceReply: true,
+		})
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
