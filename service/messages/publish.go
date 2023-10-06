@@ -32,9 +32,7 @@ const fmtLinkUser = "tg://user?id=%d"
 const fmtUserName = "%s %s"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
-const msgLimitReached = `Message daily publishing limit reached. 
-Payment is required to proceed.
-Note: the message is being kept for 1 week.`
+const msgLimitReached = "Message daily publishing limit reached. Payment is required to proceed. The message is being kept for 1 week"
 const msgFmtPublishMissing = "message to publish is missing: %s"
 const msgFmtRunOnceFailed = "failed to publish event: %s, cause: %s, retrying in: %s"
 
@@ -166,9 +164,9 @@ func publishInvoice(
 	ackCount, err = svcMsgs.PutBatch(context.TODO(), []*pb.CloudEvent{evt})
 	if ackCount == 1 {
 		if kbd == nil {
-			_ = tgCtx.Send(msgLimitReached, telebot.ModeHTML)
+			_ = tgCtx.Send(msgLimitReached)
 		} else {
-			_ = tgCtx.Send(msgLimitReached, telebot.ModeHTML, kbd)
+			_ = tgCtx.Send(msgLimitReached, kbd)
 		}
 		var orderData []byte
 		orderData, err = json.Marshal(service.Order{
