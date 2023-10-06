@@ -74,11 +74,11 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 }
 
 func StartHandlerFunc(kbd *telebot.ReplyMarkup) telebot.HandlerFunc {
-	return func(ctx telebot.Context) (err error) {
-		chat := ctx.Chat()
+	return func(tgCtx telebot.Context) (err error) {
+		chat := tgCtx.Chat()
 		switch chat.Type {
 		case telebot.ChatPrivate:
-			err = ctx.Send(msgStartPrivate, kbd, telebot.ModeHTML)
+			err = tgCtx.Send(msgStartPrivate, kbd, telebot.ModeHTML)
 		default:
 			err = fmt.Errorf("%w: %s", ErrChatType, chat.Type)
 		}
