@@ -19,7 +19,7 @@ import (
 	"time"
 )
 
-const limitRootGroupOrCondChildrenCount = 4
+const limitGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
 const expiresDefaultDays = 30
 const expiresDefaultDuration = time.Hour * 24 * expiresDefaultDays // ~ month
@@ -198,26 +198,26 @@ func validateSubscriptionData(sd subscription.Data) (err error) {
 		err = errors.New("invalid subscription:\nempty description")
 	}
 	if err == nil {
-		err = validateCondition(sd.Condition, true)
+		err = validateCondition(sd.Condition)
 	}
 	return err
 }
 
-func validateCondition(cond condition.Condition, root bool) (err error) {
+func validateCondition(cond condition.Condition) (err error) {
 	switch tc := cond.(type) {
 	case condition.GroupCondition:
 		children := tc.GetGroup()
 		countChildren := len(children)
-		if root && tc.GetLogic() == condition.GroupLogicOr && countChildren > limitRootGroupOrCondChildrenCount {
+		if tc.GetLogic() == condition.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
 			err = fmt.Errorf(
-				"%w:\nchildren condition count for the root group condition with \"Or\" logic is %d, limit is %d,\nconsider to use an additional subscription",
+				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to use an additional subscription instead",
 				errInvalidCondition,
 				countChildren,
-				limitRootGroupOrCondChildrenCount,
+				limitGroupOrCondChildrenCount,
 			)
 		} else {
 			for _, child := range children {
-				err = validateCondition(child, false)
+				err = validateCondition(child)
 				if err != nil {
 					break
 				}
@@ -230,7 +230,7 @@ func validateCondition(cond condition.Condition, root bool) (err error) {
 				"%w:\ntext condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
 				errInvalidCondition,
 				lenTerms,
-				limitRootGroupOrCondChildrenCount,
+				limitGroupOrCondChildrenCount,
 			)
 		}
 	}
