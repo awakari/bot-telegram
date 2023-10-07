@@ -6,7 +6,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-func TextHandlerFunc(txtHandlers map[string]telebot.HandlerFunc, replyHandlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
+func RootHandlerFunc(txtHandlers map[string]telebot.HandlerFunc, replyHandlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		switch tgCtx.Message().IsReply() {
 		case true:

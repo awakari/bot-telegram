@@ -92,6 +92,7 @@ func main() {
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		subscriptions.ReqDelete:         subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
@@ -168,8 +169,8 @@ func main() {
 		})
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
-	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.TextHandlerFunc(txtHandlers, replyHandlers), menuKbd))
+	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
+	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
