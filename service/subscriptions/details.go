@@ -38,7 +38,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			btns := []telebot.Btn{
 				{
 					Text: "🔗 Link Chat",
-					URL:  fmt.Sprintf("https://t.me/AwakariSubscriptionsBot?startgroup=%s", subId),
+					URL:  fmt.Sprintf("https://t.me/AwakariBot?startgroup=%s", subId),
 				},
 			}
 			if !sd.Expires.IsZero() {

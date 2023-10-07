@@ -28,9 +28,28 @@ type Config struct {
 		GroupId string `envconfig:"API_GROUP_ID" default:"com.github.awakari.bot-telegram" required:"true"`
 		Uri     string `envconfig:"API_URI" default:"api:50051" required:"true"`
 	}
+	Chats   ChatsConfig
 	Payment PaymentConfig
 	Log     struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`
+	}
+}
+
+type ChatsConfig struct {
+	Db ChatsDbConfig
+}
+
+type ChatsDbConfig struct {
+	Uri      string `envconfig:"CHATS_DB_URI" default:"mongodb://localhost:27017/?retryWrites=true&w=majority" required:"true"`
+	Name     string `envconfig:"CHATS_DB_NAME" default:"bot-telegram" required:"true"`
+	UserName string `envconfig:"CHATS_DB_USERNAME" default:""`
+	Password string `envconfig:"CHATS_DB_PASSWORD" default:""`
+	Table    struct {
+		Name string `envconfig:"CHATS_DB_TABLE_NAME" default:"chats" required:"true"`
+	}
+	Tls struct {
+		Enabled  bool `envconfig:"CHATS_DB_TLS_ENABLED" default:"false" required:"true"`
+		Insecure bool `envconfig:"CHATS_DB_TLS_INSECURE" default:"false" required:"true"`
 	}
 }
 

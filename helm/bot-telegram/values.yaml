@@ -99,6 +99,26 @@ api:
       chat:
         id: 0
     token: telegram-bot-token
+chats:
+  # Database related configuration.
+  db:
+    protocol: mongodb
+    hostname: "mongodb:27017"
+    # Database name to use.
+    name: bot-telegram
+    username: "root"
+    password:
+      raw: "" # used if limits.db.password.secret.enabled is false
+      secret:
+        enabled: true
+        name: "mongodb"
+        key: "mongodb-root-password"
+    table:
+      # Database table name to use.
+      name: chats
+    tls:
+      enabled: false
+      insecure: false
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4

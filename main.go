@@ -1,16 +1,19 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
@@ -148,11 +151,44 @@ func main() {
 		panic(err)
 	}
 
+	// init chat storage
+	var chatStor chats.Storage
+	chatStor, err = chats.NewStorage(context.TODO(), cfg.Chats.Db)
+	if err != nil {
+		panic(err)
+	}
+	defer chatStor.Close()
+
+	// init events format, see https://core.telegram.org/bots/api#html-style for details
+	htmlPolicy := bluemonday.NewPolicy()
+	htmlPolicy.AllowStandardURLs()
+	htmlPolicy.
+		AllowAttrs("href").
+		OnElements("a")
+	htmlPolicy.AllowElements("b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "code", "pre")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("span")
+	htmlPolicy.AllowURLSchemes("tg")
+	htmlPolicy.
+		AllowAttrs("emoji-ids").
+		OnElements("tg-emoji")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("code")
+	htmlPolicy.AllowDataURIImages()
+	msgFmt := messages.Format{
+		HtmlPolicy: htmlPolicy,
+	}
+
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	b.Handle("/start", service.ErrorHandlerFunc(service.StartHandlerFunc(menuKbd), menuKbd))
+	b.Handle(
+		"/start",
+		service.ErrorHandlerFunc(service.StartHandlerFunc(log, clientAwk, chatStor, groupId, msgFmt, menuKbd), menuKbd),
+	)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
 	})
@@ -177,6 +213,7 @@ func main() {
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
+	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(service.UserLeftHandlerFunc(chatStor), nil))
 
 	b.Start()
 }
