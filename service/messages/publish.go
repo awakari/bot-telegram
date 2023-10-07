@@ -198,9 +198,6 @@ func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *p
 			},
 		}
 	}
-	if evt.Data == nil {
-		err = errors.New("message text or file caption is empty")
-	}
 	return
 }
 
