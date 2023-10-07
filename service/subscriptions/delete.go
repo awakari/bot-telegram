@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"strings"
 )
 
 const CmdDelete = "delete"
@@ -34,7 +35,7 @@ func DeleteReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *telebot.R
 		if len(args) != 3 {
 			err = errors.New("invalid argument count")
 		}
-		subId, reply := args[1], args[2]
+		subId, reply := args[1], strings.ToLower(args[2])
 		switch reply {
 		case "yes":
 			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
