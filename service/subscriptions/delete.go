@@ -15,7 +15,7 @@ import (
 const CmdDelete = "delete"
 const ReqDelete = "sub_delete"
 
-func DeleteHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
+func DeleteHandlerFunc() service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
 		_ = tgCtx.Send("Are you sure? Reply \"yes\" or \"no\" to the next message:")

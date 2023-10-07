@@ -73,7 +73,7 @@ func main() {
 	// init handlers
 	groupId := cfg.Api.GroupId
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(clientAwk, groupId),
+		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
