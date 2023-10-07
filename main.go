@@ -187,7 +187,18 @@ func main() {
 	})
 	b.Handle(
 		"/start",
-		service.ErrorHandlerFunc(service.StartHandlerFunc(log, clientAwk, chatStor, groupId, msgFmt, menuKbd), menuKbd),
+		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
+			chat := tgCtx.Chat()
+			switch chat.Type {
+			case telebot.ChatPrivate:
+				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd, telebot.ModeHTML)
+			case telebot.ChatGroup:
+				err = subscriptions.Start(tgCtx, log, clientAwk, chatStor, groupId, msgFmt)
+			default:
+				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\"): %s", chat.Type)
+			}
+			return
+		}, menuKbd),
 	)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
@@ -213,7 +224,7 @@ func main() {
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
-	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(service.UserLeftHandlerFunc(chatStor), nil))
+	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
 	b.Start()
 }

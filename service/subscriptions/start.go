@@ -41,7 +41,7 @@ func Start(
 		chat.GroupId = groupId
 		chat.UserId = userId
 		chat.State = chats.StateActive
-		chat.Expires = time.Now().UTC().Add(messages.ReaderTtl)
+		chat.Expires = time.Now().UTC().Add(chats.ReaderTtl)
 		err = chatStor.Create(context.TODO(), chat)
 	}
 	var subData subscription.Data
@@ -60,7 +60,7 @@ func Start(
 		err = tgCtx.Send(fmt.Sprintf(msgFmtRenameFail, subData.Description), telebot.ModeHTML)
 	}
 	if err == nil {
-		r := messages.NewReader(tgCtx, clientAwk, chatStor, chat.Key, groupId, userId, msgFmt)
+		r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Key, groupId, userId, msgFmt)
 		go r.Run(context.Background(), log)
 	}
 	return

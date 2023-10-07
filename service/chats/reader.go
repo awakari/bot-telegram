@@ -1,10 +1,10 @@
-package messages
+package chats
 
 import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/awakari/bot-telegram/service/chats"
+	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cenkalti/backoff/v4"
@@ -43,9 +43,9 @@ const msgFmtExtendSteps = ` Please consider the following steps to extend it:
 var runtimeReaders = make(map[int64]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
-func ResumeAllReaders(ctx context.Context, log *slog.Logger, chatStor chats.Storage, tgBot *telebot.Bot, clientAwk api.Client, format Format) (count uint32, err error) {
+func ResumeAllReaders(ctx context.Context, log *slog.Logger, chatStor Storage, tgBot *telebot.Bot, clientAwk api.Client, format messages.Format) (count uint32, err error) {
 	var resumingDone bool
-	var c chats.Chat
+	var c Chat
 	var nextErr error
 	for !resumingDone && count < runtimeReaderCountLimit {
 		c, nextErr = chatStor.ActivateNext(ctx, time.Now().UTC().Add(ReaderTtl))
@@ -61,7 +61,7 @@ func ResumeAllReaders(ctx context.Context, log *slog.Logger, chatStor chats.Stor
 			r := NewReader(tgBot.NewContext(u), clientAwk, chatStor, c.Key, c.GroupId, c.UserId, format)
 			go r.Run(context.Background(), log)
 			count++
-		case errors.Is(nextErr, chats.ErrNotFound):
+		case errors.Is(nextErr, ErrNotFound):
 			resumingDone = true
 		default:
 			err = errors.Join(err, nextErr)
@@ -78,9 +78,9 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 	for _, r := range runtimeReaders {
 		r := r // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
-			c := chats.Chat{
+			c := Chat{
 				Key:     r.chatKey,
-				State:   chats.StateInactive,
+				State:   StateInactive,
 				Expires: time.Now().UTC(),
 			}
 			err := r.chatStor.Update(gCtx, c)
@@ -102,7 +102,7 @@ func StopChatReader(chatId int64) {
 	}
 }
 
-func NewReader(tgCtx telebot.Context, client api.Client, chatStor chats.Storage, chatKey chats.Key, groupId, userId string, format Format) Reader {
+func NewReader(tgCtx telebot.Context, client api.Client, chatStor Storage, chatKey Key, groupId, userId string, format messages.Format) Reader {
 	return &reader{
 		tgCtx:    tgCtx,
 		client:   client,
@@ -117,12 +117,12 @@ func NewReader(tgCtx telebot.Context, client api.Client, chatStor chats.Storage,
 type reader struct {
 	tgCtx    telebot.Context
 	client   api.Client
-	chatStor chats.Storage
-	chatKey  chats.Key
+	chatStor Storage
+	chatKey  Key
 	groupId  string
 	userId   string
 	stop     bool
-	format   Format
+	format   messages.Format
 }
 
 func (r *reader) Run(ctx context.Context, log *slog.Logger) {
@@ -163,10 +163,10 @@ func (r *reader) runOnce() (err error) {
 		err = r.deliverEventsReadLoop(ctx, awakariReader)
 	}
 	if err == nil {
-		nextChatState := chats.Chat{
+		nextChatState := Chat{
 			Key:     r.chatKey,
 			Expires: time.Now().UTC().Add(ReaderTtl),
-			State:   chats.StateActive,
+			State:   StateActive,
 		}
 		err = r.chatStor.Update(ctx, nextChatState)
 	}
@@ -243,8 +243,8 @@ func (r *reader) runtimeUnregister(ctx context.Context) {
 	defer runtimeReadersLock.Unlock()
 	delete(runtimeReaders, r.chatKey.Id)
 	// try to do the best effort to mark chat as inactive in the chats DB
-	_ = r.chatStor.Update(ctx, chats.Chat{
+	_ = r.chatStor.Update(ctx, Chat{
 		Key:   r.chatKey,
-		State: chats.StateInactive,
+		State: StateInactive,
 	})
 }
