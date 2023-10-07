@@ -20,9 +20,14 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
+
+	ctx := context.TODO()
 
 	// init config and logger
 	slog.Info("starting...")
@@ -153,7 +158,7 @@ func main() {
 
 	// init chat storage
 	var chatStor chats.Storage
-	chatStor, err = chats.NewStorage(context.TODO(), cfg.Chats.Db)
+	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
 	if err != nil {
 		panic(err)
 	}
@@ -225,6 +230,24 @@ func main() {
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
+
+	go func() {
+		log.Debug("Wait 20 seconds before resuming existing chats...")
+		time.Sleep(20 * time.Second)
+		log.Debug("Resume existing chats...")
+		count, err := chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt)
+		log.Debug(fmt.Sprintf("Resumed %d chats, errors: %s", count, err))
+	}()
+	// Listen for shutdown signals
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigs
+		ctxShutdown, cancelShutdown := context.WithTimeout(context.TODO(), 15*time.Second)
+		chats.ReleaseAllChats(ctxShutdown, log)
+		log.Debug("Graceful shutdown done")
+		cancelShutdown()
+	}()
 
 	b.Start()
 }

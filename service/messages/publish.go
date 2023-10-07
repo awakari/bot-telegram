@@ -350,7 +350,7 @@ func PublishPaid(
 			b.InitialInterval = cfgBackoff.Init
 			b.Multiplier = cfgBackoff.Factor
 			b.MaxElapsedTime = cfgBackoff.LimitTotal
-			ew := evtWriter{
+			ew := writer{
 				e: evts[0],
 				w: w,
 			}
