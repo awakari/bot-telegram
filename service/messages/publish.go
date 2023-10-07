@@ -59,23 +59,31 @@ func PublishBasicReplyHandlerFunc(
 		sender := tgCtx.Sender()
 		userId := strconv.FormatInt(sender.ID, 10)
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
-		var evt *pb.CloudEvent
+		var evt pb.CloudEvent
 		if err == nil {
 			defer w.Close()
-			evt = toCloudEvent(sender, tgCtx.Message(), args[1])
-			err = publish(tgCtx, w, evt, svcMsgs, cfgPayment, kbd)
+			err = toCloudEvent(sender, tgCtx.Message(), args[1], &evt)
+		}
+		if err == nil {
+			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, kbd)
 		}
 		return
 	}
 }
 
-func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string) (evt *pb.CloudEvent) {
-	evt = &pb.CloudEvent{
-		Id:          uuid.NewString(),
-		Source:      fmt.Sprintf(fmtLinkUser, sender.ID),
-		SpecVersion: attrValSpecVersion,
-		Type:        attrValType,
-		Attributes: map[string]*pb.CloudEventAttributeValue{
+func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
+	if msg.Photo != nil {
+		fmt.Printf("msg img: %+v\n", msg.Photo)
+	}
+	if txt == "" {
+		err = errors.New("message text is empty")
+	}
+	if err == nil {
+		evt.Id = uuid.NewString()
+		evt.Source = fmt.Sprintf(fmtLinkUser, sender.ID)
+		evt.SpecVersion = attrValSpecVersion
+		evt.Type = attrValType
+		evt.Attributes = map[string]*pb.CloudEventAttributeValue{
 			attrKeyAuthor: {
 				Attr: &pb.CloudEventAttributeValue_CeString{
 					CeString: fmt.Sprintf(fmtUserName, sender.FirstName, sender.LastName),
@@ -86,10 +94,10 @@ func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string) (evt *
 					CeString: strconv.Itoa(msg.ID),
 				},
 			},
-		},
-		Data: &pb.CloudEvent_TextData{
+		}
+		evt.Data = &pb.CloudEvent_TextData{
 			TextData: txt,
-		},
+		}
 	}
 	return
 }
