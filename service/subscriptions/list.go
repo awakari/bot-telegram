@@ -29,7 +29,8 @@ func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 		if err == nil {
 			respTxt += usage.FormatUsageLimit(u, l)
 		}
-		m := listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
+		var m *telebot.ReplyMarkup
+		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
 		if err == nil {
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
@@ -41,19 +42,20 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, groupId string) telebot.H
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		m := listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
+		var m *telebot.ReplyMarkup
+		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
 		if err == nil {
-			err = tgCtx.Send("Select a subscription:", m, telebot.ModeHTML)
+			err = tgCtx.Send("Select a subscription:", m)
 		}
 		return
 	}
 }
 
-func listButtons(groupIdCtx context.Context, userId string, clientAwk api.Client, btnCmd string) (err error) {
+func listButtons(groupIdCtx context.Context, userId string, clientAwk api.Client, btnCmd string) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
 	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
-	m := &telebot.ReplyMarkup{}
 	if err == nil {
+		m = &telebot.ReplyMarkup{}
 		var sub subscription.Data
 		var rows []telebot.Row
 		for _, subId := range subIds {
@@ -73,7 +75,7 @@ func listButtons(groupIdCtx context.Context, userId string, clientAwk api.Client
 			}
 			row := m.Row(telebot.Btn{
 				Text: descr,
-				Data: fmt.Sprintf("%s %s", CmdDetails, subId),
+				Data: fmt.Sprintf("%s %s", btnCmd, subId),
 			})
 			rows = append(rows, row)
 		}
