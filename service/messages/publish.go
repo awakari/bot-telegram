@@ -184,18 +184,23 @@ func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *p
 		}
 		f = msg.Video.File
 	}
-	if f.FileID != "" {
-		evt.Attributes[attrKeyFileId] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeString{
-				CeString: f.FileID,
-			},
-		}
+	if evt.Data == nil || evt.GetTextData() == "" {
+		err = errors.New("invalid message: missing text/caption")
 	}
-	if f.UniqueID != "" {
-		evt.Attributes[attrKeyFileUniqueId] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeString{
-				CeString: f.UniqueID,
-			},
+	if err == nil {
+		if f.FileID != "" {
+			evt.Attributes[attrKeyFileId] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: f.FileID,
+				},
+			}
+		}
+		if f.UniqueID != "" {
+			evt.Attributes[attrKeyFileUniqueId] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: f.UniqueID,
+				},
+			}
 		}
 	}
 	return
