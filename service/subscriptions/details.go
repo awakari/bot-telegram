@@ -33,9 +33,9 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
-			var rows []telebot.Row
+			//var rows []telebot.Row
 			// row 1
-			rows = append(rows, m.Row(
+			btns := []telebot.Btn{
 				telebot.Btn{
 					Text: "🏷 Describe",
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
@@ -44,15 +44,15 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Text: "❌ Delete",
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 				},
-			))
+			}
 			// row 2
 			if !sd.Expires.IsZero() {
-				rows = append(rows, m.Row(telebot.Btn{
+				btns = append(btns, telebot.Btn{
 					Text: "▲ Extend",
 					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
-				}))
+				})
 			}
-			m.Inline(rows...)
+			m.Inline(m.Row(btns...))
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
 			var expires string
 			switch {
