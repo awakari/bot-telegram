@@ -6,11 +6,11 @@ func ErrorHandlerFunc(h telebot.HandlerFunc, restoreKbd *telebot.ReplyMarkup) te
 	return func(ctx telebot.Context) (err error) {
 		err = h(ctx)
 		if err != nil {
-			switch restoreKbd {
-			case nil:
-				err = ctx.Send(err.Error())
-			default:
+			switch ctx.Chat().Type {
+			case telebot.ChatPrivate:
 				err = ctx.Send(err.Error(), restoreKbd)
+			default:
+				err = ctx.Send(err.Error())
 			}
 		}
 		return
