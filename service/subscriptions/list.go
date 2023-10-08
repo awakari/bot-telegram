@@ -43,9 +43,9 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, groupId string) telebot.H
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdStart)
 		if err == nil {
-			err = tgCtx.Send("Select a subscription:", m)
+			err = tgCtx.Send("Select a subscription to read in this chat:", m)
 		}
 		return
 	}

@@ -78,6 +78,36 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
+	// init chat storage
+	var chatStor chats.Storage
+	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
+	if err != nil {
+		panic(err)
+	}
+	defer chatStor.Close()
+
+	// init events format, see https://core.telegram.org/bots/api#html-style for details
+	htmlPolicy := bluemonday.NewPolicy()
+	htmlPolicy.AllowStandardURLs()
+	htmlPolicy.
+		AllowAttrs("href").
+		OnElements("a")
+	htmlPolicy.AllowElements("b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "code", "pre")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("span")
+	htmlPolicy.AllowURLSchemes("tg")
+	htmlPolicy.
+		AllowAttrs("emoji-ids").
+		OnElements("tg-emoji")
+	htmlPolicy.
+		AllowAttrs("class").
+		OnElements("code")
+	htmlPolicy.AllowDataURIImages()
+	msgFmt := messages.Format{
+		HtmlPolicy: htmlPolicy,
+	}
+
 	// init handlers
 	groupId := cfg.Api.GroupId
 	callbackHandlers := map[string]service.ArgHandlerFunc{
@@ -85,6 +115,7 @@ func main() {
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
+		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
@@ -154,36 +185,6 @@ func main() {
 	b, err = telebot.NewBot(s)
 	if err != nil {
 		panic(err)
-	}
-
-	// init chat storage
-	var chatStor chats.Storage
-	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
-	if err != nil {
-		panic(err)
-	}
-	defer chatStor.Close()
-
-	// init events format, see https://core.telegram.org/bots/api#html-style for details
-	htmlPolicy := bluemonday.NewPolicy()
-	htmlPolicy.AllowStandardURLs()
-	htmlPolicy.
-		AllowAttrs("href").
-		OnElements("a")
-	htmlPolicy.AllowElements("b", "strong", "i", "em", "u", "ins", "s", "strike", "del", "code", "pre")
-	htmlPolicy.
-		AllowAttrs("class").
-		OnElements("span")
-	htmlPolicy.AllowURLSchemes("tg")
-	htmlPolicy.
-		AllowAttrs("emoji-ids").
-		OnElements("tg-emoji")
-	htmlPolicy.
-		AllowAttrs("class").
-		OnElements("code")
-	htmlPolicy.AllowDataURIImages()
-	msgFmt := messages.Format{
-		HtmlPolicy: htmlPolicy,
 	}
 
 	// assign handlers
