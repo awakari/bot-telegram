@@ -25,7 +25,6 @@ func (f Format) Convert(evt *pb.CloudEvent) (tgMsg any) {
 			FileID:   evt.Attributes[attrKeyFileId].GetCeString(),
 			UniqueID: evt.Attributes[attrKeyFileUniqueId].GetCeString(),
 		}
-		fmt.Printf("received a message with file: %+v\n", file)
 		switch ft {
 		case FileTypeAudio:
 			tgMsg = &telebot.Audio{
