@@ -147,6 +147,7 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 	if err != nil {
 		err = r.tgCtx.Send(fmt.Sprintf(msgFmtRunFatal, err))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		_ = r.tgCtx.Bot().Leave(r.tgCtx.Chat())
 	}
 }
 
