@@ -45,6 +45,7 @@ func Start(
 			chat.State = chats.StateActive
 			chat.Expires = time.Now().UTC().Add(chats.ReaderTtl)
 			err = chatStor.Create(context.TODO(), chat)
+			fmt.Printf("Create chat result: %s\n", err)
 		}
 		var subData subscription.Data
 		if err == nil {
