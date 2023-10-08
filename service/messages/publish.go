@@ -106,88 +106,80 @@ func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *p
 			},
 		},
 	}
-	if txt != "" {
+	switch {
+	case txt != "":
 		evt.Data = &pb.CloudEvent_TextData{
 			TextData: txt,
 		}
-	}
-	var f telebot.File
-	switch {
-	case msg.Audio != nil:
-		evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(FileTypeAudio),
-			},
-		}
-		evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Audio.Duration),
-			},
-		}
+	case msg.Caption != "":
 		evt.Data = &pb.CloudEvent_TextData{
-			TextData: msg.Audio.Caption,
+			TextData: msg.Caption,
 		}
-		f = msg.Audio.File
-	case msg.Document != nil:
-		evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(FileTypeDocument),
-			},
-		}
-		evt.Data = &pb.CloudEvent_TextData{
-			TextData: msg.Document.Caption,
-		}
-		f = msg.Document.File
-	case msg.Photo != nil:
-		evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(FileTypeImage),
-			},
-		}
-		evt.Data = &pb.CloudEvent_TextData{
-			TextData: msg.Photo.Caption,
-		}
-		evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Photo.Height),
-			},
-		}
-		evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Photo.Width),
-			},
-		}
-		f = msg.Photo.File
-	case msg.Video != nil:
-		evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(FileTypeVideo),
-			},
-		}
-		evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Video.Duration),
-			},
-		}
-		evt.Data = &pb.CloudEvent_TextData{
-			TextData: msg.Video.Caption,
-		}
-		evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Video.Height),
-			},
-		}
-		evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
-			Attr: &pb.CloudEventAttributeValue_CeInteger{
-				CeInteger: int32(msg.Video.Width),
-			},
-		}
-		f = msg.Video.File
-	}
-	if evt.Data == nil || evt.GetTextData() == "" {
+	default:
 		err = errors.New("invalid message: missing text/caption")
 	}
 	if err == nil {
+		var f telebot.File
+		switch {
+		case msg.Audio != nil:
+			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(FileTypeAudio),
+				},
+			}
+			evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Audio.Duration),
+				},
+			}
+			f = msg.Audio.File
+		case msg.Document != nil:
+			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(FileTypeDocument),
+				},
+			}
+			f = msg.Document.File
+		case msg.Photo != nil:
+			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(FileTypeImage),
+				},
+			}
+			evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Photo.Height),
+				},
+			}
+			evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Photo.Width),
+				},
+			}
+			f = msg.Photo.File
+		case msg.Video != nil:
+			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(FileTypeVideo),
+				},
+			}
+			evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Video.Duration),
+				},
+			}
+			evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Video.Height),
+				},
+			}
+			evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeInteger{
+					CeInteger: int32(msg.Video.Width),
+				},
+			}
+			f = msg.Video.File
+		}
 		if f.FileID != "" {
 			evt.Attributes[attrKeyFileId] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeString{
