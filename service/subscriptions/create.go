@@ -34,7 +34,7 @@ var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 var msgFmtSubCreated = `Subscription created, next: 
 1. Create a target group chat to receive the matching messages. 
 2. Invite @AwakariBot to the group.
-3. Select the subscription in the new group from the list.`
+3. Select the subscription in the group from the list.`
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	_ = tgCtx.Send("Reply with new subscription name followed by keywords")
