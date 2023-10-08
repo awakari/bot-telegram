@@ -31,7 +31,7 @@ var errInvalidCondition = errors.New("invalid subscription condition")
 var errLimitReached = errors.New("subscription count limit reached")
 
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
-var msgFmtSubCreated = `Subscription created, next: 
+var msgSubCreated = `Subscription created, next: 
 1. Create a target group chat to receive the matching messages. 
 2. Invite @AwakariBot to the group.
 3. Select the subscription in the group from the list.`
@@ -66,12 +66,11 @@ func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 			sd.Enabled = true
 			err = validateSubscriptionData(sd)
 		}
-		var subId string
 		if err == nil {
-			subId, err = create(tgCtx, clientAwk, groupId, sd)
+			_, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), kbd, telebot.ModeHTML)
+			err = tgCtx.Send(msgSubCreated, kbd, telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
@@ -97,12 +96,11 @@ func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHa
 			sd.Enabled = req.Enabled
 			err = validateSubscriptionData(sd)
 		}
-		var subId string
 		if err == nil {
-			subId, err = create(tgCtx, clientAwk, groupId, sd)
+			_, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtSubCreated, subId), telebot.ModeHTML)
+			err = tgCtx.Send(msgSubCreated, telebot.ModeHTML)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
