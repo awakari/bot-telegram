@@ -35,20 +35,6 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			m := &telebot.ReplyMarkup{}
 			var rows []telebot.Row
 			// row 1
-			btns := []telebot.Btn{
-				{
-					Text: "🔗 Link Chat",
-					URL:  fmt.Sprintf("https://t.me/AwakariBot?startgroup=%s", subId),
-				},
-			}
-			if !sd.Expires.IsZero() {
-				btns = append(btns, telebot.Btn{
-					Text: "▲ Extend",
-					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
-				})
-			}
-			rows = append(rows, m.Row(btns...))
-			// row 2
 			rows = append(rows, m.Row(
 				telebot.Btn{
 					Text: "🏷 Describe",
@@ -58,8 +44,14 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Text: "❌ Delete",
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 				},
-			),
-			)
+			))
+			// row 2
+			if !sd.Expires.IsZero() {
+				rows = append(rows, m.Row(telebot.Btn{
+					Text: "▲ Extend",
+					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
+				}))
+			}
 			m.Inline(rows...)
 			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
 			var expires string

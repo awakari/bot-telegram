@@ -198,6 +198,7 @@ func main() {
 			case telebot.ChatPrivate:
 				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd, telebot.ModeHTML)
 			case telebot.ChatGroup:
+				fmt.Printf("START IN GROUP")
 				err = subscriptions.Start(tgCtx, log, clientAwk, chatStor, groupId, msgFmt)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\"): %s", chat.Type)
