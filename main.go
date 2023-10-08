@@ -195,11 +195,9 @@ func main() {
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
 			switch chat.Type {
+			case telebot.ChatGroup:
 			case telebot.ChatPrivate:
 				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd, telebot.ModeHTML)
-			case telebot.ChatGroup:
-				fmt.Printf("START IN GROUP")
-				err = subscriptions.Start(tgCtx, log, clientAwk, chatStor, groupId, msgFmt)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\"): %s", chat.Type)
 			}
@@ -230,6 +228,8 @@ func main() {
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
+	//
+	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subscriptions.ListOnGroupStartHandlerFunc(clientAwk, groupId), nil))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
 	go func() {
