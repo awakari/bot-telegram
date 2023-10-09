@@ -9,6 +9,7 @@ import (
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
+	"go.uber.org/ratelimit"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -39,7 +40,9 @@ const msgFmtExtendSteps = ` Please consider the following steps to extend it:
 2. Tap the "Subscriptions" reply keyboard button.
 3. Select the subscription "%s".
 4. Tap the "▲ Extend" button.`
+const rateLimit = 20
 
+var optRateLimitPer = ratelimit.Per(time.Minute)
 var runtimeReaders = make(map[int64]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
@@ -102,27 +105,29 @@ func StopChatReader(chatId int64) {
 	}
 }
 
-func NewReader(tgCtx telebot.Context, client api.Client, chatStor Storage, chatKey Key, groupId, userId string, format messages.Format) Reader {
+func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, chatKey Key, groupId, userId string, format messages.Format) Reader {
 	return &reader{
-		tgCtx:    tgCtx,
-		client:   client,
-		chatStor: chatStor,
-		chatKey:  chatKey,
-		groupId:  groupId,
-		userId:   userId,
-		format:   format,
+		tgCtx:     tgCtx,
+		clientAwk: clientAwk,
+		chatStor:  chatStor,
+		chatKey:   chatKey,
+		groupId:   groupId,
+		userId:    userId,
+		format:    format,
+		rl:        ratelimit.New(rateLimit, optRateLimitPer),
 	}
 }
 
 type reader struct {
-	tgCtx    telebot.Context
-	client   api.Client
-	chatStor Storage
-	chatKey  Key
-	groupId  string
-	userId   string
-	stop     bool
-	format   messages.Format
+	tgCtx     telebot.Context
+	clientAwk api.Client
+	chatStor  Storage
+	chatKey   Key
+	groupId   string
+	userId    string
+	stop      bool
+	format    messages.Format
+	rl        ratelimit.Limiter
 }
 
 func (r *reader) Run(ctx context.Context, log *slog.Logger) {
@@ -157,11 +162,11 @@ func (r *reader) runOnce() (err error) {
 	r.checkExpiration(groupIdCtx)
 	groupIdCtx, cancel := context.WithTimeout(groupIdCtx, ReaderTtl)
 	defer cancel()
-	var awakariReader model.Reader[[]*pb.CloudEvent]
-	awakariReader, err = r.client.OpenMessagesReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
+	var readerAwk model.AckReader[[]*pb.CloudEvent]
+	readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
 	if err == nil {
-		defer awakariReader.Close()
-		err = r.deliverEventsReadLoop(ctx, awakariReader)
+		defer readerAwk.Close()
+		err = r.deliverEventsReadLoop(ctx, readerAwk)
 	}
 	if err == nil {
 		nextChatState := Chat{
@@ -175,7 +180,7 @@ func (r *reader) runOnce() (err error) {
 }
 
 func (r *reader) checkExpiration(groupIdCtx context.Context) {
-	sd, err := r.client.ReadSubscription(groupIdCtx, r.userId, r.chatKey.SubId)
+	sd, err := r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.chatKey.SubId)
 	if err == nil {
 		switch {
 		case sd.Expires.IsZero(): // never expires
@@ -187,9 +192,9 @@ func (r *reader) checkExpiration(groupIdCtx context.Context) {
 	}
 }
 
-func (r *reader) deliverEventsReadLoop(ctx context.Context, awakariReader model.Reader[[]*pb.CloudEvent]) (err error) {
+func (r *reader) deliverEventsReadLoop(ctx context.Context, readerAwk model.AckReader[[]*pb.CloudEvent]) (err error) {
 	for !r.stop {
-		err = r.deliverEventsRead(ctx, awakariReader)
+		err = r.deliverEventsRead(ctx, readerAwk)
 		if err != nil {
 			break
 		}
@@ -197,37 +202,52 @@ func (r *reader) deliverEventsReadLoop(ctx context.Context, awakariReader model.
 	return
 }
 
-func (r *reader) deliverEventsRead(ctx context.Context, awakariReader model.Reader[[]*pb.CloudEvent]) (err error) {
-	//
+func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReader[[]*pb.CloudEvent]) (err error) {
 	var evts []*pb.CloudEvent
-	evts, err = awakariReader.Read()
-	//
+	evts, err = readerAwk.Read()
 	switch status.Code(err) {
+	case codes.OK:
+		var countAck uint32
+		if len(evts) > 0 {
+			countAck, err = r.deliverEvents(evts)
+		}
+		if countAck > 0 {
+			_ = readerAwk.Ack(countAck)
+		}
+		switch err.(type) {
+		case telebot.FloodError:
+			d := time.Second * time.Duration(err.(telebot.FloodError).RetryAfter)
+			fmt.Printf("Flood error, retry in %s\n", d)
+			time.Sleep(d)
+			err = nil
+		}
 	case codes.NotFound:
 		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
 		r.stop = true
 		err = nil
 	}
-	//
-	if len(evts) > 0 {
-		_ = r.deliverEvents(evts)
-	}
-	//
 	return err
 }
 
-func (r *reader) deliverEvents(evts []*pb.CloudEvent) (err error) {
+func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err error) {
 	for _, evt := range evts {
+		r.rl.Take()
 		tgMsg := r.format.Convert(evt)
 		err = r.tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
-			fmt.Printf("Failed to send message in HTML mode, cause: %s\n", err)
-			// fallback: try to re-send as a raw text
-			err = r.tgCtx.Send(r.format.Plain(evt))
-			if err != nil {
-				fmt.Printf("Failed to send event to chat %d: %s\n%s\n", r.chatKey.Id, err, r.format.Plain(evt))
+			switch err.(type) {
+			case telebot.FloodError:
+			default:
+				fmt.Printf("Failed to send message in HTML mode, cause: %s\n", err)
+				err = r.tgCtx.Send(r.format.Plain(evt)) // fallback: try to re-send as a raw text
 			}
+		}
+		if err == nil {
+			countAck++
+		} else {
+			fmt.Printf("Failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
+			break
 		}
 	}
 	return
