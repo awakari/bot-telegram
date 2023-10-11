@@ -233,14 +233,14 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err error) {
 	for _, evt := range evts {
 		r.rl.Take()
-		tgMsg := r.format.Convert(evt)
+		tgMsg := r.format.Convert(evt, true)
 		err = r.tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
 			default:
 				fmt.Printf("Failed to send message in HTML mode, cause: %s\n", err)
-				err = r.tgCtx.Send(r.format.Plain(evt)) // fallback: try to re-send as a raw text
+				err = r.tgCtx.Send(r.format.Convert(evt, false)) // fallback: try to re-send as a raw text
 			}
 		}
 		if err == nil {
