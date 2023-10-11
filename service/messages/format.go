@@ -89,12 +89,12 @@ func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string
 	if _, err := url.Parse(urlSrc); err == nil && html {
 		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
 	} else {
-		txt += fmt.Sprintf("source: %s\n", urlSrc)
+		txt += fmt.Sprintf("Source: %s\n", urlSrc)
 	}
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
 	if groupIdSrcOk {
-		txt += fmt.Sprintf("\nclient: %s\n", groupIdSrc.GetCeString())
+		txt += fmt.Sprintf("\nClient: %s\n", groupIdSrc.GetCeString())
 	}
 
 	if attrs {
