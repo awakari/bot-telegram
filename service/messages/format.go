@@ -5,6 +5,7 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
+	"net/url"
 	"unicode/utf8"
 )
 
@@ -102,7 +103,11 @@ func (f Format) Html(evt *pb.CloudEvent) (txt string) {
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
+	if _, err := url.Parse(urlSrc); err == nil {
+		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
+	} else {
+		txt += fmt.Sprintf("Source: %s\n", urlSrc)
+	}
 
 	txt += fmt.Sprintf("\nSincerely yours,\n@AwakariBot")
 
