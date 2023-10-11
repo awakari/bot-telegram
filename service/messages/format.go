@@ -11,8 +11,9 @@ import (
 	"unicode/utf8"
 )
 
-const fmtLenMaxBodyTxt = 1024
 const fmtLenMaxAttrVal = 256
+const fmtLenMaxSummary = 512
+const fmtLenMaxBodyTxt = 1024
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
@@ -71,6 +72,10 @@ func (f Format) Convert(evt *pb.CloudEvent, html bool) (tgMsg any) {
 
 func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string) {
 
+	if attrs {
+		txt += f.convertHeaderAttrs(evt, html, trunc)
+	}
+
 	txtData := evt.GetTextData()
 	switch {
 	case txtData != "":
@@ -87,9 +92,9 @@ func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string
 		urlSrc = rssItemGuid.GetCeString()
 	}
 	if _, err := url.Parse(urlSrc); err == nil && html {
-		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
+		txt += fmt.Sprintf("\n<a href=\"%s\">Source</a>\n", urlSrc)
 	} else {
-		txt += fmt.Sprintf("Source: %s\n", urlSrc)
+		txt += fmt.Sprintf("\nSource: %s\n", urlSrc)
 	}
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
@@ -106,45 +111,45 @@ func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string
 	return
 }
 
+func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, html bool, trunc bool) (txt string) {
+	attrTitle, attrTitleFound := evt.Attributes["title"]
+	if attrTitleFound {
+		v := f.HtmlPolicy.Sanitize(attrTitle.GetCeString())
+		if trunc {
+			v = truncateStringUtf8(v, fmtLenMaxAttrVal)
+		}
+		switch html {
+		case true:
+			txt += fmt.Sprintf("\n<b>%s</b>\n", v)
+		default:
+			txt += fmt.Sprintf("\n%s\n", v)
+		}
+	}
+	attrSummary, attrSummaryFound := evt.Attributes["summary"]
+	if attrSummaryFound {
+		v := f.HtmlPolicy.Sanitize(attrSummary.GetCeString())
+		if trunc {
+			v = truncateStringUtf8(v, fmtLenMaxSummary)
+		}
+		txt += fmt.Sprintf("\n%s\n", v)
+	}
+	return
+}
+
 func (f Format) convertAttrs(evt *pb.CloudEvent, html bool, trunc bool) (txt string) {
 
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
+		case "title":
+		case "summary":
 		case "awakarimatchfound": // internal
 		case "awakarigroupid": // already in use for the "Via"
 		case "awakariuserid": // do not expose
 		case "rssitemguid": // already in use for the source "Source"
 		case "feedcategories":
 		case "feeddescription":
-		case "feedimagetitle": // already used when handling "feedimageurl" attr
+		case "feedimagetitle":
 		case "feedimageurl":
-			_, imgUrlFound := evt.Attributes["imageurl"]
-			if !imgUrlFound { // use the feed image instead
-				var imgTitle string
-				attrImgTitle, imgTitleFound := evt.Attributes["feedimagetitle"]
-				switch imgTitleFound {
-				case true:
-					imgTitle = attrImgTitle.GetCeString()
-				default:
-					imgTitle = "Image"
-				}
-				switch html {
-				case true:
-					switch {
-					case attrVal.GetCeString() != "":
-						txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeString())
-					case attrVal.GetCeUri() != "":
-						txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeUri())
-					}
-				default:
-					switch {
-					case attrVal.GetCeString() != "":
-						txt += fmt.Sprintf("%s: %s\n", imgTitle, attrVal.GetCeString())
-					case attrVal.GetCeUri() != "":
-						txt += fmt.Sprintf("%s: %s\n", imgTitle, attrVal.GetCeUri())
-					}
-				}
-			}
 		case "feedtitle":
 		case "imagetitle": // already used when handling "imageurl" attr
 		case "imageurl":
@@ -160,9 +165,9 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, html bool, trunc bool) (txt str
 			case true:
 				switch {
 				case attrVal.GetCeString() != "":
-					txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeString())
+					txt += fmt.Sprintf("\n<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeString())
 				case attrVal.GetCeUri() != "":
-					txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeUri())
+					txt += fmt.Sprintf("\n<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeUri())
 				}
 			default:
 				switch {
@@ -188,12 +193,7 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, html bool, trunc bool) (txt str
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				switch html {
-				case true:
-					txt += fmt.Sprintf("\n<b>%s</b>: %s\n", attrName, v)
-				default:
-					txt += fmt.Sprintf("\n%s: %s\n", attrName, v)
-				}
+				txt += fmt.Sprintf("\n%s: %s\n", attrName, v)
 			case *pb.CloudEventAttributeValue_CeUri:
 				v := vt.CeUri
 				if trunc {
