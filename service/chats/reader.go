@@ -220,12 +220,14 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 		if countAck > 0 {
 			_ = readerAwk.Ack(countAck)
 		}
-		switch err.(type) {
-		case telebot.FloodError:
-			d := time.Second * time.Duration(err.(telebot.FloodError).RetryAfter)
-			fmt.Printf("Flood error, retry in %s\n", d)
-			time.Sleep(d)
-			err = nil
+		if err != nil {
+			switch err.(type) {
+			case telebot.FloodError:
+				d := time.Second * time.Duration(err.(telebot.FloodError).RetryAfter)
+				fmt.Printf("Flood error, retry in %s\n", d)
+				time.Sleep(d)
+				err = nil
+			}
 		}
 	case codes.NotFound:
 		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
@@ -247,11 +249,20 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err erro
 			default:
 				fmt.Printf("Failed to send message in HTML mode, cause: %s\n", err)
 				err = r.tgCtx.Send(r.format.Convert(evt, false)) // fallback: try to re-send as a raw text
+				if err != nil {
+					switch err.(type) {
+					case telebot.FloodError:
+					default:
+						fmt.Printf("SKIP: failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
+						countAck++ // skip
+					}
+				}
 			}
 		}
-		countAck++
+		if err == nil {
+			countAck++
+		}
 		if err != nil {
-			fmt.Printf("FATAL: failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
 			break
 		}
 	}
