@@ -164,17 +164,23 @@ func (r *reader) runOnce() (err error) {
 	defer cancel()
 	var readerAwk model.AckReader[[]*pb.CloudEvent]
 	readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
-	if err == nil {
+	switch status.Code(err) {
+	case codes.OK:
 		defer readerAwk.Close()
 		err = r.deliverEventsReadLoop(ctx, readerAwk)
-	}
-	if err == nil {
-		nextChatState := Chat{
-			Key:     r.chatKey,
-			Expires: time.Now().UTC().Add(ReaderTtl),
-			State:   StateActive,
+		if err == nil {
+			nextChatState := Chat{
+				Key:     r.chatKey,
+				Expires: time.Now().UTC().Add(ReaderTtl),
+				State:   StateActive,
+			}
+			err = r.chatStor.Update(ctx, nextChatState)
 		}
-		err = r.chatStor.Update(ctx, nextChatState)
+	case codes.NotFound:
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
+		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		r.stop = true
+		err = nil
 	}
 	return
 }
@@ -243,10 +249,9 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err erro
 				err = r.tgCtx.Send(r.format.Convert(evt, false)) // fallback: try to re-send as a raw text
 			}
 		}
-		if err == nil {
-			countAck++
-		} else {
-			fmt.Printf("Failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
+		countAck++
+		if err != nil {
+			fmt.Printf("FATAL: failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
 			break
 		}
 	}
