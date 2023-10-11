@@ -25,7 +25,7 @@ import (
 const ReqMsgPubBasic = "msg_pub_basic"
 const PurposePublish = "msg_pub"
 const attrKeyAuthor = "author"
-const attrKeyMsgId = "telegrammessageid"
+const attrKeyMsgId = "tgmessageid"
 const attrValType = "com.github.awakari.bot-telegram"
 const attrValSpecVersion = "1.0"
 const fmtLinkUser = "tg://user?id=%d"
