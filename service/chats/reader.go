@@ -217,9 +217,7 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 		if len(evts) > 0 {
 			countAck, err = r.deliverEvents(evts)
 		}
-		if countAck > 0 {
-			_ = readerAwk.Ack(countAck)
-		}
+		_ = readerAwk.Ack(countAck)
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
