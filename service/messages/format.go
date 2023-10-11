@@ -32,19 +32,19 @@ func (f Format) Convert(evt *pb.CloudEvent, html bool) (tgMsg any) {
 			tgMsg = &telebot.Audio{
 				File:     file,
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convertTextDataAndFooter(evt, html, false),
+				Caption:  f.convert(evt, html, false, false),
 			}
 		case FileTypeDocument:
 			tgMsg = &telebot.Document{
 				File:    file,
-				Caption: f.convertTextDataAndFooter(evt, html, false),
+				Caption: f.convert(evt, html, false, false),
 			}
 		case FileTypeImage:
 			tgMsg = &telebot.Photo{
 				File:    file,
 				Width:   int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:  int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
-				Caption: f.convertTextDataAndFooter(evt, html, false),
+				Caption: f.convert(evt, html, false, false),
 			}
 		case FileTypeVideo:
 			tgMsg = &telebot.Video{
@@ -52,7 +52,7 @@ func (f Format) Convert(evt *pb.CloudEvent, html bool) (tgMsg any) {
 				Width:    int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:   int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convertTextDataAndFooter(evt, html, false),
+				Caption:  f.convert(evt, html, false, false),
 			}
 		}
 	default:
@@ -61,18 +61,56 @@ func (f Format) Convert(evt *pb.CloudEvent, html bool) (tgMsg any) {
 		case true:
 			// no need to convert any other attributes except text and footer
 			// no need to truncate for telegram if message came from telegram
-			tgMsg = f.convertTextDataAndFooter(evt, html, false)
+			tgMsg = f.convert(evt, html, false, false)
 		default:
-			tgMsg = f.convert(evt, html, true)
+			tgMsg = f.convert(evt, html, true, true)
 		}
 	}
 	return
 }
 
-func (f Format) convert(evt *pb.CloudEvent, html bool, trunc bool) (txt string) {
+func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string) {
+
+	txtData := evt.GetTextData()
+	switch {
+	case txtData != "":
+		txtData = f.HtmlPolicy.Sanitize(txtData)
+		if trunc {
+			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
+		}
+		txt += fmt.Sprintf("\n%s\n", txtData)
+	}
+
+	urlSrc := evt.Source
+	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
+	if rssItemGuidOk {
+		urlSrc = rssItemGuid.GetCeString()
+	}
+	if _, err := url.Parse(urlSrc); err == nil && html {
+		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
+	} else {
+		txt += fmt.Sprintf("source: %s\n", urlSrc)
+	}
+
+	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
+	if groupIdSrcOk {
+		txt += fmt.Sprintf("\nclient: %s\n", groupIdSrc.GetCeString())
+	}
+
+	if attrs {
+		txt += f.convertAttrs(evt, html, trunc)
+	}
+
+	txt += fmt.Sprintf("\nSincerely yours,\n@AwakariBot")
+
+	return
+}
+
+func (f Format) convertAttrs(evt *pb.CloudEvent, html bool, trunc bool) (txt string) {
 
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
+		case "awakarimatchfound": // internal
 		case "awakarigroupid": // already in use for the "Via"
 		case "awakariuserid": // do not expose
 		case "rssitemguid": // already in use for the source "Source"
@@ -180,41 +218,6 @@ func (f Format) convert(evt *pb.CloudEvent, html bool, trunc bool) (txt string) 
 			}
 		}
 	}
-
-	txt += f.convertTextDataAndFooter(evt, html, trunc)
-
-	return
-}
-
-func (f Format) convertTextDataAndFooter(evt *pb.CloudEvent, html bool, trunc bool) (txt string) {
-
-	txtData := evt.GetTextData()
-	switch {
-	case txtData != "":
-		txtData = f.HtmlPolicy.Sanitize(txtData)
-		if trunc {
-			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
-		}
-		txt += fmt.Sprintf("\n%s\n", txtData)
-	}
-
-	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
-	if groupIdSrcOk {
-		txt += fmt.Sprintf("\nVia: %s\n", groupIdSrc.GetCeString())
-	}
-
-	urlSrc := evt.Source
-	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
-	if rssItemGuidOk {
-		urlSrc = rssItemGuid.GetCeString()
-	}
-	if _, err := url.Parse(urlSrc); err == nil && html {
-		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
-	} else {
-		txt += fmt.Sprintf("Source: %s\n", urlSrc)
-	}
-
-	txt += fmt.Sprintf("\nSincerely yours,\n@AwakariBot")
 
 	return
 }
