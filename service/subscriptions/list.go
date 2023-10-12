@@ -84,7 +84,7 @@ func listButtons(
 			if err == nil {
 				descr := sub.Description
 				if subLinked {
-					descr += " 🔒"
+					descr += " 🔗"
 				} else if subLinkedHere {
 					descr += " ✓"
 				}
