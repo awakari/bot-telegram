@@ -239,28 +239,37 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err error) {
 	for _, evt := range evts {
 		r.rl.Take()
-		tgMsg := r.format.Convert(evt, true)
+		tgMsg := r.format.Convert(evt, messages.FormatModeHtml)
 		err = r.tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
 			default:
-				fmt.Printf("Failed to send message in HTML mode, cause: %s\n", err)
-				err = r.tgCtx.Send(r.format.Convert(evt, false)) // fallback: try to re-send as a raw text
-				if err != nil {
-					switch err.(type) {
-					case telebot.FloodError:
-					default:
-						fmt.Printf("SKIP: failed to send event %s to chat %d: %s\n", evt.Id, r.chatKey.Id, err)
-						countAck++ // skip
-					}
-				}
+				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s\n", tgMsg, err)
+				tgMsg = r.format.Convert(evt, messages.FormatModePlain)
+				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
 		}
+		if err != nil {
+			switch err.(type) {
+			case telebot.FloodError:
+			default:
+				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
+				tgMsg = r.format.Convert(evt, messages.FormatModeRaw)
+				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a raw text w/o file attachments
+			}
+		}
+		//
 		if err == nil {
 			countAck++
 		}
 		if err != nil {
+			switch err.(type) {
+			case telebot.FloodError:
+			default:
+				fmt.Printf("FATAL: failed to send message %+v in raw text mode, cause: %s\n", tgMsg, err)
+				countAck++ // to skip
+			}
 			break
 		}
 	}

@@ -17,8 +17,7 @@ import (
 )
 
 const CmdStart = "sub_start"
-const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. New matching messages will appear here."
-const msgFmtRenameFail = "Unable to rename the chat. Please rename it manually to: <pre>%s</pre>."
+const msgFmtChatLinked = "Linked the subscription to this chat. New matching messages will appear here. Please rename it manually to: <pre>%s</pre>."
 
 func Start(
 	log *slog.Logger,
@@ -57,13 +56,6 @@ func Start(
 		}
 		if err == nil {
 			err = tgCtx.Send(fmt.Sprintf(msgFmtChatLinked, subData.Description))
-		}
-		if err == nil {
-			_ = tgCtx.Bot().SetGroupDescription(tgCtx.Chat(), fmt.Sprintf("Subscription id: %s", subId))
-			err = tgCtx.Bot().SetGroupTitle(tgCtx.Chat(), subData.Description)
-			if err != nil {
-				err = tgCtx.Send(fmt.Sprintf(msgFmtRenameFail, subData.Description), telebot.ModeHTML)
-			}
 		}
 		if err == nil {
 			r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Key, groupId, userId, msgFmt)
