@@ -26,7 +26,7 @@ const (
 	FormatModeRaw
 )
 
-func (f Format) Convert(evt *pb.CloudEvent, mode FormatMode) (tgMsg any) {
+func (f Format) Convert(evt *pb.CloudEvent, subDescr string, mode FormatMode) (tgMsg any) {
 	fileTypeAttr, fileTypeFound := evt.Attributes[attrKeyFileType]
 	if fileTypeFound && mode != FormatModeRaw {
 		ft := FileType(fileTypeAttr.GetCeInteger())
@@ -39,19 +39,19 @@ func (f Format) Convert(evt *pb.CloudEvent, mode FormatMode) (tgMsg any) {
 			tgMsg = &telebot.Audio{
 				File:     file,
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convert(evt, mode, false, false),
+				Caption:  f.convert(evt, subDescr, mode, false, false),
 			}
 		case FileTypeDocument:
 			tgMsg = &telebot.Document{
 				File:    file,
-				Caption: f.convert(evt, mode, false, false),
+				Caption: f.convert(evt, subDescr, mode, false, false),
 			}
 		case FileTypeImage:
 			tgMsg = &telebot.Photo{
 				File:    file,
 				Width:   int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:  int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
-				Caption: f.convert(evt, mode, false, false),
+				Caption: f.convert(evt, subDescr, mode, false, false),
 			}
 		case FileTypeVideo:
 			tgMsg = &telebot.Video{
@@ -59,7 +59,7 @@ func (f Format) Convert(evt *pb.CloudEvent, mode FormatMode) (tgMsg any) {
 				Width:    int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:   int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convert(evt, mode, false, false),
+				Caption:  f.convert(evt, subDescr, mode, false, false),
 			}
 		}
 	} else {
@@ -68,15 +68,15 @@ func (f Format) Convert(evt *pb.CloudEvent, mode FormatMode) (tgMsg any) {
 		case true:
 			// no need to truncate for telegram when message is from telegram
 			// no need to convert any other attributes except text and footer
-			tgMsg = f.convert(evt, mode, false, false)
+			tgMsg = f.convert(evt, subDescr, mode, false, false)
 		default:
-			tgMsg = f.convert(evt, mode, true, true)
+			tgMsg = f.convert(evt, subDescr, mode, true, true)
 		}
 	}
 	return
 }
 
-func (f Format) convert(evt *pb.CloudEvent, mode FormatMode, trunc, attrs bool) (txt string) {
+func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, trunc, attrs bool) (txt string) {
 
 	if attrs {
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
@@ -111,7 +111,7 @@ func (f Format) convert(evt *pb.CloudEvent, mode FormatMode, trunc, attrs bool) 
 	if groupIdSrcOk {
 		txt += fmt.Sprintf("Submitted by: %s\n", groupIdSrc.GetCeString())
 	}
-	txt += fmt.Sprintf("Delivered by: @AwakariBot")
+	txt += fmt.Sprintf("Subscription: %s\nDelivered by: @AwakariBot", subDescr)
 
 	return
 }

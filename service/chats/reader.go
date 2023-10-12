@@ -8,6 +8,7 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	clientAwkApiReader "github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/model"
+	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"go.uber.org/ratelimit"
@@ -158,16 +159,25 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 }
 
 func (r *reader) runOnce() (err error) {
+	// prepare the context with a certain timeout
 	ctx := context.Background()
 	groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", r.groupId)
 	r.checkExpiration(groupIdCtx)
 	groupIdCtx, cancel := context.WithTimeout(groupIdCtx, ReaderTtl)
 	defer cancel()
+	// get subscription info
+	var sd subscription.Data
+	sd, err = r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.chatKey.SubId)
+	// open the events reader
 	var readerAwk model.AckReader[[]*pb.CloudEvent]
-	readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
+	var subDescr string
+	if err == nil {
+		subDescr = sd.Description
+		readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
+	}
 	if err == nil {
 		defer readerAwk.Close()
-		err = r.deliverEventsReadLoop(ctx, readerAwk)
+		err = r.deliverEventsReadLoop(ctx, readerAwk, subDescr)
 	}
 	if err == nil {
 		nextChatState := Chat{
@@ -200,9 +210,13 @@ func (r *reader) checkExpiration(groupIdCtx context.Context) {
 	}
 }
 
-func (r *reader) deliverEventsReadLoop(ctx context.Context, readerAwk model.AckReader[[]*pb.CloudEvent]) (err error) {
+func (r *reader) deliverEventsReadLoop(
+	ctx context.Context,
+	readerAwk model.AckReader[[]*pb.CloudEvent],
+	subDescr string,
+) (err error) {
 	for !r.stop {
-		err = r.deliverEventsRead(ctx, readerAwk)
+		err = r.deliverEventsRead(ctx, readerAwk, subDescr)
 		if err != nil {
 			break
 		}
@@ -210,14 +224,18 @@ func (r *reader) deliverEventsReadLoop(ctx context.Context, readerAwk model.AckR
 	return
 }
 
-func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReader[[]*pb.CloudEvent]) (err error) {
+func (r *reader) deliverEventsRead(
+	ctx context.Context,
+	readerAwk model.AckReader[[]*pb.CloudEvent],
+	subDescr string,
+) (err error) {
 	var evts []*pb.CloudEvent
 	evts, err = readerAwk.Read()
 	switch status.Code(err) {
 	case codes.OK:
 		var countAck uint32
 		if len(evts) > 0 {
-			countAck, err = r.deliverEvents(evts)
+			countAck, err = r.deliverEvents(evts, subDescr)
 		}
 		_ = readerAwk.Ack(countAck)
 		if err != nil {
@@ -238,17 +256,17 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 	return err
 }
 
-func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err error) {
+func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck uint32, err error) {
 	for _, evt := range evts {
 		r.rl.Take()
-		tgMsg := r.format.Convert(evt, messages.FormatModeHtml)
+		tgMsg := r.format.Convert(evt, subDescr, messages.FormatModeHtml)
 		err = r.tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
 			default:
 				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s\n", tgMsg, err)
-				tgMsg = r.format.Convert(evt, messages.FormatModePlain)
+				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModePlain)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
 		}
@@ -257,7 +275,7 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent) (countAck uint32, err erro
 			case telebot.FloodError:
 			default:
 				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
-				tgMsg = r.format.Convert(evt, messages.FormatModeRaw)
+				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModeRaw)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a raw text w/o file attachments
 			}
 		}
