@@ -123,7 +123,7 @@ func main() {
 		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(cfg.Payment),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, groupId),
+		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelMsgSendBasic:   messages.PublishBasicRequest,
@@ -191,16 +191,20 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
+	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, chatStor, groupId)
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
 			switch chat.Type {
 			case telebot.ChatGroup:
+				err = subListHandlerFunc(tgCtx)
+			case telebot.ChatSuperGroup:
+				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatPrivate:
 				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd, telebot.ModeHTML)
 			default:
-				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\"): %s", chat.Type)
+				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
 			return
 		}, menuKbd),
@@ -230,7 +234,7 @@ func main() {
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
 	//
-	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subscriptions.ListOnGroupStartHandlerFunc(clientAwk, groupId), nil))
+	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subListHandlerFunc, nil))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
 	go func() {

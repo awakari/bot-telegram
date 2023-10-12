@@ -43,7 +43,7 @@ func Start(
 			chat.UserId = userId
 			chat.State = chats.StateActive
 			chat.Expires = time.Now().UTC().Add(chats.ReaderTtl)
-			err = chatStor.Create(context.TODO(), chat)
+			err = chatStor.LinkSubscription(context.TODO(), chat)
 			switch {
 			case errors.Is(err, chats.ErrAlreadyExists):
 				err = errors.New("the chat is already linked to a subscription, try to use another group chat")

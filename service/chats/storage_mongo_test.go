@@ -59,7 +59,7 @@ func TestStorageMongo_Create(t *testing.T) {
 		State:   StateActive,
 		Expires: time.Now().Add(time.Hour),
 	}
-	err = s.Create(ctx, preExisting)
+	err = s.LinkSubscription(ctx, preExisting)
 	require.Nil(t, err)
 	//
 	cases := map[string]struct {
@@ -102,7 +102,7 @@ func TestStorageMongo_Create(t *testing.T) {
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			err = s.Create(ctx, c.chat)
+			err = s.LinkSubscription(ctx, c.chat)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}
@@ -132,7 +132,7 @@ func TestStorageMongo_Update(t *testing.T) {
 		State:   StateActive,
 		Expires: time.Now().Add(time.Hour),
 	}
-	err = s.Create(ctx, preExisting)
+	err = s.LinkSubscription(ctx, preExisting)
 	require.Nil(t, err)
 	//
 	cases := map[string]struct {
@@ -175,7 +175,7 @@ func TestStorageMongo_Update(t *testing.T) {
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			err = s.Update(ctx, c.chat)
+			err = s.UpdateSubscriptionLink(ctx, c.chat)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}
@@ -197,7 +197,7 @@ func TestStorageMongo_Delete(t *testing.T) {
 	sm := s.(storageMongo)
 	defer clear(ctx, t, sm)
 	//
-	preExisting := Chat{
+	preExisting0 := Chat{
 		Key: Key{
 			Id:    -123,
 			SubId: "sub0",
@@ -205,15 +205,28 @@ func TestStorageMongo_Delete(t *testing.T) {
 		State:   StateActive,
 		Expires: time.Now().Add(time.Hour),
 	}
-	err = s.Create(ctx, preExisting)
+	err = s.LinkSubscription(ctx, preExisting0)
+	require.Nil(t, err)
+	//
+	preExisting1 := Chat{
+		Key: Key{
+			Id:    -123,
+			SubId: "sub1",
+		},
+		State:   StateInactive,
+		Expires: time.Now().Add(time.Hour),
+	}
+	err = s.LinkSubscription(ctx, preExisting1)
 	require.Nil(t, err)
 	//
 	cases := map[string]struct {
-		id  int64
-		err error
+		id    int64
+		count int64
+		err   error
 	}{
 		"ok": {
-			id: -123,
+			id:    -123,
+			count: 2,
 		},
 		"not found is ok": {
 			id: 234,
@@ -222,7 +235,8 @@ func TestStorageMongo_Delete(t *testing.T) {
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			err = s.Delete(ctx, c.id)
+			count, err := s.Delete(ctx, c.id)
+			assert.Equal(t, c.count, count)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}
@@ -307,7 +321,7 @@ func TestStorageMongo_ActivateNext(t *testing.T) {
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
 			for _, chat := range c.stored {
-				err = s.Create(ctx, chat)
+				err = s.LinkSubscription(ctx, chat)
 				require.Nil(t, err)
 			}
 			var actual Chat

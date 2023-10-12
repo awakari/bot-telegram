@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
@@ -15,7 +16,7 @@ import (
 
 const subListLimit = 256 // TODO: implement the proper pagination
 
-func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
+func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
@@ -30,7 +31,7 @@ func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 			respTxt += usage.FormatUsageLimit(u, l)
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdDetails)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails)
 		if err == nil {
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
@@ -38,12 +39,12 @@ func ListHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 	}
 }
 
-func ListOnGroupStartHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
+func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, CmdStart)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart)
 		if err == nil {
 			err = tgCtx.Send("Select a subscription to read in this chat:", m)
 		}
@@ -51,7 +52,14 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, groupId string) telebot.H
 	}
 }
 
-func listButtons(groupIdCtx context.Context, userId string, clientAwk api.Client, btnCmd string) (m *telebot.ReplyMarkup, err error) {
+func listButtons(
+	groupIdCtx context.Context,
+	userId string,
+	clientAwk api.Client,
+	chatStor chats.Storage,
+	chatId int64,
+	btnCmd string,
+) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
 	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
 	if err == nil {
@@ -60,24 +68,40 @@ func listButtons(groupIdCtx context.Context, userId string, clientAwk api.Client
 		var rows []telebot.Row
 		for _, subId := range subIds {
 			sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
+			var subLinked bool
+			if err == nil {
+				k := chats.Key{
+					Id:    chatId,
+					SubId: subId,
+				}
+				_, err = chatStor.GetSubscriptionLink(groupIdCtx, k)
+				if err == nil {
+					subLinked = true
+				}
+			}
+			if err == nil {
+				descr := sub.Description
+				if subLinked {
+					descr = fmt.Sprintf("🔗 %s", descr)
+				}
+				now := time.Now().UTC()
+				switch {
+				case sub.Expires.IsZero(): // never expires
+					descr += " ∞"
+				case sub.Expires.Before(now):
+					descr += " ⚠"
+				case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
+					descr += " ⏳"
+				}
+				row := m.Row(telebot.Btn{
+					Text: descr,
+					Data: fmt.Sprintf("%s %s", btnCmd, subId),
+				})
+				rows = append(rows, row)
+			}
 			if err != nil {
 				break
 			}
-			descr := sub.Description
-			now := time.Now().UTC()
-			switch {
-			case sub.Expires.IsZero(): // never expires
-				descr += " ∞"
-			case sub.Expires.Before(now):
-				descr += " ⚠"
-			case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
-				descr += " ⏳"
-			}
-			row := m.Row(telebot.Btn{
-				Text: descr,
-				Data: fmt.Sprintf("%s %s", btnCmd, subId),
-			})
-			rows = append(rows, row)
 		}
 		m.Inline(rows...)
 	}

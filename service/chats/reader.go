@@ -87,7 +87,7 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 				State:   StateInactive,
 				Expires: time.Now().UTC(),
 			}
-			err := r.chatStor.Update(gCtx, c)
+			err := r.chatStor.UpdateSubscriptionLink(gCtx, c)
 			if err != nil {
 				log.Error(fmt.Sprintf("Failed to release chat %d: %s", c.Key.Id, err))
 			}
@@ -152,7 +152,7 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 	//
 	if err != nil {
 		err = r.tgCtx.Send(fmt.Sprintf(msgFmtRunFatal, err))
-		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
 		_ = r.tgCtx.Bot().Leave(r.tgCtx.Chat())
 	}
 }
@@ -175,12 +175,12 @@ func (r *reader) runOnce() (err error) {
 			Expires: time.Now().UTC().Add(ReaderTtl),
 			State:   StateActive,
 		}
-		err = r.chatStor.Update(ctx, nextChatState)
+		err = r.chatStor.UpdateSubscriptionLink(ctx, nextChatState)
 	}
 	switch {
 	case errors.Is(err, clientAwkApiReader.ErrNotFound):
 		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
-		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
 		r.stop = true
 		err = nil
 	}
@@ -231,7 +231,7 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 		}
 	case codes.NotFound:
 		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
-		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
+		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
 		r.stop = true
 		err = nil
 	}
@@ -289,7 +289,7 @@ func (r *reader) runtimeUnregister(ctx context.Context) {
 	defer runtimeReadersLock.Unlock()
 	delete(runtimeReaders, r.chatKey.Id)
 	// try to do the best effort to mark chat as inactive in the chats DB
-	_ = r.chatStor.Update(ctx, Chat{
+	_ = r.chatStor.UpdateSubscriptionLink(ctx, Chat{
 		Key:   r.chatKey,
 		State: StateInactive,
 	})

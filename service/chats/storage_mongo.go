@@ -45,7 +45,7 @@ var indices = []mongo.IndexModel{
 		},
 		Options: options.
 			Index().
-			SetUnique(true),
+			SetUnique(false),
 	},
 	{
 		Keys: bson.D{
@@ -81,6 +81,28 @@ var indices = []mongo.IndexModel{
 			SetUnique(false),
 	},
 }
+var projGet = bson.D{
+	{
+		Key:   attrGroupId,
+		Value: 1,
+	},
+	{
+		Key:   attrUserId,
+		Value: 1,
+	},
+	{
+		Key:   attrState,
+		Value: 1,
+	},
+	{
+		Key:   attrExpires,
+		Value: 1,
+	},
+}
+var optsGet = options.
+	FindOne().
+	SetShowRecordID(false).
+	SetProjection(projGet)
 var optsActivateNext = options.
 	FindOneAndUpdate().
 	SetSort(bson.D{
@@ -131,7 +153,7 @@ func (sm storageMongo) Close() error {
 	return sm.conn.Disconnect(context.TODO())
 }
 
-func (sm storageMongo) Create(ctx context.Context, c Chat) (err error) {
+func (sm storageMongo) LinkSubscription(ctx context.Context, c Chat) (err error) {
 	rec := chatRec{
 		Id:      c.Key.Id,
 		SubId:   c.Key.SubId,
@@ -145,7 +167,29 @@ func (sm storageMongo) Create(ctx context.Context, c Chat) (err error) {
 	return
 }
 
-func (sm storageMongo) Update(ctx context.Context, c Chat) (err error) {
+func (sm storageMongo) GetSubscriptionLink(ctx context.Context, k Key) (c Chat, err error) {
+	q := bson.M{
+		attrId:    k.Id,
+		attrSubId: k.SubId,
+	}
+	var result *mongo.SingleResult
+	result = sm.coll.FindOne(ctx, q, optsGet)
+	err = result.Err()
+	var rec chatRec
+	if err == nil {
+		err = result.Decode(&rec)
+	}
+	if err == nil {
+		c.Key = k
+		c.GroupId = rec.GroupId
+		c.UserId = rec.UserId
+		c.State = State(rec.State)
+		c.Expires = rec.Expires
+	}
+	return
+}
+
+func (sm storageMongo) UpdateSubscriptionLink(ctx context.Context, c Chat) (err error) {
 	q := bson.M{
 		attrId:    c.Key.Id,
 		attrSubId: c.Key.SubId,
@@ -168,11 +212,25 @@ func (sm storageMongo) Update(ctx context.Context, c Chat) (err error) {
 	return
 }
 
-func (sm storageMongo) Delete(ctx context.Context, id int64) (err error) {
+func (sm storageMongo) UnlinkSubscription(ctx context.Context, k Key) (err error) {
+	q := bson.M{
+		attrId:    k.Id,
+		attrSubId: k.SubId,
+	}
+	_, err = sm.coll.DeleteOne(ctx, q)
+	err = decodeMongoError(err)
+	return
+}
+
+func (sm storageMongo) Delete(ctx context.Context, id int64) (count int64, err error) {
 	q := bson.M{
 		attrId: id,
 	}
-	_, err = sm.coll.DeleteOne(ctx, q)
+	var result *mongo.DeleteResult
+	result, err = sm.coll.DeleteMany(ctx, q)
+	if result != nil {
+		count = result.DeletedCount
+	}
 	err = decodeMongoError(err)
 	return
 }
