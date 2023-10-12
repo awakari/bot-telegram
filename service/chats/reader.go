@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
+	clientAwkApiReader "github.com/awakari/client-sdk-go/api/grpc/reader"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
@@ -176,9 +177,9 @@ func (r *reader) runOnce() (err error) {
 		}
 		err = r.chatStor.Update(ctx, nextChatState)
 	}
-	switch status.Code(err) {
-	case codes.NotFound:
-		_ = r.tgCtx.Send(fmt.Sprintf("missing chat, stopping: %s", err))
+	switch {
+	case errors.Is(err, clientAwkApiReader.ErrNotFound):
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
 		r.stop = true
 		err = nil
@@ -229,7 +230,7 @@ func (r *reader) deliverEventsRead(ctx context.Context, readerAwk model.AckReade
 			}
 		}
 	case codes.NotFound:
-		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
 		r.stop = true
 		err = nil
