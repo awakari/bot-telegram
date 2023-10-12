@@ -87,7 +87,7 @@ func listButtons(
 					descr += " 🔗"
 				}
 				if subLinkedHere {
-					descr += " ✓✅☑🗹"
+					descr += " ✓"
 				}
 				now := time.Now().UTC()
 				switch {
