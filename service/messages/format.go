@@ -83,7 +83,7 @@ func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string
 		if trunc {
 			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
 		}
-		txt += fmt.Sprintf("\n%s\n", txtData)
+		txt += fmt.Sprintf("%s\n", txtData)
 	}
 
 	urlSrc := evt.Source
@@ -92,9 +92,9 @@ func (f Format) convert(evt *pb.CloudEvent, html, trunc, attrs bool) (txt string
 		urlSrc = rssItemGuid.GetCeString()
 	}
 	if _, err := url.Parse(urlSrc); err == nil && html {
-		txt += fmt.Sprintf("\n<a href=\"%s\">Source</a>\n", urlSrc)
+		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
 	} else {
-		txt += fmt.Sprintf("\nSource: %s\n", urlSrc)
+		txt += fmt.Sprintf("Source: %s\n", urlSrc)
 	}
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
@@ -120,9 +120,9 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, html bool, trunc bool) (t
 		}
 		switch html {
 		case true:
-			txt += fmt.Sprintf("\n<b>%s</b>\n", v)
+			txt += fmt.Sprintf("<b>%s</b>\n", v)
 		default:
-			txt += fmt.Sprintf("\n%s\n", v)
+			txt += fmt.Sprintf("%s\n", v)
 		}
 	}
 	attrSummary, attrSummaryFound := evt.Attributes["summary"]
@@ -131,7 +131,7 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, html bool, trunc bool) (t
 		if trunc {
 			v = truncateStringUtf8(v, fmtLenMaxSummary)
 		}
-		txt += fmt.Sprintf("\n%s\n", v)
+		txt += fmt.Sprintf("%s\n", v)
 	}
 	return
 }
