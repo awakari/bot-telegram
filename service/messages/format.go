@@ -6,7 +6,6 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
-	"net/url"
 	"time"
 	"unicode/utf8"
 )
@@ -98,22 +97,21 @@ func (f Format) convert(evt *pb.CloudEvent, mode FormatMode, trunc, attrs bool) 
 	if rssItemGuidOk {
 		urlSrc = rssItemGuid.GetCeString()
 	}
-	if _, err := url.Parse(urlSrc); err == nil && mode == FormatModeHtml {
-		txt += fmt.Sprintf("<a href=\"%s\">Source</a>\n", urlSrc)
-	} else {
-		txt += fmt.Sprintf("Source: %s\n\n", urlSrc)
+	txt += fmt.Sprintf("Source: %s\n\n", urlSrc)
+
+	var attrsTxt string
+	if attrs {
+		attrsTxt = f.convertAttrs(evt, mode, trunc)
+	}
+	if attrsTxt != "" {
+		txt += fmt.Sprintf("%s\n", f.convertAttrs(evt, mode, trunc))
 	}
 
 	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
 	if groupIdSrcOk {
-		txt += fmt.Sprintf("Client: %s\n\n", groupIdSrc.GetCeString())
+		txt += fmt.Sprintf("Submitted by: %s\n", groupIdSrc.GetCeString())
 	}
-
-	if attrs {
-		txt += f.convertAttrs(evt, mode, trunc)
-	}
-
-	txt += fmt.Sprintf("\nSincerely yours,\n@AwakariBot")
+	txt += fmt.Sprintf("Delivered by: @AwakariBot")
 
 	return
 }
