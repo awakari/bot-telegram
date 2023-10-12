@@ -84,9 +84,8 @@ func listButtons(
 			if err == nil {
 				descr := sub.Description
 				if subLinked {
-					descr += " 🔗"
-				}
-				if subLinkedHere {
+					descr += " 🔒"
+				} else if subLinkedHere {
 					descr += " ✓"
 				}
 				now := time.Now().UTC()
