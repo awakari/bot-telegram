@@ -101,13 +101,9 @@ func listButtons(
 				btn := telebot.Btn{
 					Text: descr,
 				}
-				switch {
-				case subLinkedHere && btnCmd == CmdStart:
-					btn.Text = descr
+				if btnCmd == CmdStart && subLinkedHere {
 					btn.Data = fmt.Sprintf("%s %s", CmdStop, subId)
-				case subLinked:
-				default:
-					btn.Text = descr
+				} else {
 					btn.Data = fmt.Sprintf("%s %s", btnCmd, subId)
 				}
 				row := m.Row(btn)
