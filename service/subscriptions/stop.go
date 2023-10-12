@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"gopkg.in/telebot.v3"
@@ -17,7 +18,7 @@ func Stop(chatStor chats.Storage) service.ArgHandlerFunc {
 		}
 		err = chatStor.UnlinkSubscription(context.Background(), k)
 		if err == nil {
-			_ = tgCtx.Send("Unlinked the subscription from this chat")
+			_ = tgCtx.Send(fmt.Sprintf("Unlinked the subscription from this chat.Note: don't delete this group for up to next %s. Some new messages may appear here.", chats.ReaderTtl))
 		}
 		return
 	}

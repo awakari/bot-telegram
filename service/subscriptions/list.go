@@ -83,8 +83,10 @@ func listButtons(
 			}
 			if err == nil {
 				descr := sub.Description
-				if subLinked {
-					descr = fmt.Sprintf("🔗 %s", descr)
+				if subLinkedHere {
+					descr += " ★"
+				} else if subLinked {
+					descr += " 🔗"
 				}
 				now := time.Now().UTC()
 				switch {
@@ -95,19 +97,19 @@ func listButtons(
 				case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
 					descr += " ⏳"
 				}
-				btns := []telebot.Btn{
-					{
-						Text: descr,
-						Data: fmt.Sprintf("%s %s", btnCmd, subId),
-					},
+				btn := telebot.Btn{
+					Text: descr,
 				}
-				if subLinkedHere && btnCmd == CmdStart {
-					btns = append(btns, telebot.Btn{
-						Text: "⏹",
-						Data: fmt.Sprintf("sub_stop %s", subId),
-					})
+				switch {
+				case subLinkedHere && btnCmd == CmdStart:
+					btn.Text = descr
+					btn.Data = fmt.Sprintf("%s %s", CmdStop, subId)
+				case subLinked:
+				default:
+					btn.Text = descr
+					btn.Data = fmt.Sprintf("%s %s", btnCmd, subId)
 				}
-				row := m.Row(btns...)
+				row := m.Row(btn)
 				rows = append(rows, row)
 			}
 			if err != nil {
