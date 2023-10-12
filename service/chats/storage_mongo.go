@@ -83,6 +83,10 @@ var indices = []mongo.IndexModel{
 }
 var projGet = bson.D{
 	{
+		Key:   attrId,
+		Value: 1,
+	},
+	{
 		Key:   attrGroupId,
 		Value: 1,
 	},
@@ -167,10 +171,9 @@ func (sm storageMongo) LinkSubscription(ctx context.Context, c Chat) (err error)
 	return
 }
 
-func (sm storageMongo) GetSubscriptionLink(ctx context.Context, k Key) (c Chat, err error) {
+func (sm storageMongo) GetSubscriptionLink(ctx context.Context, subId string) (c Chat, err error) {
 	q := bson.M{
-		attrId:    k.Id,
-		attrSubId: k.SubId,
+		attrSubId: subId,
 	}
 	var result *mongo.SingleResult
 	result = sm.coll.FindOne(ctx, q, optsGet)
@@ -180,7 +183,10 @@ func (sm storageMongo) GetSubscriptionLink(ctx context.Context, k Key) (c Chat, 
 		err = result.Decode(&rec)
 	}
 	if err == nil {
-		c.Key = k
+		c.Key = Key{
+			Id:    rec.Id,
+			SubId: subId,
+		}
 		c.GroupId = rec.GroupId
 		c.UserId = rec.UserId
 		c.State = State(rec.State)

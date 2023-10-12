@@ -116,6 +116,7 @@ func main() {
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
+		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),

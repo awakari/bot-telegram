@@ -69,14 +69,15 @@ func listButtons(
 		for _, subId := range subIds {
 			sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 			var subLinked bool
+			var subLinkedHere bool
 			if err == nil {
-				k := chats.Key{
-					Id:    chatId,
-					SubId: subId,
-				}
-				_, err = chatStor.GetSubscriptionLink(groupIdCtx, k)
+				var c chats.Chat
+				c, err = chatStor.GetSubscriptionLink(groupIdCtx, subId)
 				if err == nil {
 					subLinked = true
+					if c.Key.Id == chatId {
+						subLinkedHere = true
+					}
 				}
 				err = nil
 			}
@@ -94,10 +95,19 @@ func listButtons(
 				case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
 					descr += " ⏳"
 				}
-				row := m.Row(telebot.Btn{
-					Text: descr,
-					Data: fmt.Sprintf("%s %s", btnCmd, subId),
-				})
+				btns := []telebot.Btn{
+					{
+						Text: descr,
+						Data: fmt.Sprintf("%s %s", btnCmd, subId),
+					},
+				}
+				if subLinkedHere && btnCmd == CmdStart {
+					btns = append(btns, telebot.Btn{
+						Text: "⏹",
+						Data: fmt.Sprintf("sub_stop %s", subId),
+					})
+				}
+				row := m.Row(btns...)
 				rows = append(rows, row)
 			}
 			if err != nil {
