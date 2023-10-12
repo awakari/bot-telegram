@@ -164,20 +164,21 @@ func (r *reader) runOnce() (err error) {
 	defer cancel()
 	var readerAwk model.AckReader[[]*pb.CloudEvent]
 	readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
-	switch status.Code(err) {
-	case codes.OK:
+	if err == nil {
 		defer readerAwk.Close()
 		err = r.deliverEventsReadLoop(ctx, readerAwk)
-		if err == nil {
-			nextChatState := Chat{
-				Key:     r.chatKey,
-				Expires: time.Now().UTC().Add(ReaderTtl),
-				State:   StateActive,
-			}
-			err = r.chatStor.Update(ctx, nextChatState)
+	}
+	if err == nil {
+		nextChatState := Chat{
+			Key:     r.chatKey,
+			Expires: time.Now().UTC().Add(ReaderTtl),
+			State:   StateActive,
 		}
+		err = r.chatStor.Update(ctx, nextChatState)
+	}
+	switch status.Code(err) {
 	case codes.NotFound:
-		_ = r.tgCtx.Send(fmt.Sprintf("subscription doesn't exist: %s", r.chatKey.SubId))
+		_ = r.tgCtx.Send(fmt.Sprintf("missing chat, stopping: %s", err))
 		_ = r.chatStor.Delete(ctx, r.chatKey.Id)
 		r.stop = true
 		err = nil
