@@ -78,6 +78,7 @@ func listButtons(
 				if err == nil {
 					subLinked = true
 				}
+				err = nil
 			}
 			if err == nil {
 				descr := sub.Description
