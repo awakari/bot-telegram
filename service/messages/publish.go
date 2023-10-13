@@ -242,7 +242,6 @@ func publish(
 	cfgPayment config.PaymentConfig,
 	kbd *telebot.ReplyMarkup,
 ) (err error) {
-	fmt.Printf("publish event: %+v\nattributes: %+v", evt, evt.Attributes)
 	var ackCount uint32
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	switch {
