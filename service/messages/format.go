@@ -6,7 +6,6 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
-	"net/url"
 	"time"
 	"unicode/utf8"
 )
@@ -90,19 +89,10 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 		if trunc {
 			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
 		}
-		txt += fmt.Sprintf("%s\n", txtData)
+		txt += fmt.Sprintf("%s\n\n", txtData)
 	}
 
-	urlSrc := evt.Source
-	attrRssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
-	if rssItemGuidOk {
-		rssItemGuid := attrRssItemGuid.GetCeString()
-		_, err := url.Parse(rssItemGuid)
-		if err == nil {
-			urlSrc = rssItemGuid
-		}
-	}
-	txt += fmt.Sprintf("Source: %s\n\n", urlSrc)
+	txt += fmt.Sprintf("Source: %s\n\n", evt.Source)
 
 	var attrsTxt string
 	if attrs {
@@ -155,7 +145,6 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (t
 		case "awakarimatchfound": // internal
 		case "awakarigroupid": // already in use for the "Via"
 		case "awakariuserid": // do not expose
-		case "rssitemguid": // already in use for the source "Source"
 		case "feedcategories":
 		case "feeddescription":
 		case "feedimagetitle":
