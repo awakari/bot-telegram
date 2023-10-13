@@ -77,11 +77,9 @@ func (f Format) Convert(evt *pb.CloudEvent, subDescr string, mode FormatMode) (t
 }
 
 func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, trunc, attrs bool) (txt string) {
-
 	if attrs {
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
 	}
-
 	txtData := evt.GetTextData()
 	switch {
 	case txtData != "":
@@ -91,23 +89,20 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 		}
 		txt += fmt.Sprintf("%s\n\n", txtData)
 	}
-
-	txt += fmt.Sprintf("Source: %s\n\n", evt.Source)
-
+	txt += fmt.Sprintf("Source: %s\nSubscription: %s\n", evt.Source, subDescr)
 	var attrsTxt string
 	if attrs {
 		attrsTxt = f.convertAttrs(evt, mode, trunc)
 	}
 	if attrsTxt != "" {
-		txt += fmt.Sprintf("%s\n", f.convertAttrs(evt, mode, trunc))
+		switch mode {
+		case FormatModeHtml:
+			txt += fmt.Sprintf("Attributes:\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
+		default:
+			txt += fmt.Sprintf("Attributes:\n%s\n", attrsTxt)
+		}
 	}
-
-	groupIdSrc, groupIdSrcOk := evt.Attributes["awakarigroupid"]
-	if groupIdSrcOk {
-		txt += fmt.Sprintf("Submitted by: %s\n", groupIdSrc.GetCeString())
-	}
-	txt += fmt.Sprintf("Subscription: %s\nDelivered by: @AwakariBot", subDescr)
-
+	txt += "Delivered by: @AwakariBot"
 	return
 }
 
@@ -143,7 +138,6 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (t
 		case "title":
 		case "summary":
 		case "awakarimatchfound": // internal
-		case "awakarigroupid": // already in use for the "Via"
 		case "awakariuserid": // do not expose
 		case "feedcategories":
 		case "feeddescription":
