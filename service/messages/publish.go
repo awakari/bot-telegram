@@ -206,7 +206,8 @@ func PublishCustomHandlerFunc(
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		sender := tgCtx.Sender()
+		userId := strconv.FormatInt(sender.ID, 10)
 		data := args[0]
 		var w model.Writer[*pb.CloudEvent]
 		var evt pb.CloudEvent
@@ -216,8 +217,15 @@ func PublishCustomHandlerFunc(
 			err = protojson.Unmarshal([]byte(data), &evt)
 		}
 		if err == nil {
-			fmt.Printf("Sender: %+v\n", tgCtx.Sender())
-			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().Username)
+			evt.Source = fmt.Sprintf(fmtLinkUser, sender.Username)
+			_, attrKeyAuthorFound := evt.Attributes[attrKeyAuthor]
+			if !attrKeyAuthorFound {
+				evt.Attributes[attrKeyAuthor] = &pb.CloudEventAttributeValue{
+					Attr: &pb.CloudEventAttributeValue_CeString{
+						CeString: fmt.Sprintf(fmtUserName, sender.FirstName, sender.LastName),
+					},
+				}
+			}
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = attrValType
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)
