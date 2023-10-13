@@ -14,7 +14,7 @@ func UserLeftHandlerFunc(chatStor Storage) telebot.HandlerFunc {
 		}
 		if err == nil {
 			chatId := chat.ID
-			StopChatReader(chatId)
+			StopChatReaders(chatId)
 			_, _ = chatStor.Delete(context.Background(), chatId)
 		}
 		return

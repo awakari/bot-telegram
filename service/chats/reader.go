@@ -45,7 +45,7 @@ const msgFmtExtendSteps = ` Please consider the following steps to extend it:
 const rateLimit = 20
 
 var optRateLimitPer = ratelimit.Per(time.Minute)
-var runtimeReaders = make(map[int64]*reader)
+var runtimeReaders = make(map[string]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
 func ResumeAllReaders(ctx context.Context, log *slog.Logger, chatStor Storage, tgBot *telebot.Bot, clientAwk api.Client, format messages.Format) (count uint32, err error) {
@@ -89,7 +89,6 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 				State:   StateInactive,
 				Expires: time.Now().UTC(),
 			}
-			log.Info(fmt.Sprintf("Release reader: %+v", r.chatKey))
 			err := r.chatStor.UpdateSubscriptionLink(gCtx, c)
 			if err != nil {
 				log.Error(fmt.Sprintf("Failed to release chat %d: %s", c.Key.Id, err))
@@ -100,12 +99,13 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 	_ = g.Wait()
 }
 
-func StopChatReader(chatId int64) {
+func StopChatReaders(chatId int64) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
-	r, ok := runtimeReaders[chatId]
-	if ok {
-		r.stop = true
+	for _, r := range runtimeReaders {
+		if r.chatKey.Id == chatId {
+			r.stop = true
+		}
 	}
 }
 
@@ -301,13 +301,13 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 func (r *reader) runtimeRegister(_ context.Context) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
-	runtimeReaders[r.chatKey.Id] = r
+	runtimeReaders[r.chatKey.SubId] = r
 }
 
 func (r *reader) runtimeUnregister(ctx context.Context) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
-	delete(runtimeReaders, r.chatKey.Id)
+	delete(runtimeReaders, r.chatKey.SubId)
 	// try to do the best effort to mark chat as inactive in the chats DB
 	_ = r.chatStor.UpdateSubscriptionLink(ctx, Chat{
 		Key:   r.chatKey,
