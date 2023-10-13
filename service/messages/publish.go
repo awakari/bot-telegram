@@ -216,6 +216,7 @@ func PublishCustomHandlerFunc(
 			err = protojson.Unmarshal([]byte(data), &evt)
 		}
 		if err == nil {
+			fmt.Printf("Sender: %+v\n", tgCtx.Sender())
 			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().Username)
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = attrValType
