@@ -11,7 +11,6 @@ import (
 )
 
 const fmtLenMaxAttrVal = 128
-const fmtLenMaxSummary = 512
 const fmtLenMaxBodyTxt = 512
 
 type Format struct {
@@ -80,14 +79,24 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	if attrs {
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
 	}
-	txtData := evt.GetTextData()
-	switch {
-	case txtData != "":
-		txtData = f.HtmlPolicy.Sanitize(txtData)
+	attrSummary, attrSummaryFound := evt.Attributes["summary"]
+	switch attrSummaryFound {
+	case true:
+		v := f.HtmlPolicy.Sanitize(attrSummary.GetCeString())
 		if trunc {
-			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
+			v = truncateStringUtf8(v, fmtLenMaxBodyTxt)
 		}
-		txt += fmt.Sprintf("%s\n\n", txtData)
+		txt += fmt.Sprintf("%s\n\n", v)
+	default:
+		txtData := evt.GetTextData()
+		switch {
+		case txtData != "":
+			txtData = f.HtmlPolicy.Sanitize(txtData)
+			if trunc {
+				txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
+			}
+			txt += fmt.Sprintf("%s\n\n", txtData)
+		}
 	}
 	txt += fmt.Sprintf("Source: %s\nSubscription: %s\n", evt.Source, subDescr)
 	var attrsTxt string
@@ -119,14 +128,6 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 		default:
 			txt += fmt.Sprintf("%s\n\n", v)
 		}
-	}
-	attrSummary, attrSummaryFound := evt.Attributes["summary"]
-	if attrSummaryFound {
-		v := f.HtmlPolicy.Sanitize(attrSummary.GetCeString())
-		if trunc {
-			v = truncateStringUtf8(v, fmtLenMaxSummary)
-		}
-		txt += fmt.Sprintf("%s\n\n", v)
 	}
 	return
 }
