@@ -91,7 +91,7 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 			}
 			err := r.chatStor.UpdateSubscriptionLink(gCtx, c)
 			if err != nil {
-				log.Error(fmt.Sprintf("Failed to release chat %d: %s", c.Key.Id, err))
+				log.Error(fmt.Sprintf("Failed to release reader %d: %s", c.Key.Id, err))
 			}
 			return nil
 		})
