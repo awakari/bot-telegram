@@ -28,7 +28,7 @@ const attrKeyAuthor = "author"
 const attrKeyMsgId = "tgmessageid"
 const attrValType = "com.github.awakari.bot-telegram"
 const attrValSpecVersion = "1.0"
-const fmtLinkUser = "tg://user?id=%d"
+const fmtLinkUser = "@%s"
 const fmtUserName = "%s %s"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
@@ -91,7 +91,7 @@ func PublishBasicReplyHandlerFunc(
 
 func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
 	evt.Id = uuid.NewString()
-	evt.Source = fmt.Sprintf(fmtLinkUser, sender.ID)
+	evt.Source = fmt.Sprintf(fmtLinkUser, sender.Username)
 	evt.SpecVersion = attrValSpecVersion
 	evt.Type = attrValType
 	evt.Attributes = map[string]*pb.CloudEventAttributeValue{
@@ -216,7 +216,7 @@ func PublishCustomHandlerFunc(
 			err = protojson.Unmarshal([]byte(data), &evt)
 		}
 		if err == nil {
-			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().ID)
+			evt.Source = fmt.Sprintf(fmtLinkUser, tgCtx.Sender().Username)
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = attrValType
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)

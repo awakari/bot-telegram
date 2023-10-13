@@ -6,6 +6,7 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
+	"net/url"
 	"time"
 	"unicode/utf8"
 )
@@ -93,9 +94,13 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	}
 
 	urlSrc := evt.Source
-	rssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
+	attrRssItemGuid, rssItemGuidOk := evt.Attributes["rssitemguid"]
 	if rssItemGuidOk {
-		urlSrc = rssItemGuid.GetCeString()
+		rssItemGuid := attrRssItemGuid.GetCeString()
+		_, err := url.Parse(rssItemGuid)
+		if err == nil {
+			urlSrc = rssItemGuid
+		}
 	}
 	txt += fmt.Sprintf("Source: %s\n\n", urlSrc)
 
