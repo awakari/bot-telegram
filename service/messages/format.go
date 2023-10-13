@@ -181,39 +181,76 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (t
 			case *pb.CloudEventAttributeValue_CeBoolean:
 				switch vt.CeBoolean {
 				case true:
-					txt += fmt.Sprintf("%s: true\n", attrName)
+					switch mode {
+					case FormatModeHtml:
+						txt += fmt.Sprintf("%s: <pre>true</pre>\n", attrName)
+					default:
+						txt += fmt.Sprintf("%s: true\n", attrName)
+					}
 				default:
-					txt += fmt.Sprintf("%s: false\n", attrName)
+					switch mode {
+					case FormatModeHtml:
+						txt += fmt.Sprintf("%s: <pre>false</pre>\n", attrName)
+					default:
+						txt += fmt.Sprintf("%s: false\n", attrName)
+					}
 				}
 			case *pb.CloudEventAttributeValue_CeInteger:
 				txt += fmt.Sprintf("%s: %d\n", attrName, vt.CeInteger)
 			case *pb.CloudEventAttributeValue_CeString:
-				v := f.HtmlPolicy.Sanitize(vt.CeString)
-				if trunc {
-					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
+				if vt.CeString != evt.Source { // "subject" sometimes has the same value as the source
+					v := f.HtmlPolicy.Sanitize(vt.CeString)
+					if trunc {
+						v = truncateStringUtf8(v, fmtLenMaxAttrVal)
+					}
+					switch mode {
+					case FormatModeHtml:
+						txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
+					default:
+						txt += fmt.Sprintf("%s: %s\n", attrName, v)
+					}
 				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
 			case *pb.CloudEventAttributeValue_CeUri:
 				v := vt.CeUri
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				switch mode {
+				case FormatModeHtml:
+					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
+				default:
+					txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				}
 			case *pb.CloudEventAttributeValue_CeUriRef:
 				v := vt.CeUriRef
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				switch mode {
+				case FormatModeHtml:
+					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
+				default:
+					txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				}
 			case *pb.CloudEventAttributeValue_CeTimestamp:
 				v := vt.CeTimestamp
-				txt += fmt.Sprintf("%s: %s\n", attrName, v.AsTime().Format(time.RFC3339))
+				switch mode {
+				case FormatModeHtml:
+					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v.AsTime().Format(time.RFC3339))
+				default:
+					txt += fmt.Sprintf("%s: %s\n", attrName, v.AsTime().Format(time.RFC3339))
+				}
 			case *pb.CloudEventAttributeValue_CeBytes:
 				v := base64.StdEncoding.EncodeToString(vt.CeBytes)
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				switch mode {
+				case FormatModeHtml:
+					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
+				default:
+					txt += fmt.Sprintf("%s: %s\n", attrName, v)
+				}
 			}
 		}
 	}
