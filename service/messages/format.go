@@ -10,9 +10,9 @@ import (
 	"unicode/utf8"
 )
 
-const fmtLenMaxAttrVal = 256
+const fmtLenMaxAttrVal = 128
 const fmtLenMaxSummary = 512
-const fmtLenMaxBodyTxt = 1024
+const fmtLenMaxBodyTxt = 512
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
@@ -92,14 +92,14 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	txt += fmt.Sprintf("Source: %s\nSubscription: %s\n", evt.Source, subDescr)
 	var attrsTxt string
 	if attrs {
-		attrsTxt = f.convertAttrs(evt, mode, trunc)
+		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
 	}
 	if attrsTxt != "" {
 		switch mode {
 		case FormatModeHtml:
-			txt += fmt.Sprintf("Attributes:\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
+			txt += fmt.Sprintf("Extra Attributes:\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
 		default:
-			txt += fmt.Sprintf("Attributes:\n%s\n", attrsTxt)
+			txt += fmt.Sprintf("Extra Attributes:\n%s\n", attrsTxt)
 		}
 	}
 	txt += "Delivered by: @AwakariBot"
@@ -131,7 +131,7 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 	return
 }
 
-func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
+func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
 
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
@@ -175,19 +175,9 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (t
 			case *pb.CloudEventAttributeValue_CeBoolean:
 				switch vt.CeBoolean {
 				case true:
-					switch mode {
-					case FormatModeHtml:
-						txt += fmt.Sprintf("%s: <pre>true</pre>\n", attrName)
-					default:
-						txt += fmt.Sprintf("%s: true\n", attrName)
-					}
+					txt += fmt.Sprintf("%s: true\n", attrName)
 				default:
-					switch mode {
-					case FormatModeHtml:
-						txt += fmt.Sprintf("%s: <pre>false</pre>\n", attrName)
-					default:
-						txt += fmt.Sprintf("%s: false\n", attrName)
-					}
+					txt += fmt.Sprintf("%s: false\n", attrName)
 				}
 			case *pb.CloudEventAttributeValue_CeInteger:
 				txt += fmt.Sprintf("%s: %d\n", attrName, vt.CeInteger)
@@ -197,54 +187,29 @@ func (f Format) convertAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (t
 					if trunc {
 						v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 					}
-					switch mode {
-					case FormatModeHtml:
-						txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
-					default:
-						txt += fmt.Sprintf("%s: %s\n", attrName, v)
-					}
+					txt += fmt.Sprintf("%s: %s\n", attrName, v)
 				}
 			case *pb.CloudEventAttributeValue_CeUri:
 				v := vt.CeUri
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				switch mode {
-				case FormatModeHtml:
-					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
-				default:
-					txt += fmt.Sprintf("%s: %s\n", attrName, v)
-				}
+				txt += fmt.Sprintf("%s: %s\n", attrName, v)
 			case *pb.CloudEventAttributeValue_CeUriRef:
 				v := vt.CeUriRef
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				switch mode {
-				case FormatModeHtml:
-					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
-				default:
-					txt += fmt.Sprintf("%s: %s\n", attrName, v)
-				}
+				txt += fmt.Sprintf("%s: %s\n", attrName, v)
 			case *pb.CloudEventAttributeValue_CeTimestamp:
 				v := vt.CeTimestamp
-				switch mode {
-				case FormatModeHtml:
-					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v.AsTime().Format(time.RFC3339))
-				default:
-					txt += fmt.Sprintf("%s: %s\n", attrName, v.AsTime().Format(time.RFC3339))
-				}
+				txt += fmt.Sprintf("%s: %s\n", attrName, v.AsTime().Format(time.RFC3339))
 			case *pb.CloudEventAttributeValue_CeBytes:
 				v := base64.StdEncoding.EncodeToString(vt.CeBytes)
 				if trunc {
 					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
 				}
-				switch mode {
-				case FormatModeHtml:
-					txt += fmt.Sprintf("%s: <pre>%s</pre>\n", attrName, v)
-				default:
-					txt += fmt.Sprintf("%s: %s\n", attrName, v)
-				}
+				txt += fmt.Sprintf("%s: %s\n", attrName, v)
 			}
 		}
 	}
