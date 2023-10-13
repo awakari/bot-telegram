@@ -80,6 +80,7 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 	defer runtimeReadersLock.Unlock()
 	g, gCtx := errgroup.WithContext(ctx)
 	g.SetLimit(releaseChatsConcurrencyMax)
+	log.Info(fmt.Sprintf("Release %d readers", len(runtimeReaders)))
 	for _, r := range runtimeReaders {
 		r := r // https://golang.org/doc/faq#closures_and_goroutines
 		g.Go(func() error {
@@ -88,6 +89,7 @@ func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
 				State:   StateInactive,
 				Expires: time.Now().UTC(),
 			}
+			log.Info(fmt.Sprintf("Release reader: %+v", r.chatKey))
 			err := r.chatStor.UpdateSubscriptionLink(gCtx, c)
 			if err != nil {
 				log.Error(fmt.Sprintf("Failed to release chat %d: %s", c.Key.Id, err))
