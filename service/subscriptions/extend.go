@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/cenkalti/backoff/v4"
@@ -38,7 +39,7 @@ func ExtendReqHandlerFunc() service.ArgHandlerFunc {
 			fmt.Sprintf("%s %s", ReqSubExtend, subId),
 			&telebot.ReplyMarkup{
 				ForceReply:  true,
-				Placeholder: strconv.Itoa(expiresDefaultDays),
+				Placeholder: strconv.Itoa(usage.ExpiresDefaultDays),
 			},
 		)
 		return
