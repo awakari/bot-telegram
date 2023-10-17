@@ -60,7 +60,7 @@ var publishBasicMarkup = &telebot.ReplyMarkup{
 }
 
 func PublishBasicRequest(tgCtx telebot.Context) (err error) {
-	_ = tgCtx.Send("Reply with a text")
+	_ = tgCtx.Send("Reply with your message to publish:")
 	err = tgCtx.Send(ReqMsgPubBasic, publishBasicMarkup)
 	return
 }

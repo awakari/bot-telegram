@@ -7,6 +7,9 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
+const LabelSrcList = "Sources"
+const LabelSrcAdd = "+ Add"
+const LabelSrcListOwn = "Own"
 const LabelMsgDetails = "Messages Publishing"
 const LabelMsgSendBasic = "▸ Basic"
 const LabelMsgSendCustom = "▸ Custom"
@@ -25,6 +28,21 @@ var btnSubNewCustom = telebot.Btn{
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/sub-new.html",
 	},
+}
+
+var btnSrcList = telebot.Btn{
+	Text: LabelSrcList,
+}
+
+var btnSrcAdd = telebot.Btn{
+	Text: LabelSrcAdd,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/src-add.html",
+	},
+}
+
+var btnSrcListOwn = telebot.Btn{
+	Text: LabelSrcListOwn,
 }
 
 var btnMsgs = telebot.Btn{
@@ -61,6 +79,8 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd.Reply(
 		kbd.Row(btnSubList),
 		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnLimitIncrSubs),
+		kbd.Row(btnSrcList),
+		kbd.Row(btnSrcAdd, btnSrcListOwn),
 		kbd.Row(btnMsgs),
 		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnLimitIncrMsgs),
 	)
