@@ -23,7 +23,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			l, err = clientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectPublishEvents)
 		}
 		if err == nil {
-			respTxt := usage.FormatUsageLimit(u, l)
+			respTxt := usage.FormatUsageLimit("Publishing", u, l)
 			err = tgCtx.Send(respTxt, telebot.ModeHTML)
 		}
 		//

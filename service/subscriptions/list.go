@@ -21,7 +21,7 @@ func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId strin
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails)
 		if err == nil {
-			err = tgCtx.Send("Subscriptions:", m, telebot.ModeHTML)
+			err = tgCtx.Send("Select a subscription to see the details and available actions:", m, telebot.ModeHTML)
 		}
 		return
 	}

@@ -50,18 +50,8 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
-var btnLimitIncrSubs = telebot.Btn{
-	Text: LabelSubUsage,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/price-calc-subs.html",
-	},
-}
-
 var btnPubUsage = telebot.Btn{
 	Text: LabelPubUsage,
-	//WebApp: &telebot.WebApp{
-	//	URL: "https://awakari.app/price-calc-msgs.html",
-	//},
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {

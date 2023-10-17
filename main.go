@@ -121,7 +121,7 @@ func main() {
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		service.LabelSubUsage:        usage.ExtendLimitsInvoice(cfg.Payment),
+		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),

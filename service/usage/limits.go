@@ -18,8 +18,9 @@ import (
 	"time"
 )
 
+const LabelLimitIncrease = "▲ Increase Limit"
 const PurposeLimits = "limits"
-const msgFmtUsageLimit = `<pre>Usage:
+const msgFmtUsageLimit = `<pre>%s Usage:
   Count:   %d
   Limit:   %d
   Expires: %s
@@ -165,7 +166,7 @@ func formatUsageSubject(subj usage.Subject) (s string) {
 	return
 }
 
-func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
+func FormatUsageLimit(subj string, u usage.Usage, l usage.Limit) (txt string) {
 	var expires string
 	switch l.Expires.IsZero() {
 	case true:
@@ -173,6 +174,6 @@ func FormatUsageLimit(u usage.Usage, l usage.Limit) (txt string) {
 	default:
 		expires = l.Expires.Format(time.RFC3339)
 	}
-	txt = fmt.Sprintf(msgFmtUsageLimit, u.Count, l.Count, expires)
+	txt = fmt.Sprintf(msgFmtUsageLimit, subj, u.Count, l.Count, expires)
 	return
 }

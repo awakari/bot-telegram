@@ -22,12 +22,17 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 			l, err = clientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectSubscriptions)
 		}
 		if err == nil {
-			respTxt += usage.FormatUsageLimit(u, l)
+			respTxt += usage.FormatUsageLimit("Subscriptions", u, l)
 		}
-		//var m *telebot.ReplyMarkup
-		//m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails)
+		m := &telebot.ReplyMarkup{}
+		m.Inline(m.Row(telebot.Btn{
+			Text: usage.LabelLimitIncrease,
+			WebApp: &telebot.WebApp{
+				URL: "https://awakari.app/price-calc-subs.html",
+			},
+		}))
 		if err == nil {
-			err = tgCtx.Send(respTxt /*m,*/, telebot.ModeHTML)
+			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		return
 	}
