@@ -61,12 +61,12 @@ func IncreaseLimit() service.ArgHandlerFunc {
 func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var subjCode int64
-		subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
+		subjCode, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
 		var subj usage.Subject
 		var count int64
 		if err == nil {
 			subj = usage.Subject(subjCode)
-			count, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
+			count, err = strconv.ParseInt(args[2], 10, strconv.IntSize)
 		}
 		var priceTotal float64
 		if err == nil {
