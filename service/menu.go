@@ -52,6 +52,9 @@ var btnMsgNewCustom = telebot.Btn{
 
 var btnPubAddSource = telebot.Btn{
 	Text: LabelPubAddSource,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/source-add.html",
+	},
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {

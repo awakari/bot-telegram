@@ -30,16 +30,16 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 				Text: usage.LabelLimitIncrease,
 				Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
 			}))
-			err = tgCtx.Send(respTxt, telebot.ModeHTML)
+			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
 			m.Inline(m.Row(
 				telebot.Btn{
-					Text: "Common",
+					Text: "Own",
 				},
 				telebot.Btn{
-					Text: "Own",
+					Text: "Common",
 				},
 			))
 			err = tgCtx.Send("List Sources:", m)

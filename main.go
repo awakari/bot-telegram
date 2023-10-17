@@ -123,6 +123,9 @@ func main() {
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
+		/*service.LabelPubAddSource: func(tgCtx telebot.Context, args ...string) (err error) {
+
+		},*/
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
