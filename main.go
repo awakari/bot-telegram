@@ -10,6 +10,7 @@ import (
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
+	"github.com/awakari/bot-telegram/service/sources"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
@@ -110,6 +111,7 @@ func main() {
 
 	// init handlers
 	groupId := cfg.Api.GroupId
+	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -123,9 +125,7 @@ func main() {
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
-		/*service.LabelPubAddSource: func(tgCtx telebot.Context, args ...string) (err error) {
-
-		},*/
+		service.LabelPubAddSource:    sources.AddInvoiceHandlerFunc(cfg.Payment, menuKbd),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
@@ -134,7 +134,6 @@ func main() {
 		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 	}
-	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqDelete:         subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
