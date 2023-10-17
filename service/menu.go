@@ -10,7 +10,7 @@ const LabelSubCreateCustom = "+ Custom"
 const LabelMsgDetails = "Publishing"
 const LabelMsgSendBasic = "🢒▷▸▹⯈ Basic"
 const LabelMsgSendCustom = "▸ Custom"
-const LabelLimitIncrease = "▲ Limit"
+const LabelLimitIncrease = "Sub Usage"
 const LabelSrcList = "Sources"
 const LabelSrcListOwn = "Own"
 const LabelSrcAdd = "+ Add"
@@ -68,7 +68,7 @@ var btnLimitIncrSubs = telebot.Btn{
 }
 
 var btnLimitIncrMsgs = telebot.Btn{
-	Text: LabelLimitIncrease,
+	Text: "Pub Usage",
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/price-calc-msgs.html",
 	},
