@@ -27,7 +27,6 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 		m := &telebot.ReplyMarkup{}
 		m.Inline(m.Row(telebot.Btn{
 			Text: usage.LabelLimitIncrease,
-			Data: usage.LabelLimitIncrease,
 			WebApp: &telebot.WebApp{
 				URL: "https://awakari.app/price-calc-msgs.html",
 			},
