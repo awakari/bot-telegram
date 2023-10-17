@@ -21,7 +21,8 @@ const daysMax = 3_652
 const priceMax = 10_000
 const feedFetchTimeout = 1 * time.Minute
 const PurposeSrcAdd = "src_add"
-const srcAddrLenMax = 64
+const srcAddrLenMax = 80
+const orderPayloadSep = ','
 
 type addPayload struct {
 	Limit srcLimit `json:"limit"`
@@ -30,8 +31,9 @@ type addPayload struct {
 }
 
 type srcLimit struct {
-	TimeDays uint16 `json:"timeDays"`
-	Count    uint16 `json:"count"`
+	Count uint16 `json:"count"`
+	Freq  uint16 `json:"freq"`
+	Time  uint16 `json:"time"`
 }
 
 type srcPrice struct {
@@ -50,8 +52,8 @@ func (ap addPayload) validate(cfgPayment config.PaymentConfig, bot *telebot.Bot)
 	if err == nil && (ap.Limit.Count < 1 || ap.Limit.Count > limitCountMax) {
 		err = fmt.Errorf("%w: count limit is %d, should in the range of 1..%d", errInvalidAddPayload, ap.Limit.Count, limitCountMax)
 	}
-	if err == nil && (ap.Limit.TimeDays < 1 || ap.Limit.Count > daysMax) {
-		err = fmt.Errorf("%w: time in days is %d, should in the range of 1..%d", errInvalidAddPayload, ap.Limit.TimeDays, daysMax)
+	if err == nil && (ap.Limit.Time < 1 || ap.Limit.Count > daysMax) {
+		err = fmt.Errorf("%w: time in days is %d, should in the range of 1..%d", errInvalidAddPayload, ap.Limit.Time, daysMax)
 	}
 	if err == nil && (ap.Price.Total < 1 || ap.Price.Total > 10_000) {
 		err = fmt.Errorf("%w: total price is %f, should in the range of 1..%d", errInvalidAddPayload, ap.Price.Total, priceMax)
@@ -101,7 +103,18 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeSrcAdd,
-				Payload: fmt.Sprintf("%d,%d,%s,%s", ap.Limit.Count, ap.Limit.TimeDays, ap.Src.Addr, ap.Src.Type),
+				Payload: fmt.Sprintf(
+					"%d%c%d%c%d%c%s%c%s",
+					ap.Limit.Count,
+					orderPayloadSep,
+					ap.Limit.Freq,
+					orderPayloadSep,
+					ap.Limit.Time,
+					orderPayloadSep,
+					ap.Src.Addr,
+					orderPayloadSep,
+					ap.Src.Type,
+				),
 			}
 			orderData, err = json.Marshal(o)
 		}
@@ -111,7 +124,7 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 			price := int(ap.Price.Total * cfgPayment.Currency.SubFactor)
 			invoice := telebot.Invoice{
 				Start:       uuid.NewString(),
-				Title:       fmt.Sprintf("Add custom source for %d days", ap.Limit.TimeDays),
+				Title:       fmt.Sprintf("Add custom source for %d days", ap.Limit.Time),
 				Description: label,
 				Payload:     string(orderData),
 				Currency:    cfgPayment.Currency.Code,
