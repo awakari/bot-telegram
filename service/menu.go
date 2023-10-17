@@ -7,13 +7,11 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
+const LabelSubUsage = "Sub Usage"
 const LabelMsgDetails = "Publishing"
 const LabelMsgSendBasic = "▷ Basic"
 const LabelMsgSendCustom = "▷ Custom"
-const LabelLimitIncrease = "Sub Usage"
-const LabelSrcList = "Sources"
-const LabelSrcListOwn = "Own"
-const LabelSrcAdd = "+ Add"
+const LabelPubUsage = "Pub Usage"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -30,19 +28,11 @@ var btnSubNewCustom = telebot.Btn{
 	},
 }
 
-var btnSrcList = telebot.Btn{
-	Text: LabelSrcList,
-}
-
-var btnSrcAdd = telebot.Btn{
-	Text: LabelSrcAdd,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/src-add.html",
-	},
-}
-
-var btnSrcListOwn = telebot.Btn{
-	Text: LabelSrcListOwn,
+var btnSubUsage = telebot.Btn{
+	Text: LabelSubUsage,
+	//WebApp: &telebot.WebApp{
+	//	URL: "https://awakari.app/price-calc-subs.html",
+	//},
 }
 
 var btnMsgs = telebot.Btn{
@@ -61,26 +51,26 @@ var btnMsgNewCustom = telebot.Btn{
 }
 
 var btnLimitIncrSubs = telebot.Btn{
-	Text: LabelLimitIncrease,
+	Text: LabelSubUsage,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/price-calc-subs.html",
 	},
 }
 
-var btnLimitIncrMsgs = telebot.Btn{
-	Text: "Pub Usage",
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/price-calc-msgs.html",
-	},
+var btnPubUsage = telebot.Btn{
+	Text: LabelPubUsage,
+	//WebApp: &telebot.WebApp{
+	//	URL: "https://awakari.app/price-calc-msgs.html",
+	//},
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
 		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnLimitIncrSubs),
+		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnSubUsage),
 		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnLimitIncrMsgs),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnPubUsage),
 	)
 	return
 }

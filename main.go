@@ -121,11 +121,12 @@ func main() {
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		service.LabelLimitIncrease:   usage.ExtendLimitsInvoice(cfg.Payment),
+		service.LabelSubUsage:        usage.ExtendLimitsInvoice(cfg.Payment),
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
+		service.LabelSubUsage:       subscriptions.Usage(clientAwk, groupId),
 		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelMsgSendBasic:   messages.PublishBasicRequest,
 	}
