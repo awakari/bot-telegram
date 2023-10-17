@@ -1,7 +1,8 @@
 package sources
 
 import (
-	"context"
+	"crypto/tls"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mmcdole/gofeed"
 	"gopkg.in/telebot.v3"
+	"net/http"
 	"time"
 )
 
@@ -18,9 +20,9 @@ const srcTypeFeed = "feed"
 const limitCountMax = 1_440
 const daysMax = 3_652
 const priceMax = 10_000
-const feedParseTimeout = 1 * time.Minute
+const feedFetchTimeout = 1 * time.Minute
 const PurposeSrcAdd = "src_add"
-const srcAddrLenMax = 112
+const srcAddrLenMax = 64
 
 type addPayload struct {
 	Limit srcLimit `json:"limit"`
@@ -74,9 +76,20 @@ func (ap addPayload) validate(cfgPayment config.PaymentConfig, bot *telebot.Bot)
 			err = fmt.Errorf("%w: telegram chat type is %s, should be %s", errInvalidAddPayload, chat.Type, telebot.ChatChannel)
 		}
 	case srcTypeFeed:
-		ctx, cancel := context.WithTimeout(context.TODO(), feedParseTimeout)
-		defer cancel()
-		_, err = gofeed.NewParser().ParseURLWithContext(ap.Src.Addr, ctx)
+		clientHttp := http.Client{
+			Timeout: feedFetchTimeout,
+			Transport: &http.Transport{
+				TLSClientConfig: &tls.Config{
+					InsecureSkipVerify: true,
+				},
+			},
+		}
+		var resp *http.Response
+		resp, err = clientHttp.Get(ap.Src.Addr)
+		if err == nil {
+			defer resp.Body.Close()
+			_, err = gofeed.NewParser().Parse(resp.Body)
+		}
 	default:
 		err = fmt.Errorf("%w: unrecognized source type %s", errInvalidAddPayload, ap.Src.Type)
 	}
@@ -94,7 +107,10 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 		if err == nil {
 			orderPayloadData, err = json.Marshal(addOrder{
 				Limit: ap.Limit,
-				Src:   ap.Src,
+				Src: src{
+					Addr: base64.URLEncoding.EncodeToString([]byte(ap.Src.Addr)),
+					Type: ap.Src.Type,
+				},
 			})
 		}
 		var orderData []byte
