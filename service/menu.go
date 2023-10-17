@@ -8,9 +8,9 @@ const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
 const LabelSubUsage = "Sub Usage"
-const LabelMsgDetails = "Publishing"
-const LabelMsgSendBasic = "▷ Basic"
-const LabelMsgSendCustom = "▷ Custom"
+const LabelPublishing = "Publishing"
+const LabelPubMsgBasic = "▷ Basic"
+const LabelPubMsgCustom = "▷ Custom"
 const LabelPubUsage = "Pub Usage"
 
 var btnSubList = telebot.Btn{
@@ -36,15 +36,15 @@ var btnSubUsage = telebot.Btn{
 }
 
 var btnMsgs = telebot.Btn{
-	Text: LabelMsgDetails,
+	Text: LabelPublishing,
 }
 
 var btnMsgNewBasic = telebot.Btn{
-	Text: LabelMsgSendBasic,
+	Text: LabelPubMsgBasic,
 }
 
 var btnMsgNewCustom = telebot.Btn{
-	Text: LabelMsgSendCustom,
+	Text: LabelPubMsgCustom,
 	WebApp: &telebot.WebApp{
 		URL: "https://awakari.app/msg-new.html",
 	},

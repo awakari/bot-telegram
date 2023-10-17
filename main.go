@@ -120,7 +120,7 @@ func main() {
 		usage.CmdLimit:               usage.IncreaseLimit(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
+		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
 	}
@@ -128,8 +128,8 @@ func main() {
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 		service.LabelSubUsage:       subscriptions.Usage(clientAwk, groupId),
-		service.LabelMsgDetails:     messages.DetailsHandlerFunc(clientAwk, groupId),
-		service.LabelMsgSendBasic:   messages.PublishBasicRequest,
+		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
+		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 		service.LabelPubUsage:       messages.Usage(clientAwk, groupId),
 	}
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
