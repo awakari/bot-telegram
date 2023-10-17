@@ -15,6 +15,8 @@ type OrderLimit struct {
 const orderLimitTimeDaysMin = 7
 const orderLimitTimeDaysMax = 3652
 const orderLimitCountMin = 2
+const orderLimitCountMaxSubs = 256
+const orderLimitCountMaxMsgs = 1440
 
 var errInvalidOrder = errors.New("invalid order")
 
@@ -38,8 +40,24 @@ func (o OrderLimit) validate() (err error) {
 	}
 	if err == nil {
 		switch o.Subject {
-		case usage.SubjectPublishEvents: // ok
-		case usage.SubjectSubscriptions: // ok
+		case usage.SubjectPublishEvents:
+			if o.Count > orderLimitCountMaxMsgs {
+				err = fmt.Errorf(
+					"%w: count is %d, should be less or or equal to %d",
+					errInvalidOrder,
+					o.Count,
+					orderLimitCountMaxMsgs,
+				)
+			}
+		case usage.SubjectSubscriptions:
+			if o.Count > orderLimitCountMaxSubs {
+				err = fmt.Errorf(
+					"%w: count is %d, should be less or or equal to %d",
+					errInvalidOrder,
+					o.Count,
+					orderLimitCountMaxSubs,
+				)
+			}
 		default:
 			err = fmt.Errorf("%w: unknown subject %s", errInvalidOrder, o.Subject)
 		}
