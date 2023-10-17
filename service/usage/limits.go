@@ -20,7 +20,7 @@ import (
 
 const LabelLimitIncrease = "▲ Increase Limit"
 const PurposeLimits = "limits"
-const msgFmtUsageLimit = `<pre>%s Usage:
+const msgFmtUsageLimit = `%s Usage:<pre>
   Count:   %d
   Limit:   %d
   Expires: %s
