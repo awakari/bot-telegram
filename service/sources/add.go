@@ -2,7 +2,6 @@ package sources
 
 import (
 	"crypto/tls"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -43,11 +42,6 @@ type srcPrice struct {
 type src struct {
 	Addr string `json:"addr"`
 	Type string `json:"type"`
-}
-
-type addOrder struct {
-	Limit srcLimit `json:"limit"`
-	Src   src      `json:"src"`
 }
 
 var errInvalidAddPayload = errors.New("invalid add source payload")
@@ -103,22 +97,15 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 		if err == nil {
 			err = ap.validate(cfgPayment, tgCtx.Bot())
 		}
-		var orderPayloadData []byte
-		if err == nil {
-			orderPayloadData, err = json.Marshal(addOrder{
-				Limit: ap.Limit,
-				Src:   ap.Src,
-			})
-		}
 		var orderData []byte
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeSrcAdd,
-				Payload: base64.URLEncoding.EncodeToString(orderPayloadData),
+				Payload: fmt.Sprintf("%d,%d,%s,%s", ap.Limit.Count, ap.Limit.TimeDays, ap.Src.Addr, ap.Src.Type),
 			}
 			orderData, err = json.Marshal(o)
 		}
-		fmt.Printf("Order data: %s\n", orderData)
+		fmt.Printf("Order data size: %d\n", len(orderData))
 		if err == nil {
 			label := fmt.Sprintf("Source: %s", ap.Src.Addr)
 			price := int(ap.Price.Total * cfgPayment.Currency.SubFactor)
