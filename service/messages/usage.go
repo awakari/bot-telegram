@@ -2,6 +2,7 @@ package messages
 
 import (
 	"context"
+	"fmt"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
@@ -27,9 +28,7 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 		m := &telebot.ReplyMarkup{}
 		m.Inline(m.Row(telebot.Btn{
 			Text: usage.LabelLimitIncrease,
-			WebApp: &telebot.WebApp{
-				URL: "https://awakari.app/price-calc-msgs.html",
-			},
+			Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
 		}))
 		if err == nil {
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)

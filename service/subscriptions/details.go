@@ -36,11 +36,11 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			//var rows []telebot.Row
 			// row 1
 			btns := []telebot.Btn{
-				telebot.Btn{
+				{
 					Text: "🏷 Describe",
 					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 				},
-				telebot.Btn{
+				{
 					Text: "❌ Delete",
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 				},

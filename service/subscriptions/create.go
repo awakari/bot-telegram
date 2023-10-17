@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
@@ -21,8 +22,7 @@ import (
 
 const limitGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
-const expiresDefaultDays = 30
-const expiresDefaultDuration = time.Hour * 24 * expiresDefaultDays // ~ month
+const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
 const ReqSubCreateBasic = "sub_create_basic"
 

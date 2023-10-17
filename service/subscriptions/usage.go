@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"fmt"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
@@ -23,15 +24,11 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 		}
 		if err == nil {
 			respTxt += usage.FormatUsageLimit("Subscriptions", u, l)
-		}
-		m := &telebot.ReplyMarkup{}
-		m.Inline(m.Row(telebot.Btn{
-			Text: usage.LabelLimitIncrease,
-			WebApp: &telebot.WebApp{
-				URL: "https://awakari.app/price-calc-subs.html",
-			},
-		}))
-		if err == nil {
+			m := &telebot.ReplyMarkup{}
+			m.Inline(m.Row(telebot.Btn{
+				Text: usage.LabelLimitIncrease,
+				Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectSubscriptions),
+			}))
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		return

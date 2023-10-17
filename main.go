@@ -117,6 +117,7 @@ func main() {
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
+		usage.CmdLimit:               usage.IncreaseLimit(),
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelMsgSendCustom:   messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
@@ -138,6 +139,7 @@ func main() {
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
+		usage.ReqLimitSet:               usage.ExtendLimitsInvoice(cfg.Payment),
 		"support": func(tgCtx telebot.Context, args ...string) (err error) {
 			tgCtxSupport := tgCtx.Bot().NewContext(telebot.Update{
 				Message: &telebot.Message{
@@ -239,9 +241,6 @@ func main() {
 	//
 	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subListHandlerFunc, nil))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
-	b.Handle(telebot.OnInlineResult, func(tgCtx telebot.Context) error {
-		return tgCtx.Send(fmt.Sprintf("Inline result: %+v", tgCtx.InlineResult()))
-	})
 
 	go func() {
 		log.Debug("Wait 20 seconds before resuming existing readers...")

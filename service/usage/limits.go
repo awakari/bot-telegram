@@ -3,6 +3,7 @@ package usage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
@@ -18,7 +19,12 @@ import (
 	"time"
 )
 
+const ExpiresDefaultDays = 30
+
 const LabelLimitIncrease = "▲ Increase Limit"
+const CmdLimit = "limit"
+const ReqLimitSet = "limit_set"
+
 const PurposeLimits = "limits"
 const msgFmtUsageLimit = `%s Usage:<pre>
   Count:   %d
@@ -27,16 +33,65 @@ const msgFmtUsageLimit = `%s Usage:<pre>
 </pre>`
 const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
 
+func IncreaseLimit() service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		var subjCode int64
+		subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
+		subj := usage.Subject(subjCode)
+		switch subj {
+		case usage.SubjectSubscriptions:
+		case usage.SubjectPublishEvents:
+		default:
+			err = errors.New(fmt.Sprintf("unrecognzied subject code: %d", subjCode))
+		}
+		if err == nil {
+			_ = tgCtx.Send("Reply with a new count limit (at least 2):")
+			err = tgCtx.Send(
+				fmt.Sprintf("%s %d", ReqLimitSet, subjCode),
+				&telebot.ReplyMarkup{
+					ForceReply:  true,
+					Placeholder: "10",
+				},
+			)
+		}
+		return
+	}
+}
+
 func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		var op OrderPayload
-		err = json.Unmarshal([]byte(args[0]), &op)
+		var subjCode int64
+		subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
+		var subj usage.Subject
+		var count int64
 		if err == nil {
-			err = op.validate()
+			subj = usage.Subject(subjCode)
+			count, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
+		}
+		var priceTotal float64
+		if err == nil {
+			var pricePerItem float64
+			switch subj {
+			case usage.SubjectSubscriptions:
+				pricePerItem = cfgPayment.Price.Subscription.CountLimit
+			case usage.SubjectPublishEvents:
+				pricePerItem = cfgPayment.Price.MessagePublishing.DailyLimit
+			}
+			priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-1))
+			if priceTotal <= 0 {
+				err = fmt.Errorf("%w: non-positive total price %f", errInvalidOrder, priceTotal)
+			}
+		}
+		var ol OrderLimit
+		if err == nil {
+			ol.TimeDays = ExpiresDefaultDays
+			ol.Count = uint32(count)
+			ol.Subject = usage.Subject(subjCode)
+			err = ol.validate()
 		}
 		var orderPayloadData []byte
 		if err == nil {
-			orderPayloadData, err = json.Marshal(op.Limit)
+			orderPayloadData, err = json.Marshal(ol)
 		}
 		var orderData []byte
 		if err == nil {
@@ -47,16 +102,16 @@ func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc
 			orderData, err = json.Marshal(o)
 		}
 		label := fmt.Sprintf(
-			"%s: %d x %d days", formatUsageSubject(op.Limit.Subject), op.Limit.Count, op.Limit.TimeDays,
+			"%s: %d x %d days", formatUsageSubject(subj), count, ExpiresDefaultDays,
 		)
 		if err == nil {
-			price := int(op.Price.Total * cfgPayment.Currency.SubFactor)
+			price := int(priceTotal * cfgPayment.Currency.SubFactor)
 			invoice := telebot.Invoice{
 				Start:       uuid.NewString(),
-				Title:       fmt.Sprintf("%s limit", formatUsageSubject(op.Limit.Subject)),
+				Title:       fmt.Sprintf("%s limit", formatUsageSubject(subj)),
 				Description: label,
 				Payload:     string(orderData),
-				Currency:    op.Price.Unit,
+				Currency:    cfgPayment.Currency.Code,
 				Prices: []telebot.Price{
 					{
 						Label:  label,
