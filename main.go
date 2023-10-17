@@ -130,7 +130,6 @@ func main() {
 		service.LabelSubUsage:       subscriptions.Usage(clientAwk, groupId),
 		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
-		service.LabelPubUsage:       messages.Usage(clientAwk, groupId),
 	}
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	replyHandlers := map[string]service.ArgHandlerFunc{
