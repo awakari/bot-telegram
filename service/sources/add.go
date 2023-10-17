@@ -121,6 +121,7 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 			}
 			orderData, err = json.Marshal(o)
 		}
+		fmt.Printf("Order data: %s\n", orderData)
 		if err == nil {
 			label := fmt.Sprintf("Source: %s", ap.Src.Addr)
 			price := int(ap.Price.Total * cfgPayment.Currency.SubFactor)
