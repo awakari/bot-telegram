@@ -107,17 +107,14 @@ func AddInvoiceHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMa
 		if err == nil {
 			orderPayloadData, err = json.Marshal(addOrder{
 				Limit: ap.Limit,
-				Src: src{
-					Addr: base64.URLEncoding.EncodeToString([]byte(ap.Src.Addr)),
-					Type: ap.Src.Type,
-				},
+				Src:   ap.Src,
 			})
 		}
 		var orderData []byte
 		if err == nil {
 			o := service.Order{
 				Purpose: PurposeSrcAdd,
-				Payload: string(orderPayloadData),
+				Payload: base64.URLEncoding.EncodeToString(orderPayloadData),
 			}
 			orderData, err = json.Marshal(o)
 		}
