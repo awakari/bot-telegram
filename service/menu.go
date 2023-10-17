@@ -7,13 +7,13 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
-const LabelSrcList = "Sources"
-const LabelSrcAdd = "+ Add"
-const LabelSrcListOwn = "Own"
 const LabelMsgDetails = "Messages Publishing"
 const LabelMsgSendBasic = "▸ Basic"
 const LabelMsgSendCustom = "▸ Custom"
 const LabelLimitIncrease = "▲ Limit"
+const LabelSrcList = "Sources"
+const LabelSrcListOwn = "Own"
+const LabelSrcAdd = "+ Add"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -75,14 +75,15 @@ var btnLimitIncrMsgs = telebot.Btn{
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
-	kbd = &telebot.ReplyMarkup{}
+	kbd = &telebot.ReplyMarkup{
+		ResizeKeyboard: true,
+	}
 	kbd.Reply(
 		kbd.Row(btnSubList),
 		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnLimitIncrSubs),
-		kbd.Row(btnSrcList),
-		kbd.Row(btnSrcAdd, btnSrcListOwn),
 		kbd.Row(btnMsgs),
 		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnLimitIncrMsgs),
+		kbd.Row(btnSrcList, btnSrcListOwn, btnSrcAdd),
 	)
 	return
 }
