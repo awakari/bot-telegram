@@ -134,10 +134,10 @@ payment:
     timeout: 10s
   price:
     messagePublishing:
-      dailyLimit: 0.1
+      dailyLimit: 0.04
       extra: 1
     subscription:
-      countLimit: 0.1
-      extension: 0.1
+      countLimit: 0.04
+      extension: 0.04
   provider:
     token: payment-provider-token
