@@ -239,6 +239,9 @@ func main() {
 	//
 	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subListHandlerFunc, nil))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
+	b.Handle(telebot.OnInlineResult, func(tgCtx telebot.Context) error {
+		return tgCtx.Send(fmt.Sprintf("Inline result: %+v", tgCtx.InlineResult()))
+	})
 
 	go func() {
 		log.Debug("Wait 20 seconds before resuming existing readers...")
