@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
-	"github.com/awakari/client-sdk-go/api/grpc/limits"
+	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
 	"strconv"
 )
@@ -16,8 +16,8 @@ const CmdFeedDetails = "src_feed_details"
 const pageLimit = 10
 
 type ListHandler struct {
-	svcLimits   limits.Service
-	svcSrcFeeds feeds.Service
+	ClientAwk   api.Client
+	SvcSrcFeeds feeds.Service
 }
 
 func (lh ListHandler) FeedListAll(tgCtx telebot.Context, args ...string) (err error) {
@@ -39,7 +39,7 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		cursor = args[0]
 	}
 	var page []string
-	page, err = lh.svcSrcFeeds.List(context.TODO(), filter, pageLimit, cursor)
+	page, err = lh.SvcSrcFeeds.List(context.TODO(), filter, pageLimit, cursor)
 	if err == nil {
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
@@ -65,7 +65,7 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		m.Inline(rows...)
 		switch len(page) {
 		case 0:
-			err = tgCtx.Send("End of list")
+			err = tgCtx.Send("End of the list")
 		default:
 			err = tgCtx.Send("Feeds page:", m)
 		}

@@ -131,7 +131,10 @@ func main() {
 		SvcAdmin:   svcAdmin,
 		Log:        log,
 	}
-	srcListHandler := sources.ListHandler{}
+	srcListHandler := sources.ListHandler{
+		ClientAwk:   clientAwk,
+		SvcSrcFeeds: svcSrcFeeds,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
