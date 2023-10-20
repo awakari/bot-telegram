@@ -14,6 +14,8 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
 	"github.com/mmcdole/gofeed"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
@@ -216,10 +218,13 @@ func (ah AddHandler) AddPrecheckout(tgCtx telebot.Context, args ...string) (err 
 	case srcTypeFeed:
 		var feed *grpcApiSrcFeeds.Feed
 		feed, err = ah.SvcFeeds.Read(ctx, srcAddr)
-		if err == nil {
+		switch {
+		case err == nil:
 			if feed.Expires != nil && feed.Expires.AsTime().After(time.Now().UTC()) {
 				err = errors.New(fmt.Sprintf("cannot add the source with the same address, it already exists and not expired yet: %s", srcAddr))
 			}
+		case status.Code(err) == codes.NotFound:
+			err = nil
 		}
 		switch err {
 		case nil:
