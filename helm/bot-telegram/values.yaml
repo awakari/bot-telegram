@@ -90,6 +90,11 @@ api:
   writer:
     uri: "resolver:50051"
   uri: "api:50051"
+  source:
+    feeds:
+      uri: "source-feeds:50051"
+    telegram:
+      uri: "source-telegram:50051"
   cert: server-cert
   payment:
     provider:

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package awakari.source.feeds;
+
+option go_package = "./api/grpc/source/feeds";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/duration.proto";
+
+service Service {
+  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc Read(ReadRequest) returns (ReadResponse);
+  rpc Extend(ExtendRequest) returns (ExtendResponse);
+  rpc List(ListRequest) returns (ListResponse);
+}
+
+message WriteRequest {
+  Feed feed = 1;
+}
+
+message WriteResponse {
+}
+
+message ReadRequest {
+  string url = 1;
+}
+
+message ReadResponse {
+  Feed feed = 1;
+}
+
+message ExtendRequest {
+  string url = 1;
+  google.protobuf.Duration add = 2;
+}
+
+message ExtendResponse {
+}
+
+message ListRequest {
+  Filter filter = 1;
+  uint32 limit = 2;
+  string cursor = 3;
+}
+
+message ListResponse {
+  repeated string page = 1;
+}
+
+message Feed {
+  string url = 1;
+  string userId = 2;
+  google.protobuf.Duration updatePeriod = 4;
+  google.protobuf.Timestamp nextUpdate = 5;
+  google.protobuf.Timestamp expires = 6;
+  google.protobuf.Timestamp itemLast = 7;
+  int64 itemCount = 8;
+}
+
+message Filter {
+  string userId = 1;
+}

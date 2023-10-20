@@ -10,11 +10,17 @@ type Config struct {
 		Admin struct {
 			Uri string `envconfig:"API_ADMIN_URI" default:"api:56789" required:"true"`
 		}
+		GroupId  string `envconfig:"API_GROUP_ID" default:"com.github.awakari.bot-telegram" required:"true"`
 		Messages struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
-		Writer struct {
-			Uri string `envconfig:"API_WRITER_URI" default:"resolver:50051" required:"true"`
+		Source struct {
+			Feeds struct {
+				Uri string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
+			}
+			Telegram struct {
+				Uri string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
+			}
 		}
 		Telegram struct {
 			Webhook struct {
@@ -25,8 +31,10 @@ type Config struct {
 			SupportChatId int64  `envconfig:"API_TELEGRAM_SUPPORT_CHAT_ID" required:"true"`
 			Token         string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 		}
-		GroupId string `envconfig:"API_GROUP_ID" default:"com.github.awakari.bot-telegram" required:"true"`
-		Uri     string `envconfig:"API_URI" default:"api:50051" required:"true"`
+		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
+		Writer struct {
+			Uri string `envconfig:"API_WRITER_URI" default:"resolver:50051" required:"true"`
+		}
 	}
 	Chats   ChatsConfig
 	Payment PaymentConfig

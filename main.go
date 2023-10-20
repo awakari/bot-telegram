@@ -6,6 +6,7 @@ import (
 	"fmt"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
+	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -79,6 +80,17 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
+	// init the source-feeds client
+	connSrcFeeds, err := grpc.Dial(cfg.Api.Source.Feeds.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		log.Info("connected the source-feeds service")
+		defer connMsgs.Close()
+	} else {
+		log.Error("failed to connect the source-feeds service", err)
+	}
+	clientSrcFeeds := grpcApiSrcFeeds.NewServiceClient(connSrcFeeds)
+	svcSrcFeeds := grpcApiSrcFeeds.NewService(clientSrcFeeds)
+
 	// init chat storage
 	var chatStor chats.Storage
 	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
@@ -112,6 +124,13 @@ func main() {
 	// init handlers
 	groupId := cfg.Api.GroupId
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
+	pubSrcAddHandler := sources.AddHandler{
+		CfgPayment: cfg.Payment,
+		KbdRestore: menuKbd,
+		SvcFeeds:   svcSrcFeeds,
+		SvcAdmin:   svcAdmin,
+		Log:        log,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -125,7 +144,7 @@ func main() {
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
-		service.LabelPubAddSource:    sources.AddInvoiceHandlerFunc(cfg.Payment, menuKbd),
+		service.LabelPubAddSource:    pubSrcAddHandler.HandleFormData,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
@@ -160,11 +179,13 @@ func main() {
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
+		sources.PurposeSrcAdd:       pubSrcAddHandler.AddPrecheckout,
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId, log, cfg.Payment.Backoff),
 		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
+		sources.PurposeSrcAdd:       pubSrcAddHandler.AddPaid,
 	}
 
 	// init Telegram bot
