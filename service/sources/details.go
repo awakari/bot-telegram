@@ -67,13 +67,20 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		default:
 			txtExpires = feed.Expires.AsTime().Format(time.RFC3339)
 		}
+		var txtItemLast string
+		switch {
+		case feed.ItemLast.Seconds <= 0:
+			txtItemLast = "never"
+		default:
+			txtItemLast = feed.ItemLast.AsTime().Format(time.RFC3339)
+		}
 		txt := fmt.Sprintf(
 			fmtFeedDetails,
 			txtSummary,
 			txtExpires,
 			feed.UpdatePeriod.AsDuration(),
 			feed.NextUpdate.AsTime().Format(time.RFC3339),
-			feed.ItemLast.AsTime().Format(time.RFC3339),
+			txtItemLast,
 			feed.ItemCount,
 		)
 		err = tgCtx.Send(txt, telebot.ModeHTML)

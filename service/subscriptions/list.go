@@ -12,7 +12,10 @@ import (
 	"time"
 )
 
-const subListLimit = 256 // TODO: implement the proper pagination
+const CmdPageNext = "subs_next"
+
+const pageLimit = 10
+const cmdLimit = 64
 
 func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
@@ -49,7 +52,7 @@ func listButtons(
 	btnCmd string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
-	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, subListLimit, "")
+	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, pageLimit, "")
 	if err == nil {
 		m = &telebot.ReplyMarkup{}
 		var sub subscription.Data
@@ -99,6 +102,16 @@ func listButtons(
 			if err != nil {
 				break
 			}
+		}
+		if len(subIds) == pageLimit {
+			cmdData := fmt.Sprintf("%s %s %s", CmdPageNext, btnCmd, subIds[len(subIds)-1])
+			if len(cmdData) > cmdLimit {
+				cmdData = cmdData[:cmdLimit]
+			}
+			rows = append(rows, m.Row(telebot.Btn{
+				Text: "Next Page >",
+				Data: cmdData,
+			}))
 		}
 		m.Inline(rows...)
 	}
