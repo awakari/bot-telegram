@@ -54,7 +54,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		urls, err = dh.SvcSrcFeeds.List(context.TODO(), filter, 1, url)
 		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, urls, err))
 		if err == nil && len(urls) > 0 {
-			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), url)
+			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), urls[0])
 		}
 	}
 	//
