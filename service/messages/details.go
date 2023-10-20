@@ -19,11 +19,11 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			m := &telebot.ReplyMarkup{}
 			m.Inline(m.Row(
 				telebot.Btn{
-					Text: "Feeds All",
+					Text: "All Feeds",
 					Data: sources.CmdFeedListAll,
 				},
 				telebot.Btn{
-					Text: "Feeds Own",
+					Text: "Own Feeds",
 					Data: sources.CmdFeedListOwn,
 				},
 			))
