@@ -197,6 +197,8 @@ func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId s
 			Expires:      timestamppb.New(expires),
 		}
 		err = ah.SvcFeeds.Write(ctx, &feed)
+	default:
+		err = fmt.Errorf("%w: unsupported source type: %s", errInvalidAddPayload, ap.Src.Type)
 	}
 	return
 }
