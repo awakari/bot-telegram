@@ -137,6 +137,7 @@ func main() {
 	srcDetailsHandler := sources.DetailsHandler{
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
+		Log:         log,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
