@@ -3,6 +3,7 @@ package messages
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service/sources"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
@@ -18,10 +19,12 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			m := &telebot.ReplyMarkup{}
 			m.Inline(m.Row(
 				telebot.Btn{
-					Text: "Own",
+					Text: "Feeds All",
+					Data: sources.CmdFeedListAll,
 				},
 				telebot.Btn{
-					Text: "All",
+					Text: "Feeds Own",
+					Data: sources.CmdFeedListOwn,
 				},
 			))
 			err = tgCtx.Send("List Sources:", m)
@@ -38,7 +41,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			l, err = clientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectPublishEvents)
 		}
 		if err == nil {
-			respTxt := usage.FormatUsageLimit("Publishing", u, l)
+			respTxt := usage.FormatUsageLimit("Messages Publishing", u, l)
 			m := &telebot.ReplyMarkup{}
 			m.Inline(m.Row(telebot.Btn{
 				Text: usage.LabelLimitIncrease,

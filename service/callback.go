@@ -16,14 +16,16 @@ func Callback(handlers map[string]ArgHandlerFunc) telebot.HandlerFunc {
 	return func(ctx telebot.Context) (err error) {
 		data := ctx.Callback().Data
 		parts := strings.Split(data, " ")
-		if len(parts) < 2 {
+		if len(parts) < 1 {
 			err = fmt.Errorf("%w: %s", errInvalidCallbackData, data)
 		}
 		var args []string
 		var f ArgHandlerFunc
 		if err == nil {
 			cmd := parts[0]
-			args = parts[1:]
+			if len(parts) > 1 {
+				args = parts[1:]
+			}
 			var ok bool
 			f, ok = handlers[cmd]
 			if !ok {

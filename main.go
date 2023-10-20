@@ -124,13 +124,14 @@ func main() {
 	// init handlers
 	groupId := cfg.Api.GroupId
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
-	pubSrcAddHandler := sources.AddHandler{
+	srcAddHandler := sources.AddHandler{
 		CfgPayment: cfg.Payment,
 		KbdRestore: menuKbd,
 		SvcFeeds:   svcSrcFeeds,
 		SvcAdmin:   svcAdmin,
 		Log:        log,
 	}
+	srcListHandler := sources.ListHandler{}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -139,12 +140,14 @@ func main() {
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 		usage.CmdLimit:               usage.IncreaseLimit(),
+		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
+		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelLimitIncrease:     usage.ExtendLimitsInvoice(cfg.Payment),
-		service.LabelPubAddSource:    pubSrcAddHandler.HandleFormData,
+		service.LabelPubAddSource:    srcAddHandler.HandleFormData,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
@@ -179,13 +182,13 @@ func main() {
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
-		sources.PurposeSrcAdd:       pubSrcAddHandler.AddPrecheckout,
+		sources.PurposeSrcAdd:       srcAddHandler.AddPrecheckout,
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId, log, cfg.Payment.Backoff),
 		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
-		sources.PurposeSrcAdd:       pubSrcAddHandler.AddPaid,
+		sources.PurposeSrcAdd:       srcAddHandler.AddPaid,
 	}
 
 	// init Telegram bot
