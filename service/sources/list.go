@@ -13,7 +13,8 @@ const CmdFeedListAll = "src_feed_list_all"
 const CmdFeedListOwn = "src_feed_list_own"
 const CmdFeedDetails = "src_feed_details"
 
-const pageLimit = 10
+const pageLimit = 12
+const cmdLimit = 64
 
 type ListHandler struct {
 	ClientAwk   api.Client
@@ -44,10 +45,13 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		for _, feedUrl := range page {
-
+			cmdData := fmt.Sprintf("%s %s", CmdFeedDetails, feedUrl)
+			if len(cmdData) > cmdLimit {
+				cmdData = cmdData[:cmdLimit]
+			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: feedUrl,
-				Data: fmt.Sprintf("%s %s", CmdFeedDetails /*feedUrl*/, "TODO"),
+				Data: cmdData,
 			}))
 		}
 		if len(page) == pageLimit {
@@ -58,9 +62,13 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 			default:
 				cmdList = CmdFeedListOwn
 			}
+			cmdData := fmt.Sprintf("%s %s", cmdList, page[len(page)-1])
+			if len(cmdData) > cmdLimit {
+				cmdData = cmdData[:cmdLimit]
+			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",
-				Data: fmt.Sprintf("%s %s", cmdList /*page[len(page)-1]*/, "TODO"),
+				Data: cmdData,
 			}))
 		}
 		m.Inline(rows...)
