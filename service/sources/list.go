@@ -44,9 +44,10 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		for _, feedUrl := range page {
+
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: feedUrl,
-				Data: fmt.Sprintf("%s %s", CmdFeedDetails, feedUrl),
+				Data: fmt.Sprintf("%s %s", CmdFeedDetails /*feedUrl*/, "TODO"),
 			}))
 		}
 		if len(page) == pageLimit {
@@ -59,7 +60,7 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",
-				Data: fmt.Sprintf("%s %s", cmdList, page[len(page)-1]),
+				Data: fmt.Sprintf("%s %s", cmdList /*page[len(page)-1]*/, "TODO"),
 			}))
 		}
 		m.Inline(rows...)
