@@ -21,7 +21,7 @@ const CmdFeedDetailsAny = "feed_any"
 const CmdFeedDetailsOwn = "feed_own"
 
 const fmtFeedDetails = `Feed Details:
-<a href="%s">Link</a>, <a href="tg://user?id=%s">Owner</a>
+<a href="%s">Link</a>
 Expires: <pre>%s</pre>
 Update Period: <pre>%s</pre>
 Next Update: <pre>%s</pre>
@@ -56,16 +56,25 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	}
 	//
 	if err == nil {
+		var txtExpires string
+		switch feed.Expires.Seconds {
+		case 0:
+			txtExpires = "never"
+		default:
+			txtExpires = feed.Expires.AsTime().Format(time.RFC3339)
+		}
 		txt := fmt.Sprintf(
 			fmtFeedDetails,
 			feed.Url,
-			feed.UserId,
-			feed.Expires.AsTime().Format(time.RFC3339),
+			txtExpires,
 			feed.UpdatePeriod.AsDuration(),
 			feed.NextUpdate.AsTime().Format(time.RFC3339),
 			feed.ItemLast.AsTime().Format(time.RFC3339),
 			feed.ItemCount,
 		)
+		if feed.UserId != "" {
+			txt += fmt.Sprintf("\n<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
+		}
 		err = tgCtx.Send(txt, telebot.ModeHTML)
 	}
 	//
