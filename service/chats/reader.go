@@ -38,7 +38,7 @@ const backOffMax = 24 * time.Hour
 const msgExpired = "⚠ The subscription has been expired."
 const msgExpiresSoon = "⏳ The subscription expires in %s."
 const msgFmtExtendSteps = ` Please consider the following steps to extend it:
-1. Go to @AwakariBot.
+1. Go to your private chat with @AwakariBot.
 2. Tap the "Subscriptions" reply keyboard button.
 3. Select the subscription "%s".
 4. Tap the "▲ Extend" button.`
@@ -156,7 +156,6 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 	if err != nil {
 		err = r.tgCtx.Send(fmt.Sprintf(msgFmtRunFatal, err))
 		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
-		_ = r.tgCtx.Bot().Leave(r.tgCtx.Chat())
 	}
 }
 
