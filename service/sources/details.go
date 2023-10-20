@@ -73,7 +73,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			feed.ItemCount,
 		)
 		if feed.UserId != "" {
-			txt += fmt.Sprintf("\n<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
+			txt += fmt.Sprintf("<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
 		}
 		err = tgCtx.Send(txt, telebot.ModeHTML)
 	}
