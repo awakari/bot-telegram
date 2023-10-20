@@ -4,22 +4,19 @@ import (
 	"context"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
-	"github.com/awakari/client-sdk-go/api"
 	"gopkg.in/telebot.v3"
 	"strconv"
 )
 
-const CmdFeedListAll = "src_feed_list_all"
-const CmdFeedListOwn = "src_feed_list_own"
-const CmdFeedDetails = "src_feed_details"
-
-const pageLimit = 12
-const cmdLimit = 64
-
 type ListHandler struct {
-	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
 }
+
+const CmdFeedListAll = "feeds_all"
+const CmdFeedListOwn = "feeds_own"
+
+const pageLimit = 10
+const cmdLimit = 64
 
 func (lh ListHandler) FeedListAll(tgCtx telebot.Context, args ...string) (err error) {
 	err = lh.feedList(tgCtx, nil, args...)
@@ -45,7 +42,13 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		for _, feedUrl := range page {
-			cmdData := fmt.Sprintf("%s %s", CmdFeedDetails, feedUrl)
+			var cmdData string
+			switch filter {
+			case nil:
+				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsAny, feedUrl)
+			default:
+				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsOwn, feedUrl)
+			}
 			if len(cmdData) > cmdLimit {
 				cmdData = cmdData[:cmdLimit]
 			}

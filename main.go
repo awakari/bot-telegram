@@ -132,6 +132,9 @@ func main() {
 		Log:        log,
 	}
 	srcListHandler := sources.ListHandler{
+		SvcSrcFeeds: svcSrcFeeds,
+	}
+	srcDetailsHandler := sources.DetailsHandler{
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
 	}
@@ -145,6 +148,8 @@ func main() {
 		usage.CmdLimit:               usage.IncreaseLimit(),
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
+		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
+		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
