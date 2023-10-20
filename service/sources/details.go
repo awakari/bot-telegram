@@ -8,6 +8,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"strconv"
 	"time"
 )
@@ -15,6 +16,7 @@ import (
 type DetailsHandler struct {
 	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
+	Log         *slog.Logger
 }
 
 const CmdFeedDetailsAny = "feed_any"
@@ -47,16 +49,17 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	feed, err = dh.SvcSrcFeeds.Read(context.TODO(), url)
 	switch {
 	case status.Code(err) == codes.NotFound:
-		// might be not found due to url truncation - use as a prefix in this case
+		dh.Log.Warn(fmt.Sprintf("Feed not found, URL may be truncated: %s", url))
 		var urls []string
 		urls, err = dh.SvcSrcFeeds.List(context.TODO(), filter, 1, url)
+		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, urls, err))
 		if err == nil && len(urls) > 0 {
 			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), url)
 		}
 	}
 	//
 	if err == nil {
-		txtSummary := fmt.Sprintf("<a href=\"%s\">Link</a>", feed.Url)
+		txtSummary := feed.Url
 		if feed.UserId != "" {
 			txtSummary += fmt.Sprintf("\n<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
 		}

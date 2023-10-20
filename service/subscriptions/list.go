@@ -3,6 +3,7 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
@@ -22,7 +23,7 @@ func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId strin
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails, "")
 		if err == nil {
 			err = tgCtx.Send("Select a subscription to see the details and available actions:", m, telebot.ModeHTML)
 		}
@@ -35,9 +36,22 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart, "")
 		if err == nil {
 			err = tgCtx.Send("Select a subscription to read in this chat:", m)
+		}
+		return
+	}
+}
+
+func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		var m *telebot.ReplyMarkup
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], args[1])
+		if err == nil {
+			err = tgCtx.Send("Select a subscription to see the details and available actions:", m, telebot.ModeHTML)
 		}
 		return
 	}
@@ -50,6 +64,7 @@ func listButtons(
 	chatStor chats.Storage,
 	chatId int64,
 	btnCmd string,
+	cursor string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
 	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, pageLimit, "")

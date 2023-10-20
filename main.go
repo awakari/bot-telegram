@@ -145,6 +145,7 @@ func main() {
 		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
+		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
 		usage.CmdLimit:               usage.IncreaseLimit(),
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
