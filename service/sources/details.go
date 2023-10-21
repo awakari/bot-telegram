@@ -27,12 +27,12 @@ const CmdFeedDetailsOwn = "feed_own"
 
 const fmtFeedDetails = `Feed Details:
 %s
+Daily Messages Limit: <pre>%d</pre>
 Expires: <pre>%s</pre>
 Update Period: <pre>%s</pre>
 Next Update: <pre>%s</pre>
 Last Message: <pre>%s</pre>
 Total Messages: <pre>%d</pre>
-Messages Daily Limit: <pre>%d</pre>
 `
 
 func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err error) {
@@ -68,7 +68,8 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	if err == nil {
 		ctxGroupId := context.WithValue(ctx, "x-awakari-group-id", dh.CfgFeeds.GroupId)
 		url = feed.Url
-		l, _ = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
+		l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
+		fmt.Printf("limit=%+v, err=%s\n", l, err)
 	}
 	//
 	if err == nil {
@@ -76,21 +77,12 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		if feed.UserId != "" {
 			txtSummary += fmt.Sprintf("\n<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
 		}
-		m := &telebot.ReplyMarkup{}
 		var txtExpires string
 		switch {
 		case feed.Expires.Seconds <= 0:
 			txtExpires = "never"
 		default:
 			txtExpires = feed.Expires.AsTime().Format(time.RFC3339)
-			cmdExtend := fmt.Sprintf("%s %s", CmdExtend, url)
-			if len(cmdExtend) > cmdLimit {
-				cmdExtend = cmdExtend[:cmdLimit]
-			}
-			m.Inline(m.Row(telebot.Btn{
-				Text: "▲ Extend",
-				Data: fmt.Sprintf(cmdExtend),
-			}))
 		}
 		var txtItemLast string
 		switch {
@@ -102,14 +94,14 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		txt := fmt.Sprintf(
 			fmtFeedDetails,
 			txtSummary,
+			l.Count,
 			txtExpires,
 			feed.UpdatePeriod.AsDuration(),
 			feed.NextUpdate.AsTime().Format(time.RFC3339),
 			txtItemLast,
 			feed.ItemCount,
-			l.Count,
 		)
-		err = tgCtx.Send(txt, m, telebot.ModeHTML)
+		err = tgCtx.Send(txt, telebot.ModeHTML)
 	}
 	//
 	return

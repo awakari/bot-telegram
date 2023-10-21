@@ -141,7 +141,6 @@ func main() {
 		SvcSrcFeeds: svcSrcFeeds,
 		Log:         log,
 	}
-	srcExtendHandler := sources.ExtendHandler{}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -155,7 +154,6 @@ func main() {
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
 		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
-		sources.CmdExtend:            srcExtendHandler.RequestInput,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),

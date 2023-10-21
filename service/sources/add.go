@@ -130,7 +130,7 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	switch ap.Price.Total {
 	case 0:
 		// add for free, don't change a limit
-		err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+		_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
 		if err == nil {
 			err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
 		}
@@ -184,9 +184,9 @@ func (ah AddHandler) sendInvoice(tgCtx telebot.Context, ap addPayload) (err erro
 	return err
 }
 
-func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId string) (err error) {
+func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId string) (expires time.Time, err error) {
 	addr := ap.Src.Addr
-	expires := time.Now().UTC().Add(day * time.Duration(ap.Limit.Time))
+	expires = time.Now().UTC().Add(day * time.Duration(ap.Limit.Time))
 	switch ap.Src.Type {
 	case srcTypeFeed:
 		feed := grpcApiSrcFeeds.Feed{
@@ -290,9 +290,9 @@ func (ah AddHandler) AddPaid(tgCtx telebot.Context, args ...string) (err error) 
 
 func (ah AddHandler) registerPaidSource(ap addPayload, userId string) (err error) {
 	ctx := context.TODO()
-	err = ah.registerSource(ctx, ap, userId)
+	var expires time.Time
+	expires, err = ah.registerSource(ctx, ap, userId)
 	if err == nil {
-		expires := time.Now().UTC().Add(day * time.Duration(ap.Limit.Time))
 		switch ap.Src.Type {
 		case srcTypeFeed:
 			err = ah.SvcAdmin.SetLimits(

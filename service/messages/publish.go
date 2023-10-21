@@ -26,7 +26,6 @@ const ReqMsgPubBasic = "msg_pub_basic"
 const PurposePublish = "msg_pub"
 const attrKeyAuthor = "author"
 const attrKeyMsgId = "tgmessageid"
-const attrValType = "com.github.awakari.bot-telegram"
 const attrValSpecVersion = "1.0"
 const fmtLinkUser = "@%s"
 const fmtUserName = "%s %s"
@@ -77,7 +76,12 @@ func PublishBasicReplyHandlerFunc(
 		sender := tgCtx.Sender()
 		userId := strconv.FormatInt(sender.ID, 10)
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
-		var evt pb.CloudEvent
+		evt := pb.CloudEvent{
+			Id:          uuid.NewString(),
+			Source:      fmt.Sprintf(fmtLinkUser, sender.Username),
+			SpecVersion: attrValSpecVersion,
+			Type:        groupId,
+		}
 		if err == nil {
 			defer w.Close()
 			err = toCloudEvent(sender, tgCtx.Message(), args[1], &evt)
@@ -90,10 +94,6 @@ func PublishBasicReplyHandlerFunc(
 }
 
 func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
-	evt.Id = uuid.NewString()
-	evt.Source = fmt.Sprintf(fmtLinkUser, sender.Username)
-	evt.SpecVersion = attrValSpecVersion
-	evt.Type = attrValType
 	evt.Attributes = map[string]*pb.CloudEventAttributeValue{
 		attrKeyAuthor: {
 			Attr: &pb.CloudEventAttributeValue_CeString{
@@ -227,7 +227,7 @@ func PublishCustomHandlerFunc(
 				}
 			}
 			evt.SpecVersion = attrValSpecVersion
-			evt.Type = attrValType
+			evt.Type = groupId
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)
 		}
 		return
