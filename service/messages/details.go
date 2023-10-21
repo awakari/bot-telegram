@@ -26,6 +26,10 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 					Text: "Own Feeds",
 					Data: sources.CmdFeedListOwn,
 				},
+				telebot.Btn{
+					Text: "Telegram Channels",
+					URL:  "https://github.com/awakari/source-telegram/blob/master/helm/source-telegram/values-demo-0.yaml#L6",
+				},
 			))
 			err = tgCtx.Send("List Sources:", m)
 		}
