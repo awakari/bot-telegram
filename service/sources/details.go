@@ -8,6 +8,7 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
@@ -66,7 +67,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	//
 	var l usage.Limit
 	if err == nil {
-		ctxGroupId := context.WithValue(ctx, "x-awakari-group-id", dh.CfgFeeds.GroupId)
+		ctxGroupId := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", dh.CfgFeeds.GroupId)
 		url = feed.Url
 		l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
 		fmt.Printf("limit=%+v, err=%s\n", l, err)
