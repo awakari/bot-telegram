@@ -28,7 +28,6 @@ import (
 
 const srcTypeTgCh = "tgch"
 const srcTypeFeed = "feed"
-const groupIdSrcFeeds = "com.github.awakari.source-feeds"
 const limitCountMax = 1_440
 const daysMax = 3_652
 const priceMax = 10_000
@@ -115,6 +114,7 @@ func (ap addPayload) validate(cfgPayment config.PaymentConfig, bot *telebot.Bot)
 
 type AddHandler struct {
 	CfgPayment config.PaymentConfig
+	CfgFeeds   config.FeedsConfig
 	KbdRestore *telebot.ReplyMarkup
 	SvcFeeds   grpcApiSrcFeeds.Service
 	SvcAdmin   grpcApiAdmin.Service
@@ -297,7 +297,7 @@ func (ah AddHandler) registerPaidSource(ap addPayload, userId string) (err error
 		case srcTypeFeed:
 			err = ah.SvcAdmin.SetLimits(
 				ctx,
-				groupIdSrcFeeds,
+				ah.CfgFeeds.GroupId,
 				ap.Src.Addr,
 				usage.SubjectPublishEvents,
 				int64(ap.Limit.Count),

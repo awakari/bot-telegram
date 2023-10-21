@@ -15,12 +15,8 @@ type Config struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
 		Source struct {
-			Feeds struct {
-				Uri string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
-			}
-			Telegram struct {
-				Uri string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
-			}
+			Feeds    FeedsConfig
+			Telegram TelegramConfig
 		}
 		Telegram struct {
 			Webhook struct {
@@ -91,6 +87,16 @@ type PriceConfig struct {
 		CountLimit float64 `envconfig:"PAYMENT_PRICE_SUBSCRIPTION_COUNT_LIMIT" required:"true" default:"0.1"`
 		Extension  float64 `envconfig:"PAYMENT_PRICE_SUBSCRIPTION_EXTENSION" required:"true" default:"0.1"`
 	}
+}
+
+type FeedsConfig struct {
+	GroupId string `envconfig:"API_SOURCE_FEEDS_GROUP_ID" default:"com.github.awakari.source-feeds"`
+	Uri     string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
+}
+
+type TelegramConfig struct {
+	GroupId string `envconfig:"API_SOURCE_TELEGRAM_GROUP_ID" default:"com.github.awakari.source-telegram"`
+	Uri     string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

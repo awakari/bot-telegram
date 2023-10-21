@@ -126,6 +126,7 @@ func main() {
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
 	srcAddHandler := sources.AddHandler{
 		CfgPayment: cfg.Payment,
+		CfgFeeds:   cfg.Api.Source.Feeds,
 		KbdRestore: menuKbd,
 		SvcFeeds:   svcSrcFeeds,
 		SvcAdmin:   svcAdmin,
@@ -135,10 +136,12 @@ func main() {
 		SvcSrcFeeds: svcSrcFeeds,
 	}
 	srcDetailsHandler := sources.DetailsHandler{
+		CfgFeeds:    cfg.Api.Source.Feeds,
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
 		Log:         log,
 	}
+	srcExtendHandler := sources.ExtendHandler{}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -152,6 +155,7 @@ func main() {
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
 		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
+		sources.CmdExtend:            srcExtendHandler.RequestInput,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
