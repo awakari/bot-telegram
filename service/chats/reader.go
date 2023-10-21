@@ -109,6 +109,17 @@ func StopChatReaders(chatId int64) {
 	}
 }
 
+func StopChatReader(subId string) (found bool) {
+	runtimeReadersLock.Lock()
+	defer runtimeReadersLock.Unlock()
+	var r *reader
+	r, found = runtimeReaders[subId]
+	if found {
+		r.stop = true
+	}
+	return
+}
+
 func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, chatKey Key, groupId, userId string, format messages.Format) Reader {
 	return &reader{
 		tgCtx:     tgCtx,
