@@ -7,6 +7,7 @@ import (
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	grpcApiSrcTg "github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -103,6 +104,17 @@ func main() {
 	clientSrcFeeds := grpcApiSrcFeeds.NewServiceClient(connSrcFeeds)
 	svcSrcFeeds := grpcApiSrcFeeds.NewService(clientSrcFeeds)
 
+	// init the source-telegram client
+	connSrcTg, err := grpc.Dial(cfg.Api.Source.Telegram.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		log.Info("connected the source-telegram service")
+		defer connMsgs.Close()
+	} else {
+		log.Error("failed to connect the source-telegram service", err)
+	}
+	clientSrcTg := grpcApiSrcTg.NewServiceClient(connSrcTg)
+	svcSrcTg := grpcApiSrcTg.NewService(clientSrcTg)
+
 	// init chat storage
 	var chatStor chats.Storage
 	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
@@ -146,6 +158,7 @@ func main() {
 	}
 	srcListHandler := sources.ListHandler{
 		SvcSrcFeeds: svcSrcFeeds,
+		SvcSrcTg:    svcSrcTg,
 	}
 	srcDetailsHandler := sources.DetailsHandler{
 		CfgFeeds:    cfg.Api.Source.Feeds,
@@ -162,6 +175,7 @@ func main() {
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
 		usage.CmdLimit:               usage.IncreaseLimit(),
+		sources.CmdTgChanList:        srcListHandler.TelegramChannels,
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,

@@ -9,6 +9,7 @@ import (
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"math"
 	"strconv"
 )
 
@@ -30,10 +31,10 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 				),
 				m.Row(telebot.Btn{
 					Text: "Telegram Channels",
-					URL:  "https://github.com/awakari/source-telegram/blob/master/helm/source-telegram/values-demo-0.yaml#L6",
+					Data: fmt.Sprintf("%s %d", sources.CmdTgChanList, math.MinInt64),
 				}),
 			)
-			err = tgCtx.Send("List Sources:", m)
+			err = tgCtx.Send("Sources:", m)
 		}
 		//
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
@@ -47,7 +48,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			l, err = clientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectPublishEvents)
 		}
 		if err == nil {
-			respTxt := usage.FormatUsageLimit("Messages Publishing", u, l)
+			respTxt := usage.FormatUsageLimit("Daily Messages Publishing", u, l)
 			m := &telebot.ReplyMarkup{}
 			m.Inline(m.Row(telebot.Btn{
 				Text: usage.LabelLimitIncrease,
