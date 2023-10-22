@@ -3,7 +3,7 @@ package telegram
 import "context"
 
 type Service interface {
-	List(ctx context.Context, limit uint32, cursor int64) (page []int64, err error)
+	List(ctx context.Context, limit uint32, cursor string) (page []*Channel, err error)
 }
 
 type service struct {
@@ -16,7 +16,7 @@ func NewService(client ServiceClient) Service {
 	}
 }
 
-func (svc service) List(ctx context.Context, limit uint32, cursor int64) (page []int64, err error) {
+func (svc service) List(ctx context.Context, limit uint32, cursor string) (page []*Channel, err error) {
 	var resp *ListResponse
 	resp, err = svc.client.List(ctx, &ListRequest{
 		Limit:  limit,

@@ -6,7 +6,6 @@ import (
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"gopkg.in/telebot.v3"
-	"math"
 	"strconv"
 )
 
@@ -23,29 +22,22 @@ const pageLimit = 10
 const cmdLimit = 64
 
 func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (err error) {
-	cursor := int64(math.MinInt64)
+	var cursor string
 	if len(args) > 0 {
-		cursor, err = strconv.ParseInt(args[0], 10, 64)
+		cursor = args[0]
 	}
 	if err != nil {
 		err = tgCtx.Send("Failed to parse telegram chat id: %s, cause: %s", args[0], err)
 	}
-	var page []int64
+	var page []*telegram.Channel
 	if err == nil {
 		page, err = lh.SvcSrcTg.List(context.TODO(), pageLimit, cursor)
 	}
 	if err == nil {
 		//
 		var pageTxt string
-		var chat *telebot.Chat
-		bot := tgCtx.Bot()
-		for _, chatId := range page {
-			chat, err = bot.ChatByID(chatId)
-			if err == nil {
-				pageTxt += fmt.Sprintf("<a href=\"https://t.me/%s\">%s</a>\n", chat.Username, chat.Title)
-			} else {
-				pageTxt += fmt.Sprintf("%s\n", err.Error())
-			}
+		for _, ch := range page {
+			pageTxt += fmt.Sprintf("%d: %s\n", ch.Id, ch.Name)
 		}
 		//
 		m := &telebot.ReplyMarkup{}
@@ -53,7 +45,7 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 		if len(page) == pageLimit {
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",
-				Data: fmt.Sprintf("%s %d", CmdTgChanList, page[len(page)-1]),
+				Data: fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1]),
 			}))
 		}
 		m.Inline(rows...)

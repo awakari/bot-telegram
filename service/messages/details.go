@@ -9,7 +9,6 @@ import (
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"math"
 	"strconv"
 )
 
@@ -31,7 +30,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 				),
 				m.Row(telebot.Btn{
 					Text: "Telegram Channels",
-					Data: fmt.Sprintf("%s %d", sources.CmdTgChanList, math.MinInt64),
+					Data: sources.CmdTgChanList,
 				}),
 			)
 			err = tgCtx.Send("Sources:", m)

@@ -18,13 +18,13 @@ func NewServiceLogging(svc Service, log *slog.Logger) Service {
 	}
 }
 
-func (sl serviceLogging) List(ctx context.Context, limit uint32, cursor int64) (page []int64, err error) {
+func (sl serviceLogging) List(ctx context.Context, limit uint32, cursor string) (page []*Channel, err error) {
 	page, err = sl.svc.List(ctx, limit, cursor)
 	switch err {
 	case nil:
-		sl.log.Debug(fmt.Sprintf("api.grpc.source.telegram.List(%d, %d): %d", limit, cursor, len(page)))
+		sl.log.Debug(fmt.Sprintf("api.grpc.source.telegram.List(%d, %s): %d", limit, cursor, len(page)))
 	default:
-		sl.log.Error(fmt.Sprintf("api.grpc.source.telegram.List(%d, %d): %s", limit, cursor, err))
+		sl.log.Error(fmt.Sprintf("api.grpc.source.telegram.List(%d, %s): %s", limit, cursor, err))
 	}
 	return
 }
