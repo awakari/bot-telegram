@@ -101,7 +101,7 @@ type TelegramConfig struct {
 }
 
 type ReplicaConfig struct {
-	Range uint16 `envconfig:"REPLICA_RANGE" required:"true"`
+	Range uint32 `envconfig:"REPLICA_RANGE" required:"true"`
 	Name  string `envconfig:"REPLICA_NAME" required:"true"`
 }
 

@@ -13,7 +13,6 @@ import (
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
-	"time"
 )
 
 const CmdStart = "sub_start"
@@ -35,14 +34,10 @@ func Start(
 		var chat chats.Chat
 		if err == nil {
 			userId = strconv.FormatInt(tgCtx.Sender().ID, 10)
-			chat.Key = chats.Key{
-				Id:    tgCtx.Chat().ID,
-				SubId: subId,
-			}
+			chat.Id = tgCtx.Chat().ID
+			chat.SubId = subId
 			chat.GroupId = groupId
 			chat.UserId = userId
-			chat.State = chats.StateActive
-			chat.Expires = time.Now().UTC().Add(chats.ReaderTtl)
 			err = chatStor.LinkSubscription(context.TODO(), chat)
 			switch {
 			case errors.Is(err, chats.ErrAlreadyExists):
@@ -58,7 +53,7 @@ func Start(
 			err = tgCtx.Send(fmt.Sprintf(msgFmtChatLinked, subData.Description), telebot.ModeHTML)
 		}
 		if err == nil {
-			r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Key, groupId, userId, msgFmt)
+			r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Id, chat.SubId, groupId, userId, msgFmt)
 			go r.Run(context.Background(), log)
 		}
 		return

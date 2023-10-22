@@ -22,11 +22,8 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"os/signal"
 	"strconv"
 	"strings"
-	"syscall"
-	"time"
 )
 
 func main() {
@@ -54,7 +51,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	replicaIndex := uint16(replicaIndexTmp)
+	replicaIndex := uint32(replicaIndexTmp)
 	log.Info(fmt.Sprintf("Replica: %d/%d", replicaIndex, cfg.Replica.Range))
 
 	// init Awakari client
@@ -295,21 +292,9 @@ func main() {
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
 	go func() {
-		log.Debug("Wait 20 seconds before resuming existing readers...")
-		time.Sleep(20 * time.Second)
-		log.Debug("Resume existing readers...")
-		count, err := chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
-		log.Debug(fmt.Sprintf("Resumed %d readers, errors: %s", count, err))
-	}()
-	// Listen for shutdown signals
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		<-sigs
-		ctxShutdown, cancelShutdown := context.WithTimeout(context.TODO(), 15*time.Second)
-		chats.ReleaseAllChats(ctxShutdown, log)
-		log.Debug("Graceful shutdown done")
-		cancelShutdown()
+		var count uint32
+		count, err = chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
+		log.Info(fmt.Sprintf("Resumed %d readers, errors: %s", count, err))
 	}()
 
 	b.Start()

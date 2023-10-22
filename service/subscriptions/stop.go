@@ -13,11 +13,7 @@ const CmdStop = "sub_stop"
 func Stop(chatStor chats.Storage) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
-		k := chats.Key{
-			Id:    tgCtx.Chat().ID,
-			SubId: subId,
-		}
-		err = chatStor.UnlinkSubscription(context.Background(), k)
+		err = chatStor.UnlinkSubscription(context.Background(), subId)
 		if err == nil {
 			if chats.StopChatReader(subId) {
 				_ = tgCtx.Send("Unlinked the subscription from this chat")

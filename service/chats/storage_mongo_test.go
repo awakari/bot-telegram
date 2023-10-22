@@ -6,6 +6,7 @@ import (
 	"github.com/awakari/bot-telegram/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math"
 	"os"
 	"testing"
 	"time"
@@ -52,12 +53,8 @@ func TestStorageMongo_Create(t *testing.T) {
 	defer clear(ctx, t, sm)
 	//
 	preExisting := Chat{
-		Key: Key{
-			Id:    -123,
-			SubId: "sub0",
-		},
-		State:   StateActive,
-		Expires: time.Now().Add(time.Hour),
+		Id:    -123,
+		SubId: "sub0",
 	}
 	err = s.LinkSubscription(ctx, preExisting)
 	require.Nil(t, err)
@@ -68,33 +65,21 @@ func TestStorageMongo_Create(t *testing.T) {
 	}{
 		"ok": {
 			chat: Chat{
-				Key: Key{
-					Id:    234,
-					SubId: "sub1",
-				},
-				State:   StateActive,
-				Expires: time.Now().Add(time.Hour),
+				Id:    234,
+				SubId: "sub1",
 			},
 		},
 		"already exists - same subscription": {
 			chat: Chat{
-				Key: Key{
-					Id:    345,
-					SubId: "sub0",
-				},
-				State:   StateActive,
-				Expires: time.Now().Add(time.Hour),
+				Id:    345,
+				SubId: "sub0",
 			},
 			err: ErrAlreadyExists,
 		},
 		"already exists - same chat id": {
 			chat: Chat{
-				Key: Key{
-					Id:    -123,
-					SubId: "sub1",
-				},
-				State:   StateActive,
-				Expires: time.Now().Add(time.Hour),
+				Id:    -123,
+				SubId: "sub1",
 			},
 			err: ErrAlreadyExists,
 		},
@@ -103,79 +88,6 @@ func TestStorageMongo_Create(t *testing.T) {
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
 			err = s.LinkSubscription(ctx, c.chat)
-			assert.ErrorIs(t, err, c.err)
-		})
-	}
-}
-
-func TestStorageMongo_Update(t *testing.T) {
-	//
-	collName := fmt.Sprintf("chats-test-%d", time.Now().UnixMicro())
-	dbCfg := config.ChatsDbConfig{
-		Uri:  dbUri,
-		Name: "bot-telegram",
-	}
-	dbCfg.Table.Name = collName
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
-	defer cancel()
-	s, err := NewStorage(ctx, dbCfg)
-	require.NotNil(t, s)
-	require.Nil(t, err)
-	sm := s.(storageMongo)
-	defer clear(ctx, t, sm)
-	//
-	preExisting := Chat{
-		Key: Key{
-			Id:    -123,
-			SubId: "sub0",
-		},
-		State:   StateActive,
-		Expires: time.Now().Add(time.Hour),
-	}
-	err = s.LinkSubscription(ctx, preExisting)
-	require.Nil(t, err)
-	//
-	cases := map[string]struct {
-		chat Chat
-		err  error
-	}{
-		"ok": {
-			chat: Chat{
-				Key: Key{
-					Id:    -123,
-					SubId: "sub0",
-				},
-				State:   StateInactive,
-				Expires: time.Now().Add(time.Hour),
-			},
-		},
-		"not found - different subscription": {
-			chat: Chat{
-				Key: Key{
-					Id:    -123,
-					SubId: "sub1",
-				},
-				State:   StateInactive,
-				Expires: time.Now().Add(time.Hour),
-			},
-			err: ErrNotFound,
-		},
-		"not found - different chat id": {
-			chat: Chat{
-				Key: Key{
-					Id:    234,
-					SubId: "sub0",
-				},
-				State:   StateInactive,
-				Expires: time.Now().Add(time.Hour),
-			},
-			err: ErrNotFound,
-		},
-	}
-	//
-	for k, c := range cases {
-		t.Run(k, func(t *testing.T) {
-			err = s.UpdateSubscriptionLink(ctx, c.chat)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}
@@ -198,23 +110,15 @@ func TestStorageMongo_Delete(t *testing.T) {
 	defer clear(ctx, t, sm)
 	//
 	preExisting0 := Chat{
-		Key: Key{
-			Id:    -123,
-			SubId: "sub0",
-		},
-		State:   StateActive,
-		Expires: time.Now().Add(time.Hour),
+		Id:    -123,
+		SubId: "sub0",
 	}
 	err = s.LinkSubscription(ctx, preExisting0)
 	require.Nil(t, err)
 	//
 	preExisting1 := Chat{
-		Key: Key{
-			Id:    -123,
-			SubId: "sub1",
-		},
-		State:   StateInactive,
-		Expires: time.Now().Add(time.Hour),
+		Id:    -123,
+		SubId: "sub1",
 	}
 	err = s.LinkSubscription(ctx, preExisting1)
 	require.Nil(t, err)
@@ -242,7 +146,7 @@ func TestStorageMongo_Delete(t *testing.T) {
 	}
 }
 
-func TestStorageMongo_ActivateNext(t *testing.T) {
+func TestStorageMongo_GetBatch(t *testing.T) {
 	//
 	collName := fmt.Sprintf("chats-test-%d", time.Now().UnixMicro())
 	dbCfg := config.ChatsDbConfig{
@@ -259,60 +163,46 @@ func TestStorageMongo_ActivateNext(t *testing.T) {
 	defer clear(ctx, t, sm)
 	//
 	cases := map[string]struct {
-		stored    []Chat
-		activated []Chat
+		idRange  uint32
+		idIndex  uint32
+		stored   []Chat
+		selected []Chat
 	}{
 		"ok": {
+			idRange: 2,
+			idIndex: 0,
 			stored: []Chat{
 				{
-					Key: Key{
-						Id:    1,
-						SubId: "sub1",
-					},
+					Id:      -1001875128866,
+					SubId:   "sub1",
 					GroupId: "group1",
 					UserId:  "user1",
-					State:   StateActive,
-					Expires: time.Now().Add(time.Hour),
 				},
 				{
-					Key: Key{
-						Id:    2,
-						SubId: "sub2",
-					},
+					Id:      -1001778619305,
+					SubId:   "sub2",
 					GroupId: "group2",
 					UserId:  "user2",
-					State:   StateInactive,
-					Expires: time.Now().Add(time.Hour),
 				},
 				{
-					Key: Key{
-						Id:    3,
-						SubId: "sub3",
-					},
+					Id:      -1001733378662,
+					SubId:   "sub3",
 					GroupId: "group3",
 					UserId:  "user3",
-					State:   StateActive,
-					Expires: time.Now(),
 				},
 			},
-			activated: []Chat{
+			selected: []Chat{
 				{
-					Key: Key{
-						Id:    2,
-						SubId: "sub2",
-					},
-					GroupId: "group2",
-					UserId:  "user2",
-					State:   StateActive,
+					Id:      -1001875128866,
+					SubId:   "sub1",
+					GroupId: "group1",
+					UserId:  "user1",
 				},
 				{
-					Key: Key{
-						Id:    3,
-						SubId: "sub3",
-					},
+					Id:      -1001733378662,
+					SubId:   "sub3",
 					GroupId: "group3",
 					UserId:  "user3",
-					State:   StateActive,
 				},
 			},
 		},
@@ -324,19 +214,10 @@ func TestStorageMongo_ActivateNext(t *testing.T) {
 				err = s.LinkSubscription(ctx, chat)
 				require.Nil(t, err)
 			}
-			var actual Chat
-			for _, expected := range c.activated {
-				actual, err = s.ActivateNext(ctx, time.Now().Add(time.Hour))
-				assert.Equal(t, expected.Key, actual.Key)
-				assert.Equal(t, expected.GroupId, actual.GroupId)
-				assert.Equal(t, expected.UserId, actual.UserId)
-				assert.Equal(t, expected.State, StateActive)
-				assert.True(t, actual.Expires.After(time.Now()))
-				assert.Nil(t, err)
-			}
-			actual, err = s.ActivateNext(ctx, time.Now().Add(time.Hour))
-			assert.Zero(t, actual)
-			assert.ErrorIs(t, err, ErrNotFound)
+			var selected []Chat
+			selected, err = s.GetBatch(ctx, c.idIndex, c.idRange, 10, math.MinInt64)
+			assert.Equal(t, c.selected, selected)
+			assert.Nil(t, err)
 		})
 	}
 }

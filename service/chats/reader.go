@@ -12,12 +12,12 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"go.uber.org/ratelimit"
-	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
+	"math"
 	"sync"
 	"time"
 )
@@ -42,6 +42,7 @@ const msgFmtExtendSteps = ` Please consider the following steps to extend it:
 3. Select the subscription "%s".
 4. Tap the "▲ Extend" button.`
 const rateLimit = 20
+const resumeBatchSize = 16
 
 var optRateLimitPer = ratelimit.Per(time.Minute)
 var runtimeReaders = make(map[string]*reader)
@@ -54,64 +55,37 @@ func ResumeAllReaders(
 	tgBot *telebot.Bot,
 	clientAwk api.Client,
 	format messages.Format,
-	replicaIndex uint16,
-	replicaRange uint16,
+	replicaIndex uint32,
+	replicaRange uint32,
 ) (count uint32, err error) {
-	var resumingDone bool
-	var c Chat
-	var nextErr error
-	for !resumingDone {
-		c, nextErr = chatStor.ActivateNext(ctx, time.Now().UTC().Add(ReaderTtl))
-		switch {
-		case nextErr == nil:
+	cursor := int64(math.MinInt64)
+	var page []Chat
+	for {
+		page, err = chatStor.GetBatch(ctx, replicaIndex, replicaRange, resumeBatchSize, cursor)
+		if err != nil && len(page) == 0 {
+			break
+		}
+		for _, c := range page {
 			u := telebot.Update{
 				Message: &telebot.Message{
 					Chat: &telebot.Chat{
-						ID: c.Key.Id,
+						ID: c.Id,
 					},
 				},
 			}
-			r := NewReader(tgBot.NewContext(u), clientAwk, chatStor, c.Key, c.GroupId, c.UserId, format)
+			r := NewReader(tgBot.NewContext(u), clientAwk, chatStor, c.Id, c.SubId, c.GroupId, c.UserId, format)
 			go r.Run(context.Background(), log)
 			count++
-		case errors.Is(nextErr, ErrNotFound):
-			resumingDone = true
-		default:
-			err = errors.Join(err, nextErr)
 		}
 	}
 	return
-}
-
-func ReleaseAllChats(ctx context.Context, log *slog.Logger) {
-	runtimeReadersLock.Lock()
-	defer runtimeReadersLock.Unlock()
-	g, gCtx := errgroup.WithContext(ctx)
-	g.SetLimit(releaseChatsConcurrencyMax)
-	log.Info(fmt.Sprintf("Release %d readers", len(runtimeReaders)))
-	for _, r := range runtimeReaders {
-		r := r // https://golang.org/doc/faq#closures_and_goroutines
-		g.Go(func() error {
-			c := Chat{
-				Key:     r.chatKey,
-				State:   StateInactive,
-				Expires: time.Now().UTC(),
-			}
-			err := r.chatStor.UpdateSubscriptionLink(gCtx, c)
-			if err != nil {
-				log.Error(fmt.Sprintf("Failed to release reader %d: %s", c.Key.Id, err))
-			}
-			return nil
-		})
-	}
-	_ = g.Wait()
 }
 
 func StopChatReaders(chatId int64) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
 	for _, r := range runtimeReaders {
-		if r.chatKey.Id == chatId {
+		if r.chatId == chatId {
 			r.stop = true
 		}
 	}
@@ -128,12 +102,13 @@ func StopChatReader(subId string) (found bool) {
 	return
 }
 
-func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, chatKey Key, groupId, userId string, format messages.Format) Reader {
+func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, chatId int64, subId, groupId, userId string, format messages.Format) Reader {
 	return &reader{
 		tgCtx:     tgCtx,
 		clientAwk: clientAwk,
 		chatStor:  chatStor,
-		chatKey:   chatKey,
+		chatId:    chatId,
+		subId:     subId,
 		groupId:   groupId,
 		userId:    userId,
 		format:    format,
@@ -145,7 +120,8 @@ type reader struct {
 	tgCtx     telebot.Context
 	clientAwk api.Client
 	chatStor  Storage
-	chatKey   Key
+	chatId    int64
+	subId     string
 	groupId   string
 	userId    string
 	stop      bool
@@ -174,7 +150,7 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 	//
 	if err != nil {
 		err = r.tgCtx.Send(fmt.Sprintf(msgFmtRunFatal, err))
-		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
+		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 	}
 }
 
@@ -187,30 +163,22 @@ func (r *reader) runOnce() (err error) {
 	defer cancel()
 	// get subscription info
 	var sd subscription.Data
-	sd, err = r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.chatKey.SubId)
+	sd, err = r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.subId)
 	// open the events reader
 	var readerAwk model.AckReader[[]*pb.CloudEvent]
 	var subDescr string
 	if err == nil {
 		subDescr = sd.Description
-		readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.chatKey.SubId, readBatchSize)
+		readerAwk, err = r.clientAwk.OpenMessagesAckReader(groupIdCtx, r.userId, r.subId, readBatchSize)
 	}
 	if err == nil {
 		defer readerAwk.Close()
 		err = r.deliverEventsReadLoop(ctx, readerAwk, subDescr)
 	}
-	if err == nil {
-		nextChatState := Chat{
-			Key:     r.chatKey,
-			Expires: time.Now().UTC().Add(ReaderTtl),
-			State:   StateActive,
-		}
-		err = r.chatStor.UpdateSubscriptionLink(ctx, nextChatState)
-	}
 	switch {
 	case errors.Is(err, clientAwkApiReader.ErrNotFound):
-		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
-		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.subId))
+		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 		r.stop = true
 		err = nil
 	}
@@ -218,7 +186,7 @@ func (r *reader) runOnce() (err error) {
 }
 
 func (r *reader) checkExpiration(groupIdCtx context.Context) {
-	sd, err := r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.chatKey.SubId)
+	sd, err := r.clientAwk.ReadSubscription(groupIdCtx, r.userId, r.subId)
 	if err == nil {
 		switch {
 		case sd.Expires.IsZero(): // never expires
@@ -268,8 +236,8 @@ func (r *reader) deliverEventsRead(
 			}
 		}
 	case codes.NotFound:
-		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.chatKey.SubId))
-		_ = r.chatStor.UnlinkSubscription(ctx, r.chatKey)
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.subId))
+		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 		r.stop = true
 		err = nil
 	}
@@ -319,16 +287,11 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 func (r *reader) runtimeRegister(_ context.Context) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
-	runtimeReaders[r.chatKey.SubId] = r
+	runtimeReaders[r.subId] = r
 }
 
 func (r *reader) runtimeUnregister(ctx context.Context) {
 	runtimeReadersLock.Lock()
 	defer runtimeReadersLock.Unlock()
-	delete(runtimeReaders, r.chatKey.SubId)
-	// try to do the best effort to mark chat as inactive in the chats DB
-	_ = r.chatStor.UpdateSubscriptionLink(ctx, Chat{
-		Key:   r.chatKey,
-		State: StateInactive,
-	})
+	delete(runtimeReaders, r.subId)
 }

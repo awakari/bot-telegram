@@ -9,7 +9,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"time"
 )
 
 type storageMongo struct {
@@ -18,21 +17,17 @@ type storageMongo struct {
 	coll *mongo.Collection
 }
 
-type chatRec struct {
-	Id      int64     `bson:"id"`
-	SubId   string    `bson:"subId"`
-	GroupId string    `bson:"groupId"`
-	UserId  string    `bson:"userId"`
-	State   int       `bson:"state"`
-	Expires time.Time `bson:"expires"`
+type Chat struct {
+	Id      int64  `bson:"id"`
+	SubId   string `bson:"subId"`
+	GroupId string `bson:"groupId"`
+	UserId  string `bson:"userId"`
 }
 
 const attrId = "id"
 const attrSubId = "subId"
 const attrGroupId = "groupId"
 const attrUserId = "userId"
-const attrState = "state"
-const attrExpires = "expires"
 
 var optsSrvApi = options.ServerAPI(options.ServerAPIVersion1)
 var indices = []mongo.IndexModel{
@@ -58,28 +53,6 @@ var indices = []mongo.IndexModel{
 			Index().
 			SetUnique(true),
 	},
-	{
-		Keys: bson.D{
-			{
-				Key:   attrState,
-				Value: 1,
-			},
-		},
-		Options: options.
-			Index().
-			SetUnique(false),
-	},
-	{
-		Keys: bson.D{
-			{
-				Key:   attrExpires,
-				Value: 1,
-			},
-		},
-		Options: options.
-			Index().
-			SetUnique(false),
-	},
 }
 var projGet = bson.D{
 	{
@@ -94,28 +67,35 @@ var projGet = bson.D{
 		Key:   attrUserId,
 		Value: 1,
 	},
-	{
-		Key:   attrState,
-		Value: 1,
-	},
-	{
-		Key:   attrExpires,
-		Value: 1,
-	},
 }
 var optsGet = options.
 	FindOne().
 	SetShowRecordID(false).
 	SetProjection(projGet)
-var optsActivateNext = options.
-	FindOneAndUpdate().
-	SetSort(bson.D{
-		{
-			Key:   attrSubId,
-			Value: 1,
-		},
-	}).
-	SetReturnDocument(options.After)
+var sortGetBatch = bson.D{
+	{
+		Key:   attrId,
+		Value: 1,
+	},
+}
+var projGetBatch = bson.D{
+	{
+		Key:   attrId,
+		Value: 1,
+	},
+	{
+		Key:   attrSubId,
+		Value: 1,
+	},
+	{
+		Key:   attrGroupId,
+		Value: 1,
+	},
+	{
+		Key:   attrUserId,
+		Value: 1,
+	},
+}
 
 func NewStorage(ctx context.Context, cfgDb config.ChatsDbConfig) (s Storage, err error) {
 	clientOpts := options.
@@ -158,15 +138,7 @@ func (sm storageMongo) Close() error {
 }
 
 func (sm storageMongo) LinkSubscription(ctx context.Context, c Chat) (err error) {
-	rec := chatRec{
-		Id:      c.Key.Id,
-		SubId:   c.Key.SubId,
-		GroupId: c.GroupId,
-		UserId:  c.UserId,
-		State:   int(c.State),
-		Expires: c.Expires,
-	}
-	_, err = sm.coll.InsertOne(ctx, rec)
+	_, err = sm.coll.InsertOne(ctx, c)
 	err = decodeMongoError(err)
 	return
 }
@@ -178,50 +150,15 @@ func (sm storageMongo) GetSubscriptionLink(ctx context.Context, subId string) (c
 	var result *mongo.SingleResult
 	result = sm.coll.FindOne(ctx, q, optsGet)
 	err = result.Err()
-	var rec chatRec
 	if err == nil {
-		err = result.Decode(&rec)
-	}
-	if err == nil {
-		c.Key = Key{
-			Id:    rec.Id,
-			SubId: subId,
-		}
-		c.GroupId = rec.GroupId
-		c.UserId = rec.UserId
-		c.State = State(rec.State)
-		c.Expires = rec.Expires
+		err = result.Decode(&c)
 	}
 	return
 }
 
-func (sm storageMongo) UpdateSubscriptionLink(ctx context.Context, c Chat) (err error) {
+func (sm storageMongo) UnlinkSubscription(ctx context.Context, subId string) (err error) {
 	q := bson.M{
-		attrId:    c.Key.Id,
-		attrSubId: c.Key.SubId,
-	}
-	u := bson.M{
-		"$set": bson.M{
-			attrState:   c.State,
-			attrExpires: c.Expires,
-		},
-	}
-	var result *mongo.UpdateResult
-	result, err = sm.coll.UpdateOne(ctx, q, u)
-	if err == nil {
-		if result.MatchedCount < 1 {
-			err = fmt.Errorf("%w: %+v", ErrNotFound, c.Key)
-		}
-	} else {
-		err = decodeMongoError(err)
-	}
-	return
-}
-
-func (sm storageMongo) UnlinkSubscription(ctx context.Context, k Key) (err error) {
-	q := bson.M{
-		attrId:    k.Id,
-		attrSubId: k.SubId,
+		attrSubId: subId,
 	}
 	_, err = sm.coll.DeleteOne(ctx, q)
 	err = decodeMongoError(err)
@@ -241,46 +178,35 @@ func (sm storageMongo) Delete(ctx context.Context, id int64) (count int64, err e
 	return
 }
 
-func (sm storageMongo) ActivateNext(ctx context.Context, expiresNext time.Time) (c Chat, err error) {
+func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit uint32, cursor int64) (page []Chat, err error) {
 	q := bson.M{
-		"$or": []bson.M{
-			{
-				attrState: StateInactive,
-			},
-			{
-				attrExpires: bson.M{
-					"$lt": time.Now().UTC(),
-				},
+		attrId: bson.M{
+			"$gt": cursor,
+			"$mod": bson.A{
+				idDiv,
+				idRem,
 			},
 		},
 	}
-	u := bson.M{
-		"$set": bson.M{
-			attrState:   StateActive,
-			attrExpires: expiresNext,
-		},
-	}
-	result := sm.coll.FindOneAndUpdate(ctx, q, u, optsActivateNext)
-	err = result.Err()
-	var rec chatRec
+	optsList := options.
+		Find().
+		SetLimit(int64(limit)).
+		SetShowRecordID(false).
+		SetSort(sortGetBatch).
+		SetProjection(projGetBatch)
+	var cur *mongo.Cursor
+	cur, err = sm.coll.Find(ctx, q, optsList)
 	if err == nil {
-		err = result.Decode(&rec)
-	}
-	if err == nil {
-		c.Key.Id = rec.Id
-		c.Key.SubId = rec.SubId
-		c.GroupId = rec.GroupId
-		c.UserId = rec.UserId
-		c.State = State(rec.State)
-		c.Expires = rec.Expires
+		var rec Chat
+		for cur.Next(ctx) {
+			err = errors.Join(err, cur.Decode(&rec))
+			if err == nil {
+				page = append(page, rec)
+			}
+		}
 	}
 	err = decodeMongoError(err)
 	return
-}
-
-func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint16, limit uint16, cursor int64) (page []Chat, err error) {
-	//TODO implement me
-	panic("implement me")
 }
 
 func decodeMongoError(src error) (dst error) {
