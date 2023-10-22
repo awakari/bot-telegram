@@ -36,13 +36,15 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 	}
 	if err == nil {
 		//
-		pageTxt := ""
+		var pageTxt string
 		var chat *telebot.Chat
 		bot := tgCtx.Bot()
 		for _, chatId := range page {
 			chat, err = bot.ChatByID(chatId)
 			if err == nil {
 				pageTxt += fmt.Sprintf("<a href=\"https://t.me/%s\">%s</a>\n", chat.Username, chat.Title)
+			} else {
+				pageTxt += fmt.Sprintf("%s\n", err.Error())
 			}
 		}
 		//
@@ -59,7 +61,7 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 		case 0:
 			err = tgCtx.Send("End of the list")
 		default:
-			err = tgCtx.Send(pageTxt, m)
+			err = tgCtx.Send(pageTxt, m, telebot.ModeHTML)
 		}
 	}
 	return

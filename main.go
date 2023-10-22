@@ -114,6 +114,7 @@ func main() {
 	}
 	clientSrcTg := grpcApiSrcTg.NewServiceClient(connSrcTg)
 	svcSrcTg := grpcApiSrcTg.NewService(clientSrcTg)
+	svcSrcTg = grpcApiSrcTg.NewServiceLogging(svcSrcTg, log)
 
 	// init chat storage
 	var chatStor chats.Storage
