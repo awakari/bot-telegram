@@ -28,7 +28,6 @@ type Reader interface {
 
 const ReaderTtl = 24 * time.Hour
 const readBatchSize = 16
-const releaseChatsConcurrencyMax = 16
 const msgFmtReadOnceFailed = "unexpected failure: %s\ndon't worry, retrying in %s..."
 const msgFmtRunFatal = "fatal: %s,\nto recover: try to select a subscription again"
 const backOffInit = 1 * time.Second

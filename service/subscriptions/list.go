@@ -81,7 +81,7 @@ func listButtons(
 				c, err = chatStor.GetSubscriptionLink(groupIdCtx, subId)
 				if err == nil {
 					subLinked = true
-					if c.Key.Id == chatId {
+					if c.Id == chatId {
 						subLinkedHere = true
 					}
 				}
