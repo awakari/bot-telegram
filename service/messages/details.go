@@ -17,20 +17,22 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 		//
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
-			m.Inline(m.Row(
-				telebot.Btn{
-					Text: "All Feeds",
-					Data: sources.CmdFeedListAll,
-				},
-				telebot.Btn{
-					Text: "Own Feeds",
-					Data: sources.CmdFeedListOwn,
-				},
-				telebot.Btn{
+			m.Inline(
+				m.Row(
+					telebot.Btn{
+						Text: "All Feeds",
+						Data: sources.CmdFeedListAll,
+					},
+					telebot.Btn{
+						Text: "Own Feeds",
+						Data: sources.CmdFeedListOwn,
+					},
+				),
+				m.Row(telebot.Btn{
 					Text: "Telegram Channels",
 					URL:  "https://github.com/awakari/source-telegram/blob/master/helm/source-telegram/values-demo-0.yaml#L6",
-				},
-			))
+				}),
+			)
 			err = tgCtx.Send("List Sources:", m)
 		}
 		//

@@ -37,6 +37,7 @@ type Config struct {
 	Log     struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`
 	}
+	Replica ReplicaConfig
 }
 
 type ChatsConfig struct {
@@ -97,6 +98,11 @@ type FeedsConfig struct {
 type TelegramConfig struct {
 	GroupId string `envconfig:"API_SOURCE_TELEGRAM_GROUP_ID" default:"com.github.awakari.source-telegram"`
 	Uri     string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
+}
+
+type ReplicaConfig struct {
+	Range uint32 `envconfig:"REPLICA_RANGE" required:"true"`
+	Index uint16 `envconfig:"REPLICA_INDEX" required:"true"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

@@ -1,5 +1,5 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: {{ include "bot-telegram.fullname" . }}
   labels:
@@ -110,6 +110,12 @@ spec:
                 secretKeyRef:
                   name: "{{ include "bot-telegram.fullname" . }}-tokens"
                   key: payment
+            - name: REPLICA_RANGE
+              value: "{{ .Values.replicaCount }}"
+            - name: REPLICA_INDEX
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.labels['apps.kubernetes.io/pod-index']
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
