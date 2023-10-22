@@ -184,7 +184,7 @@ func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit 
 			"$gt": cursor,
 			"$mod": bson.A{
 				idDiv,
-				idRem,
+				-int32(idRem),
 			},
 		},
 	}

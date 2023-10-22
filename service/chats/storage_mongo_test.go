@@ -170,7 +170,7 @@ func TestStorageMongo_GetBatch(t *testing.T) {
 	}{
 		"ok": {
 			idRange: 2,
-			idIndex: 0,
+			idIndex: 1,
 			stored: []Chat{
 				{
 					Id:      -1001875128866,
@@ -193,16 +193,10 @@ func TestStorageMongo_GetBatch(t *testing.T) {
 			},
 			selected: []Chat{
 				{
-					Id:      -1001875128866,
-					SubId:   "sub1",
-					GroupId: "group1",
-					UserId:  "user1",
-				},
-				{
-					Id:      -1001733378662,
-					SubId:   "sub3",
-					GroupId: "group3",
-					UserId:  "user3",
+					Id:      -1001778619305,
+					SubId:   "sub2",
+					GroupId: "group2",
+					UserId:  "user2",
 				},
 			},
 		},
