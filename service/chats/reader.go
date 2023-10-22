@@ -64,6 +64,7 @@ func ResumeAllReaders(
 		if err != nil || len(page) == 0 {
 			break
 		}
+		cursor = page[len(page)-1].Id
 		for _, c := range page {
 			u := telebot.Update{
 				Message: &telebot.Message{
