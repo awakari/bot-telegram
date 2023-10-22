@@ -298,7 +298,7 @@ func main() {
 		log.Debug("Wait 20 seconds before resuming existing readers...")
 		time.Sleep(20 * time.Second)
 		log.Debug("Resume existing readers...")
-		count, err := chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt)
+		count, err := chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
 		log.Debug(fmt.Sprintf("Resumed %d readers, errors: %s", count, err))
 	}()
 	// Listen for shutdown signals

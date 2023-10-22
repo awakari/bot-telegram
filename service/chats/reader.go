@@ -27,7 +27,6 @@ type Reader interface {
 }
 
 const ReaderTtl = 24 * time.Hour
-const runtimeReaderCountLimit = 65_536
 const readBatchSize = 16
 const releaseChatsConcurrencyMax = 16
 const msgFmtReadOnceFailed = "unexpected failure: %s\ndon't worry, retrying in %s..."
@@ -48,11 +47,20 @@ var optRateLimitPer = ratelimit.Per(time.Minute)
 var runtimeReaders = make(map[string]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
-func ResumeAllReaders(ctx context.Context, log *slog.Logger, chatStor Storage, tgBot *telebot.Bot, clientAwk api.Client, format messages.Format) (count uint32, err error) {
+func ResumeAllReaders(
+	ctx context.Context,
+	log *slog.Logger,
+	chatStor Storage,
+	tgBot *telebot.Bot,
+	clientAwk api.Client,
+	format messages.Format,
+	replicaIndex uint16,
+	replicaRange uint16,
+) (count uint32, err error) {
 	var resumingDone bool
 	var c Chat
 	var nextErr error
-	for !resumingDone && count < runtimeReaderCountLimit {
+	for !resumingDone {
 		c, nextErr = chatStor.ActivateNext(ctx, time.Now().UTC().Add(ReaderTtl))
 		switch {
 		case nextErr == nil:
