@@ -101,8 +101,8 @@ type TelegramConfig struct {
 }
 
 type ReplicaConfig struct {
-	Range uint32 `envconfig:"REPLICA_RANGE" required:"true"`
-	Index uint16 `envconfig:"REPLICA_INDEX" required:"true"`
+	Range uint16 `envconfig:"REPLICA_RANGE" required:"true"`
+	Name  string `envconfig:"REPLICA_NAME" required:"true"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

@@ -23,6 +23,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -41,6 +43,19 @@ func main() {
 		Level: slog.Level(cfg.Log.Level),
 	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &opts))
+
+	// determine the replica index
+	replicaNameParts := strings.Split(cfg.Replica.Name, "-")
+	if len(replicaNameParts) < 2 {
+		panic("unable to parse the replica name: " + cfg.Replica.Name)
+	}
+	var replicaIndexTmp uint64
+	replicaIndexTmp, err = strconv.ParseUint(replicaNameParts[len(replicaNameParts)-1], 10, 16)
+	if err != nil {
+		panic(err)
+	}
+	replicaIndex := uint16(replicaIndexTmp)
+	log.Info(fmt.Sprintf("Replica: %d/%d", replicaIndex, cfg.Replica.Range))
 
 	// init Awakari client
 	clientAwk, err := api.
