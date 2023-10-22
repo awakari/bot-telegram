@@ -14,5 +14,5 @@ type Storage interface {
 	UnlinkSubscription(ctx context.Context, k Key) (err error)
 	Delete(ctx context.Context, id int64) (count int64, err error)
 	ActivateNext(ctx context.Context, expiresNext time.Time) (c Chat, err error)
-	//GetBatch(ctx context.Context, idRem, idDiv uint16, limit uint16, cursor int64) (page []Chat, err error)
+	GetBatch(ctx context.Context, idRem, idDiv uint16, limit uint16, cursor int64) (page []Chat, err error)
 }

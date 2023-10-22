@@ -278,6 +278,11 @@ func (sm storageMongo) ActivateNext(ctx context.Context, expiresNext time.Time) 
 	return
 }
 
+func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint16, limit uint16, cursor int64) (page []Chat, err error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func decodeMongoError(src error) (dst error) {
 	switch {
 	case src == nil:

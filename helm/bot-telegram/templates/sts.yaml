@@ -112,7 +112,7 @@ spec:
                   key: payment
             - name: REPLICA_RANGE
               value: "{{ .Values.replicaCount }}"
-            - name: REPLICA_INDEX
+            - name: REPLICA_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
