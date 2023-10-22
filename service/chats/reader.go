@@ -61,7 +61,7 @@ func ResumeAllReaders(
 	var page []Chat
 	for {
 		page, err = chatStor.GetBatch(ctx, replicaIndex, replicaRange, resumeBatchSize, cursor)
-		if err != nil && len(page) == 0 {
+		if err != nil || len(page) == 0 {
 			break
 		}
 		for _, c := range page {
