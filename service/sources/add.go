@@ -131,9 +131,14 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	switch ap.Price.Total {
 	case 0:
 		// add for free, don't change a limit
-		_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
-		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
+		switch ap.Src.Type {
+		case srcTypeTgCh:
+			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
+		default:
+			_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+			if err == nil {
+				err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
+			}
 		}
 	default:
 		switch ap.Src.Type {
