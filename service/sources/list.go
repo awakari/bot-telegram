@@ -44,7 +44,7 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 			}))
 		}
 		if len(page) == pageLimit {
-			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1])
+			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1].Link)
 			if len(cmdNextPage) > cmdLimit {
 				cmdNextPage = cmdNextPage[:cmdLimit]
 			}
