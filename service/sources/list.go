@@ -35,17 +35,22 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 	}
 	if err == nil {
 		//
-		var pageTxt string
-		for _, ch := range page {
-			pageTxt += fmt.Sprintf("%d: %s\n", ch.Id, ch.Name)
-		}
-		//
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
+		for _, ch := range page {
+			rows = append(rows, m.Row(telebot.Btn{
+				Text: ch.Name,
+				URL:  ch.Link,
+			}))
+		}
 		if len(page) == pageLimit {
+			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1])
+			if len(cmdNextPage) > cmdLimit {
+				cmdNextPage = cmdNextPage[:cmdLimit]
+			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",
-				Data: fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1]),
+				Data: cmdNextPage,
 			}))
 		}
 		m.Inline(rows...)
@@ -53,7 +58,7 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 		case 0:
 			err = tgCtx.Send("End of the list")
 		default:
-			err = tgCtx.Send(pageTxt, m, telebot.ModeHTML)
+			err = tgCtx.Send("Source Telegram Channels:", m, telebot.ModeHTML)
 		}
 	}
 	return
@@ -120,7 +125,7 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		case 0:
 			err = tgCtx.Send("End of the list")
 		default:
-			err = tgCtx.Send("Feeds page:", m)
+			err = tgCtx.Send("Source Feeds:", m)
 		}
 	}
 	return
