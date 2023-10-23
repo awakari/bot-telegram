@@ -113,12 +113,13 @@ func (ap addPayload) validate(cfgPayment config.PaymentConfig, bot *telebot.Bot)
 }
 
 type AddHandler struct {
-	CfgPayment config.PaymentConfig
-	CfgFeeds   config.FeedsConfig
-	KbdRestore *telebot.ReplyMarkup
-	SvcFeeds   grpcApiSrcFeeds.Service
-	SvcAdmin   grpcApiAdmin.Service
-	Log        *slog.Logger
+	CfgPayment     config.PaymentConfig
+	CfgFeeds       config.FeedsConfig
+	KbdRestore     *telebot.ReplyMarkup
+	SvcFeeds       grpcApiSrcFeeds.Service
+	SvcAdmin       grpcApiAdmin.Service
+	Log            *slog.Logger
+	SupportHandler service.SupportHandler
 }
 
 func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err error) {
@@ -135,7 +136,12 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 			err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
 		}
 	default:
-		err = ah.sendInvoice(tgCtx, ap)
+		switch ap.Src.Type {
+		case srcTypeTgCh:
+			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
+		default:
+			err = ah.sendInvoice(tgCtx, ap)
+		}
 	}
 	return
 }

@@ -195,6 +195,10 @@ func main() {
 		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 	}
+	supportHandler := service.SupportHandler{
+		SupportChatId: cfg.Api.Telegram.SupportChatId,
+		RestoreKbd:    menuKbd,
+	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqDelete:         subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
@@ -202,20 +206,7 @@ func main() {
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 		usage.ReqLimitSet:               usage.ExtendLimitsInvoice(cfg.Payment),
-		"support": func(tgCtx telebot.Context, args ...string) (err error) {
-			tgCtxSupport := tgCtx.Bot().NewContext(telebot.Update{
-				Message: &telebot.Message{
-					Chat: &telebot.Chat{
-						ID: cfg.Api.Telegram.SupportChatId,
-					},
-				},
-			})
-			err = tgCtxSupport.Send(fmt.Sprintf("Support request from @%s:\n%s", tgCtx.Sender().Username, args[len(args)-1]))
-			if err == nil {
-				err = tgCtx.Send("Your request has been sent, the support will contact you as soon as possible.", menuKbd)
-			}
-			return
-		},
+		"support":                       supportHandler.Support,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
