@@ -76,6 +76,9 @@ func (ap addPayload) validate(cfgPayment config.PaymentConfig, bot *telebot.Bot)
 	if err == nil && ap.Price.Unit != cfgPayment.Currency.Code {
 		err = fmt.Errorf("%w: currency is %s, should be %s", errInvalidAddPayload, ap.Price.Unit, cfgPayment.Currency.Code)
 	}
+	if err == nil && ap.Src.Addr == "" {
+		err = fmt.Errorf("%w: empty source address", errInvalidAddPayload)
+	}
 	if err == nil && len(ap.Src.Addr) > srcAddrLenMax {
 		err = fmt.Errorf("%w: source address too long: %s, should not be more than %d", errInvalidAddPayload, ap.Src.Addr, srcAddrLenMax)
 	}
@@ -128,24 +131,29 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	if err == nil {
 		err = ap.validate(ah.CfgPayment, tgCtx.Bot())
 	}
-	switch ap.Price.Total {
-	case 0:
-		// add for free, don't change a limit
-		switch ap.Src.Type {
-		case srcTypeTgCh:
-			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
-		default:
-			_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
-			if err == nil {
-				err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
+	if err == nil {
+		switch ap.Price.Total {
+		case 0:
+			// add for free, don't change a limit
+			switch ap.Src.Type {
+			case srcTypeTgCh:
+				err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
+			default:
+				_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+				if err == nil {
+					err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
+				}
 			}
-		}
-	default:
-		switch ap.Src.Type {
-		case srcTypeTgCh:
-			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
 		default:
-			err = ah.sendInvoice(tgCtx, ap)
+			switch ap.Src.Type {
+			case srcTypeTgCh:
+				err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap))
+				if err == nil {
+					err = ah.sendInvoice(tgCtx, ap)
+				}
+			default:
+				err = ah.sendInvoice(tgCtx, ap)
+			}
 		}
 	}
 	return
