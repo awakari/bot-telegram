@@ -149,13 +149,18 @@ func main() {
 	// init handlers
 	groupId := cfg.Api.GroupId
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
+	supportHandler := service.SupportHandler{
+		SupportChatId: cfg.Api.Telegram.SupportChatId,
+		RestoreKbd:    menuKbd,
+	}
 	srcAddHandler := sources.AddHandler{
-		CfgPayment: cfg.Payment,
-		CfgFeeds:   cfg.Api.Source.Feeds,
-		KbdRestore: menuKbd,
-		SvcFeeds:   svcSrcFeeds,
-		SvcAdmin:   svcAdmin,
-		Log:        log,
+		CfgPayment:     cfg.Payment,
+		CfgFeeds:       cfg.Api.Source.Feeds,
+		KbdRestore:     menuKbd,
+		SvcFeeds:       svcSrcFeeds,
+		SvcAdmin:       svcAdmin,
+		Log:            log,
+		SupportHandler: supportHandler,
 	}
 	srcListHandler := sources.ListHandler{
 		SvcSrcFeeds: svcSrcFeeds,
@@ -194,10 +199,6 @@ func main() {
 		service.LabelSubUsage:       subscriptions.Usage(clientAwk, groupId),
 		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
-	}
-	supportHandler := service.SupportHandler{
-		SupportChatId: cfg.Api.Telegram.SupportChatId,
-		RestoreKbd:    menuKbd,
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
