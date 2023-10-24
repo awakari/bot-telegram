@@ -187,6 +187,7 @@ func main() {
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
 		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
+		sources.CmdTgChDetails:       srcDetailsHandler.GetTelegramChannel,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
