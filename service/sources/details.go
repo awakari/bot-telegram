@@ -37,12 +37,12 @@ Next Update: <pre>%s</pre>
 Last Message: <pre>%s</pre>
 Total Messages: <pre>%d</pre>
 `
-const fmtTgChDetails = `Telegram Channel Details:
+const fmtTgChDetails = `Source Telegram Channel Details:
 %s
-Title: %s
-Description: %s
 Daily Messages Limit: %s
 Limit Expires: %s
+Title: %s
+Description: %s
 `
 const tgChLinkPrefix = "https://t.me/"
 const tgChLinkPrefixPrivate = "https://t.me/c/"
@@ -163,7 +163,18 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		expiresTxt = "N/A (private)"
 	}
 	//
-	detailsTxt := fmt.Sprintf(fmtTgChDetails, chatLink, title, descr, limitCountTxt, expiresTxt)
+	detailsTxt := fmt.Sprintf(
+		fmtTgChDetails,
+		chatLink,
+		title,
+		descr,
+		fmt.Sprintf("<pre>%s</pre>", limitCountTxt),
+		fmt.Sprintf("<pre>%s</pre>", expiresTxt),
+	)
 	err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
+	if err != nil {
+		detailsTxt = fmt.Sprintf(fmtTgChDetails, chatLink, title, descr, limitCountTxt, expiresTxt)
+		err = tgCtx.Send(detailsTxt)
+	}
 	return
 }
