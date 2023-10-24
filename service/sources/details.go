@@ -167,14 +167,14 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 	detailsTxt := fmt.Sprintf(
 		fmtTgChDetails,
 		chatLink,
-		title,
-		descr,
 		fmt.Sprintf("<pre>%s</pre>", limitCountTxt),
 		fmt.Sprintf("<pre>%s</pre>", expiresTxt),
+		title,
+		descr,
 	)
 	err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
 	if err != nil {
-		detailsTxt = fmt.Sprintf(fmtTgChDetails, chatLink, title, descr, limitCountTxt, expiresTxt)
+		detailsTxt = fmt.Sprintf(fmtTgChDetails, chatLink, limitCountTxt, expiresTxt, title, descr)
 		err = tgCtx.Send(detailsTxt)
 	}
 	return
