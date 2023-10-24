@@ -6,12 +6,14 @@ import (
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"strconv"
 )
 
 type ListHandler struct {
 	SvcSrcFeeds feeds.Service
 	SvcSrcTg    telegram.Service
+	Log         *slog.Logger
 }
 
 const CmdFeedListAll = "feeds_all"
@@ -38,10 +40,22 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		for _, ch := range page {
-			rows = append(rows, m.Row(telebot.Btn{
-				Text: ch.Name,
-				URL:  ch.Link,
-			}))
+			var chat *telebot.Chat
+			chat, err = tgCtx.Bot().ChatByID(ch.Id)
+			switch err {
+			case nil:
+				rows = append(rows, m.Row(telebot.Btn{
+					Text: chat.Username,
+					URL:  ch.Link,
+				}))
+			default:
+				lh.Log.Warn(fmt.Sprintf("Failed to resolve chat by id %d: %s", ch.Id, err))
+				rows = append(rows, m.Row(telebot.Btn{
+					Text: ch.Name,
+					URL:  ch.Link,
+				}))
+			}
+
 		}
 		if len(page) == pageLimit {
 			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1].Link)

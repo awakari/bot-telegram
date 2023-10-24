@@ -165,6 +165,7 @@ func main() {
 	srcListHandler := sources.ListHandler{
 		SvcSrcFeeds: svcSrcFeeds,
 		SvcSrcTg:    svcSrcTg,
+		Log:         log,
 	}
 	srcDetailsHandler := sources.DetailsHandler{
 		CfgFeeds:    cfg.Api.Source.Feeds,
