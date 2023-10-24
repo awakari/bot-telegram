@@ -13,6 +13,7 @@ import (
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -25,16 +26,26 @@ type DetailsHandler struct {
 
 const CmdFeedDetailsAny = "feed_any"
 const CmdFeedDetailsOwn = "feed_own"
+const CmdTgChDetails = "tgch"
 
 const fmtFeedDetails = `Feed Details:
 %s
 Daily Messages Limit: <pre>%d</pre>
-Expires: <pre>%s</pre>
+Limit Expires: <pre>%s</pre>
 Update Period: <pre>%s</pre>
 Next Update: <pre>%s</pre>
 Last Message: <pre>%s</pre>
 Total Messages: <pre>%d</pre>
 `
+const fmtTgChDetails = `Telegram Channel Details:
+Title: %s
+%s
+Description: %s
+Daily Messages Limit: <pre>%d</pre>
+Limit Expires: <pre>%s</pre>
+`
+const tgChLinkPrefix = "https://t.me/"
+const tgChLinkPrefixPrivate = "https://t.me/c/"
 
 func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err error) {
 	err = dh.getFeed(tgCtx, args[0], nil)
@@ -105,5 +116,58 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		err = tgCtx.Send(txt, telebot.ModeHTML)
 	}
 	//
+	return
+}
+
+func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...string) (err error) {
+	url := args[0]
+	//
+	var l usage.Limit
+	if err == nil {
+		ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
+		l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
+		fmt.Printf("limit=%+v, err=%s\n", l, err)
+	}
+	//
+	var title string
+	var descr string
+	var img *telebot.ChatPhoto
+	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
+		chatName := url[len(tgChLinkPrefix):]
+		var chat *telebot.Chat
+		chat, err = tgCtx.Bot().ChatByUsername(fmt.Sprintf("@%s", chatName))
+		switch err {
+		case nil:
+			title = chat.Title
+			descr = chat.Description
+			img = chat.Photo
+		default:
+			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatName, err))
+			title = "N/A (error)"
+			descr = "N/A (error)"
+		}
+	} else {
+		title = "N/A (private)"
+		descr = "N/A (private)"
+	}
+	link := fmt.Sprintf("<a href=\"%s\">Link</a>", url)
+	detailsTxt := fmt.Sprintf(fmtTgChDetails, title, link, descr, l.Count, l.Expires.Format(time.RFC3339))
+	switch img {
+	case nil:
+		err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
+	default:
+		err = tgCtx.Send(
+			&telebot.Photo{
+				File: telebot.File{
+					FileID:   img.SmallFileID,
+					UniqueID: img.SmallFileID,
+				},
+				Width:   160,
+				Height:  160,
+				Caption: detailsTxt,
+			},
+			telebot.ModeHTML,
+		)
+	}
 	return
 }

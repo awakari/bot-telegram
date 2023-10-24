@@ -40,19 +40,16 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		for _, ch := range page {
-			var chat *telebot.Chat
-			chat, err = tgCtx.Bot().ChatByID(ch.Id)
-			switch err {
-			case nil:
-				rows = append(rows, m.Row(telebot.Btn{
-					Text: chat.Username,
-					URL:  ch.Link,
-				}))
-			default:
-				lh.Log.Warn(fmt.Sprintf("Failed to resolve chat by id %d: %s", ch.Id, err))
+			cmd := fmt.Sprintf("%s %s", CmdTgChDetails, ch.Link)
+			if len(cmd) > cmdLimit {
 				rows = append(rows, m.Row(telebot.Btn{
 					Text: ch.Name,
 					URL:  ch.Link,
+				}))
+			} else {
+				rows = append(rows, m.Row(telebot.Btn{
+					Text: ch.Name,
+					Data: cmd,
 				}))
 			}
 
