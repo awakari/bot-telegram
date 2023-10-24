@@ -38,11 +38,11 @@ Last Message: <pre>%s</pre>
 Total Messages: <pre>%d</pre>
 `
 const fmtTgChDetails = `Telegram Channel Details:
+%s
 Title: %s
-<a href="%s">Link</a>
 Description: %s
-Daily Messages Limit: <pre>%d</pre>
-Limit Expires: <pre>%s</pre>
+Daily Messages Limit: %s
+Limit Expires: %s
 `
 const tgChLinkPrefix = "https://t.me/"
 const tgChLinkPrefixPrivate = "https://t.me/c/"
@@ -120,44 +120,50 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 }
 
 func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...string) (err error) {
-	//
 	url := args[0]
-	//
+	var chatLink string
 	var title string
 	var descr string
+	var limitCountTxt string
+	var expiresTxt string
 	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
-		chatName := url[len(tgChLinkPrefix):]
+		chatLink = fmt.Sprintf("@%s", url[len(tgChLinkPrefix):])
 		var chat *telebot.Chat
-		chat, err = tgCtx.Bot().ChatByUsername(fmt.Sprintf("@%s", chatName))
+		chat, err = tgCtx.Bot().ChatByUsername(chatLink)
+		var l usage.Limit
 		switch err {
 		case nil:
 			title = chat.Title
 			descr = chat.Description
+			ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
+			l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, strconv.FormatInt(chat.ID, 10), usage.SubjectPublishEvents)
+			switch {
+			case err != nil:
+				limitCountTxt = "N/A (error)"
+				expiresTxt = "N/A (error)"
+			case l.Expires.Unix() <= 0:
+				limitCountTxt = strconv.FormatInt(l.Count, 10)
+				expiresTxt = "never"
+			default:
+				limitCountTxt = strconv.FormatInt(l.Count, 10)
+				expiresTxt = l.Expires.Format(time.RFC3339)
+			}
 		default:
-			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatName, err))
+			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatLink, err))
 			title = "N/A (error)"
 			descr = "N/A (error)"
+			limitCountTxt = "N/A (error)"
+			expiresTxt = "N/A (error)"
 		}
 	} else {
+		chatLink = url
 		title = "N/A (private)"
 		descr = "N/A (private)"
+		limitCountTxt = "N/A (private)"
+		expiresTxt = "N/A (private)"
 	}
 	//
-	var l usage.Limit
-	var expiresTxt string
-	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
-	l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
-	switch {
-	case err != nil:
-		expiresTxt = "N/A (error)"
-	case l.Expires.Unix() <= 0:
-		expiresTxt = "never"
-	default:
-		expiresTxt = l.Expires.Format(time.RFC3339)
-	}
-	//
-	detailsTxt := fmt.Sprintf(fmtTgChDetails, title, url, descr, l.Count, expiresTxt)
+	detailsTxt := fmt.Sprintf(fmtTgChDetails, chatLink, title, descr, limitCountTxt, expiresTxt)
 	err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
-	//
 	return
 }
