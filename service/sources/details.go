@@ -19,6 +19,7 @@ import (
 
 type DetailsHandler struct {
 	CfgFeeds    config.FeedsConfig
+	CfgTelegram config.TelegramConfig
 	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
 	Log         *slog.Logger
@@ -135,7 +136,7 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		case nil:
 			title = chat.Title
 			descr = chat.Description
-			ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
+			ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgTelegram.GroupId)
 			l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, strconv.FormatInt(chat.ID, 10), usage.SubjectPublishEvents)
 			switch {
 			case err != nil:

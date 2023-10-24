@@ -169,6 +169,7 @@ func main() {
 	}
 	srcDetailsHandler := sources.DetailsHandler{
 		CfgFeeds:    cfg.Api.Source.Feeds,
+		CfgTelegram: cfg.Api.Source.Telegram,
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
 		Log:         log,
