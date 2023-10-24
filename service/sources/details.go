@@ -39,7 +39,7 @@ Total Messages: <pre>%d</pre>
 `
 const fmtTgChDetails = `Telegram Channel Details:
 Title: %s
-%s
+<a href="%s">Link</a>
 Description: %s
 Daily Messages Limit: <pre>%d</pre>
 Limit Expires: <pre>%s</pre>
@@ -120,18 +120,11 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 }
 
 func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...string) (err error) {
-	url := args[0]
 	//
-	var l usage.Limit
-	if err == nil {
-		ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
-		l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
-		fmt.Printf("limit=%+v, err=%s\n", l, err)
-	}
+	url := args[0]
 	//
 	var title string
 	var descr string
-	var img *telebot.ChatPhoto
 	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
 		chatName := url[len(tgChLinkPrefix):]
 		var chat *telebot.Chat
@@ -140,7 +133,6 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		case nil:
 			title = chat.Title
 			descr = chat.Description
-			img = chat.Photo
 		default:
 			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatName, err))
 			title = "N/A (error)"
@@ -150,24 +142,22 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		title = "N/A (private)"
 		descr = "N/A (private)"
 	}
-	link := fmt.Sprintf("<a href=\"%s\">Link</a>", url)
-	detailsTxt := fmt.Sprintf(fmtTgChDetails, title, link, descr, l.Count, l.Expires.Format(time.RFC3339))
-	switch img {
-	case nil:
-		err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
+	//
+	var l usage.Limit
+	var expiresTxt string
+	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgFeeds.GroupId)
+	l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
+	switch {
+	case err != nil:
+		expiresTxt = "N/A (error)"
+	case l.Expires.Unix() <= 0:
+		expiresTxt = "never"
 	default:
-		err = tgCtx.Send(
-			&telebot.Photo{
-				File: telebot.File{
-					FileID:   img.SmallFileID,
-					UniqueID: img.SmallFileID,
-				},
-				Width:   160,
-				Height:  160,
-				Caption: detailsTxt,
-			},
-			telebot.ModeHTML,
-		)
+		expiresTxt = l.Expires.Format(time.RFC3339)
 	}
+	//
+	detailsTxt := fmt.Sprintf(fmtTgChDetails, title, url, descr, l.Count, expiresTxt)
+	err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
+	//
 	return
 }
