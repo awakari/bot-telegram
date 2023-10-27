@@ -172,6 +172,11 @@ func main() {
 		SvcSrcFeeds: svcSrcFeeds,
 		Log:         log,
 	}
+	srcDeleteHandler := sources.DeleteHandler{
+		SvcSrcFeeds: svcSrcFeeds,
+		RestoreKbd:  menuKbd,
+		GroupId:     groupId,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -187,6 +192,7 @@ func main() {
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
 		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
 		sources.CmdTgChDetails:       srcDetailsHandler.GetTelegramChannel,
+		sources.CmdDelete:            srcDeleteHandler.RequestConfirmation,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
@@ -208,6 +214,7 @@ func main() {
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 		usage.ReqLimitSet:               usage.ExtendLimitsInvoice(cfg.Payment),
+		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
 		"support":                       supportHandler.Support,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{

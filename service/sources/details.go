@@ -90,7 +90,12 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			feed.NextUpdate.AsTime().Format(time.RFC3339),
 			txtItemLast,
 		)
-		err = tgCtx.Send(txt, telebot.ModeHTML)
+		m := &telebot.ReplyMarkup{}
+		m.Inline(m.Row(telebot.Btn{
+			Text: "❌ Delete",
+			Data: fmt.Sprintf("%s %s", CmdDelete, url),
+		}))
+		err = tgCtx.Send(txt, m, telebot.ModeHTML)
 	}
 	//
 	return
