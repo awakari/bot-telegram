@@ -49,7 +49,8 @@ func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err 
 
 func (dh DetailsHandler) GetFeedOwn(tgCtx telebot.Context, args ...string) (err error) {
 	filterOwn := &feeds.Filter{
-		UserId: strconv.FormatInt(tgCtx.Sender().ID, 10),
+		GroupId: dh.GroupId,
+		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
 	}
 	err = dh.getFeed(tgCtx, args[0], filterOwn)
 	return
@@ -70,7 +71,9 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), urls[0])
 		}
 	}
-	url = feed.Url
+	if feed != nil {
+		url = feed.Url
+	}
 	//
 	if err == nil {
 		txtSummary := url
