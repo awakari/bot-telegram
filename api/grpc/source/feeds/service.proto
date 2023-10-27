@@ -11,7 +11,7 @@ service Service {
   rpc Create(CreateRequest) returns (CreateResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
   rpc Delete(DeleteRequest) returns (DeleteResponse);
-  rpc List(ListRequest) returns (ListResponse);
+  rpc ListUrls(ListUrlsRequest) returns (ListUrlsResponse);
 }
 
 message CreateRequest {
@@ -37,23 +37,22 @@ message DeleteRequest {
 message DeleteResponse {
 }
 
-message ListRequest {
+message ListUrlsRequest {
   Filter filter = 1;
   uint32 limit = 2;
   string cursor = 3;
 }
 
-message ListResponse {
-  repeated Feed page = 1;
+message ListUrlsResponse {
+  repeated string page = 1;
 }
 
 message Feed {
   string url = 1;
-  string title = 2;
-  string userId = 3;
-  google.protobuf.Duration updatePeriod = 4;
-  google.protobuf.Timestamp nextUpdate = 5;
-  google.protobuf.Timestamp itemLast = 6;
+  string userId = 2;
+  google.protobuf.Duration updatePeriod = 3;
+  google.protobuf.Timestamp nextUpdate = 4;
+  google.protobuf.Timestamp itemLast = 5;
 }
 
 message Filter {

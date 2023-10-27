@@ -13,7 +13,7 @@ type Service interface {
 
 	Delete(ctx context.Context, url, userId string) (err error)
 
-	List(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []*Feed, err error)
+	ListUrls(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []string, err error)
 }
 
 type service struct {
@@ -52,9 +52,9 @@ func (svc service) Delete(ctx context.Context, url, userId string) (err error) {
 	return
 }
 
-func (svc service) List(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []*Feed, err error) {
-	var resp *ListResponse
-	resp, err = svc.client.List(ctx, &ListRequest{
+func (svc service) ListUrls(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []string, err error) {
+	var resp *ListUrlsResponse
+	resp, err = svc.client.ListUrls(ctx, &ListUrlsRequest{
 		Filter: filter,
 		Limit:  limit,
 		Cursor: cursor,

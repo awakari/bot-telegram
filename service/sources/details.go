@@ -62,11 +62,11 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	switch {
 	case status.Code(err) == codes.NotFound:
 		dh.Log.Warn(fmt.Sprintf("Feed not found, URL may be truncated: %s", url))
-		var feedList []*feeds.Feed
-		feedList, err = dh.SvcSrcFeeds.List(context.TODO(), filter, 1, url)
-		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, feedList, err))
-		if err == nil && len(feedList) > 0 {
-			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), feedList[0].Url)
+		var urls []string
+		urls, err = dh.SvcSrcFeeds.ListUrls(context.TODO(), filter, 1, url)
+		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, urls, err))
+		if err == nil && len(urls) > 0 {
+			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), urls[0])
 		}
 	}
 	url = feed.Url

@@ -93,24 +93,24 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 	if len(args) > 0 {
 		cursor = args[0]
 	}
-	var page []*feeds.Feed
-	page, err = lh.SvcSrcFeeds.List(context.TODO(), filter, pageLimit, cursor)
+	var page []string
+	page, err = lh.SvcSrcFeeds.ListUrls(context.TODO(), filter, pageLimit, cursor)
 	if err == nil {
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
-		for _, feed := range page {
+		for _, url := range page {
 			var cmdData string
 			switch filter {
 			case nil:
-				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsAny, feed.Url)
+				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsAny, url)
 			default:
-				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsOwn, feed.Url)
+				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsOwn, url)
 			}
 			if len(cmdData) > cmdLimit {
 				cmdData = cmdData[:cmdLimit]
 			}
 			rows = append(rows, m.Row(telebot.Btn{
-				Text: feed.Title,
+				Text: url,
 				Data: cmdData,
 			}))
 		}

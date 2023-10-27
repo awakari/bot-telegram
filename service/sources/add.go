@@ -20,9 +20,6 @@ import (
 
 const srcTypeTgCh = "tgch"
 const srcTypeFeed = "feed"
-const limitCountMax = 1_440
-const daysMax = 3_652
-const priceMax = 10_000
 const feedFetchTimeout = 1 * time.Minute
 const srcAddrLenMax = 80
 const day = 24 * time.Hour
