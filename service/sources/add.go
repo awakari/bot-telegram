@@ -23,23 +23,15 @@ const srcTypeFeed = "feed"
 const feedFetchTimeout = 1 * time.Minute
 const srcAddrLenMax = 80
 const day = 24 * time.Hour
-const updatesPerDayMax = 1_440
+const updatesPerDayMax = 288
 
 type addPayload struct {
 	Limit srcLimit `json:"limit"`
-	Price srcPrice `json:"price"`
 	Src   src      `json:"src"`
 }
 
 type srcLimit struct {
-	Count uint16 `json:"count"`
-	Freq  uint16 `json:"freq"`
-	Time  uint16 `json:"time"`
-}
-
-type srcPrice struct {
-	Total float64 `json:"total"`
-	Unit  string  `json:"unit"`
+	Freq uint16 `json:"freq"`
 }
 
 type src struct {
@@ -102,12 +94,11 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 		err = ap.validate(tgCtx.Bot())
 	}
 	if err == nil {
-		// add for free, don't change a limit
 		switch ap.Src.Type {
 		case srcTypeTgCh:
 			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
 		default:
-			_, err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+			err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
 			if err == nil {
 				err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
 			}
@@ -116,9 +107,8 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	return
 }
 
-func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId string) (expires time.Time, err error) {
+func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId string) (err error) {
 	addr := ap.Src.Addr
-	expires = time.Now().UTC().Add(day * time.Duration(ap.Limit.Time))
 	switch ap.Src.Type {
 	case srcTypeFeed:
 		feed := grpcApiSrcFeeds.Feed{
