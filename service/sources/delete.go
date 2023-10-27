@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"gopkg.in/telebot.v3"
 	"strconv"
 	"strings"
@@ -14,9 +15,10 @@ const CmdDelete = "src_del_req"
 const CmdDeleteConfirm = "src_del"
 
 type DeleteHandler struct {
-	SvcSrcFeeds feeds.Service
-	RestoreKbd  *telebot.ReplyMarkup
-	GroupId     string
+	SvcSrcFeeds    feeds.Service
+	SvcSrcTelegram telegram.Service
+	RestoreKbd     *telebot.ReplyMarkup
+	GroupId        string
 }
 
 func (dh DeleteHandler) RequestConfirmation(tgCtx telebot.Context, args ...string) (err error) {

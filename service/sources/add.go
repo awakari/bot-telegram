@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/mmcdole/gofeed"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -50,11 +51,6 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 	}
 	switch ap.Src.Type {
 	case srcTypeTgCh:
-		var chat *telebot.Chat
-		chat, err = bot.ChatByUsername(ap.Src.Addr)
-		if err == nil && chat.Type != telebot.ChatChannel {
-			err = fmt.Errorf("%w: telegram chat type is %s, should be %s", errInvalidAddPayload, chat.Type, telebot.ChatChannel)
-		}
 	case srcTypeFeed:
 		if ap.Limit.Freq < 1 || ap.Limit.Freq > updatesPerDayMax {
 			err = fmt.Errorf("%w: source fetch daily frequency is %d, should be [1..%d]", errInvalidAddPayload, ap.Limit.Freq, updatesPerDayMax)
@@ -82,7 +78,8 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 }
 
 type AddHandler struct {
-	SvcFeeds       grpcApiSrcFeeds.Service
+	SvcFeeds       feeds.Service
+	SvcTelegram    telegram.Service
 	Log            *slog.Logger
 	SupportHandler service.SupportHandler
 	GroupId        string
@@ -99,7 +96,7 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 		case srcTypeTgCh:
 			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
 		default:
-			err = ah.registerSource(context.TODO(), ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+			err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
 			if err == nil {
 				err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
 			}
@@ -108,20 +105,43 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	return
 }
 
-func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId string) (err error) {
-	addr := ap.Src.Addr
+func (ah AddHandler) registerSource(ctx context.Context, tgCtx telebot.Context, ap addPayload, userId string) (err error) {
 	switch ap.Src.Type {
 	case srcTypeFeed:
-		feed := grpcApiSrcFeeds.Feed{
-			Url:          addr,
-			GroupId:      ah.GroupId,
-			UserId:       userId,
-			UpdatePeriod: durationpb.New(day / time.Duration(ap.Limit.Freq)),
-			NextUpdate:   timestamppb.New(time.Now().UTC()),
-		}
-		err = ah.SvcFeeds.Create(ctx, &feed)
+		err = ah.registerFeed(ctx, ap, userId)
 	default:
-		err = fmt.Errorf("%w: unsupported source type: %s", errInvalidAddPayload, ap.Src.Type)
+		var chat *telebot.Chat
+		chat, err = tgCtx.Bot().ChatByUsername(ap.Src.Addr)
+		if err == nil && chat.Type != telebot.ChatChannel {
+			err = fmt.Errorf("%w: telegram chat type is %s, should be %s", errInvalidAddPayload, chat.Type, telebot.ChatChannel)
+		}
+		if err == nil {
+			err = ah.registerTelegramChannel(ctx, chat, ap.Src.Addr, userId)
+		}
 	}
+	return
+}
+
+func (ah AddHandler) registerFeed(ctx context.Context, ap addPayload, userId string) (err error) {
+	feed := feeds.Feed{
+		Url:          ap.Src.Addr,
+		GroupId:      ah.GroupId,
+		UserId:       userId,
+		UpdatePeriod: durationpb.New(day / time.Duration(ap.Limit.Freq)),
+		NextUpdate:   timestamppb.New(time.Now().UTC()),
+	}
+	err = ah.SvcFeeds.Create(ctx, &feed)
+	return
+}
+
+func (ah AddHandler) registerTelegramChannel(ctx context.Context, chat *telebot.Chat, url, userId string) (err error) {
+	ch := telegram.Channel{
+		Id:      chat.ID,
+		GroupId: ah.GroupId,
+		UserId:  userId,
+		Name:    chat.Title,
+		Link:    url,
+	}
+	err = ah.SvcTelegram.Create(ctx, &ch)
 	return
 }
