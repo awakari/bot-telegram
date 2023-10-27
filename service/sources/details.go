@@ -21,6 +21,7 @@ type DetailsHandler struct {
 	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
 	Log         *slog.Logger
+	GroupId     string
 }
 
 const CmdFeedDetailsAny = "feed_any"
@@ -91,10 +92,12 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			txtItemLast,
 		)
 		m := &telebot.ReplyMarkup{}
-		m.Inline(m.Row(telebot.Btn{
-			Text: "❌ Delete",
-			Data: fmt.Sprintf("%s %s", CmdDelete, url),
-		}))
+		if feed.GroupId == dh.GroupId && feed.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
+			m.Inline(m.Row(telebot.Btn{
+				Text: "❌ Delete",
+				Data: fmt.Sprintf("%s %s", CmdDelete, url),
+			}))
+		}
 		err = tgCtx.Send(txt, m, telebot.ModeHTML)
 	}
 	//

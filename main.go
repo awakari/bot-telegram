@@ -171,6 +171,7 @@ func main() {
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
 		Log:         log,
+		GroupId:     groupId,
 	}
 	srcDeleteHandler := sources.DeleteHandler{
 		SvcSrcFeeds: svcSrcFeeds,
