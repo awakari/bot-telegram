@@ -85,6 +85,7 @@ type AddHandler struct {
 	SvcFeeds       grpcApiSrcFeeds.Service
 	Log            *slog.Logger
 	SupportHandler service.SupportHandler
+	GroupId        string
 }
 
 func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err error) {
@@ -113,6 +114,7 @@ func (ah AddHandler) registerSource(ctx context.Context, ap addPayload, userId s
 	case srcTypeFeed:
 		feed := grpcApiSrcFeeds.Feed{
 			Url:          addr,
+			GroupId:      ah.GroupId,
 			UserId:       userId,
 			UpdatePeriod: durationpb.New(day / time.Duration(ap.Limit.Freq)),
 			NextUpdate:   timestamppb.New(time.Now().UTC()),

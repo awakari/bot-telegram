@@ -14,6 +14,7 @@ type ListHandler struct {
 	SvcSrcFeeds feeds.Service
 	SvcSrcTg    telegram.Service
 	Log         *slog.Logger
+	GroupId     string
 }
 
 const CmdFeedListAll = "feeds_all"
@@ -82,7 +83,8 @@ func (lh ListHandler) FeedListAll(tgCtx telebot.Context, args ...string) (err er
 
 func (lh ListHandler) FeedListOwn(tgCtx telebot.Context, args ...string) (err error) {
 	filterOwn := &feeds.Filter{
-		UserId: strconv.FormatInt(tgCtx.Sender().ID, 10),
+		GroupId: lh.GroupId,
+		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
 	}
 	err = lh.feedList(tgCtx, filterOwn, args...)
 	return

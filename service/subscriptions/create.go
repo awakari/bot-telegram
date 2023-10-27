@@ -40,7 +40,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	_ = tgCtx.Send("Reply with new subscription name followed by keywords")
 	m := &telebot.ReplyMarkup{
 		ForceReply:  true,
-		Placeholder: "<name> <keyword1> <keyword2> ...",
+		Placeholder: "name keyword1 keyword2 ...",
 	}
 	err = tgCtx.Send(ReqSubCreateBasic, m)
 	return

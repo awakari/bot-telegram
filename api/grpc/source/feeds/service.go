@@ -11,7 +11,7 @@ type Service interface {
 
 	Read(ctx context.Context, url string) (feed *Feed, err error)
 
-	Delete(ctx context.Context, url, userId string) (err error)
+	Delete(ctx context.Context, url, groupId, userId string) (err error)
 
 	ListUrls(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []string, err error)
 }
@@ -44,10 +44,11 @@ func (svc service) Read(ctx context.Context, url string) (feed *Feed, err error)
 	return
 }
 
-func (svc service) Delete(ctx context.Context, url, userId string) (err error) {
+func (svc service) Delete(ctx context.Context, url, groupId, userId string) (err error) {
 	_, err = svc.client.Delete(ctx, &DeleteRequest{
-		Url:    url,
-		UserId: userId,
+		Url:     url,
+		GroupId: groupId,
+		UserId:  userId,
 	})
 	return
 }

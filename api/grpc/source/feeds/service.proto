@@ -31,7 +31,8 @@ message ReadResponse {
 
 message DeleteRequest {
   string url = 1;
-  string userId = 2;
+  string groupId = 2;
+  string userId = 3;
 }
 
 message DeleteResponse {
@@ -49,12 +50,14 @@ message ListUrlsResponse {
 
 message Feed {
   string url = 1;
-  string userId = 2;
-  google.protobuf.Duration updatePeriod = 3;
-  google.protobuf.Timestamp nextUpdate = 4;
-  google.protobuf.Timestamp itemLast = 5;
+  string groupId = 2;
+  string userId = 3;
+  google.protobuf.Duration updatePeriod = 4;
+  google.protobuf.Timestamp nextUpdate = 5;
+  google.protobuf.Timestamp itemLast = 6;
 }
 
 message Filter {
-  string userId = 1;
+  string groupId = 1;
+  string userId = 2;
 }

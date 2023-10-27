@@ -157,11 +157,13 @@ func main() {
 		SvcFeeds:       svcSrcFeeds,
 		Log:            log,
 		SupportHandler: supportHandler,
+		GroupId:        groupId,
 	}
 	srcListHandler := sources.ListHandler{
 		SvcSrcFeeds: svcSrcFeeds,
 		SvcSrcTg:    svcSrcTg,
 		Log:         log,
+		GroupId:     groupId,
 	}
 	srcDetailsHandler := sources.DetailsHandler{
 		CfgFeeds:    cfg.Api.Source.Feeds,
