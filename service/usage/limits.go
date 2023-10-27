@@ -45,12 +45,12 @@ func IncreaseLimit() service.ArgHandlerFunc {
 			err = errors.New(fmt.Sprintf("unrecognzied subject code: %d", subjCode))
 		}
 		if err == nil {
-			_ = tgCtx.Send("Reply with a new count limit (at least 2):")
+			_ = tgCtx.Send("Reply with a new count limit (at least 11):")
 			err = tgCtx.Send(
 				fmt.Sprintf("%s %d", ReqLimitSet, subjCode),
 				&telebot.ReplyMarkup{
 					ForceReply:  true,
-					Placeholder: "10",
+					Placeholder: "100",
 				},
 			)
 		}
@@ -77,7 +77,7 @@ func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc
 			case usage.SubjectPublishEvents:
 				pricePerItem = cfgPayment.Price.MessagePublishing.DailyLimit
 			}
-			priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-1))
+			priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-10))
 			if priceTotal <= 0 {
 				err = fmt.Errorf("%w: non-positive total price %f", errInvalidOrder, priceTotal)
 			}
