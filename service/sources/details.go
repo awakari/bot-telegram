@@ -6,9 +6,7 @@ import (
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/model/usage"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
@@ -31,26 +29,12 @@ const CmdTgChDetails = "tgch"
 
 const fmtFeedDetails = `Feed Details:
 %s
-
-Daily Messages Limit: <pre>%d</pre>
-Limit Expires: <pre>%s</pre>
-Count Today: <pre>%d</pre>
-Count Total: <pre>%d</pre>
-Since: <pre>%s</pre>
-
 Update Period: <pre>%s</pre>
 Next Update: <pre>%s</pre>
 Last Message: <pre>%s</pre>
 `
 const fmtTgChDetails = `Source Telegram Channel Details:
 %s
-
-Daily Messages Limit: %s
-Limit Expires: %s
-Count Today: %s
-Count Total: %s
-Since: %s
-
 Title: %s
 Description: %s
 `
@@ -78,39 +62,19 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	switch {
 	case status.Code(err) == codes.NotFound:
 		dh.Log.Warn(fmt.Sprintf("Feed not found, URL may be truncated: %s", url))
-		var urls []string
-		urls, err = dh.SvcSrcFeeds.List(context.TODO(), filter, 1, url)
-		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, urls, err))
-		if err == nil && len(urls) > 0 {
-			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), urls[0])
+		var feedList []*feeds.Feed
+		feedList, err = dh.SvcSrcFeeds.List(context.TODO(), filter, 1, url)
+		dh.Log.Debug(fmt.Sprintf("List feeds with cursor \"%s\" results: %+v, %s", url, feedList, err))
+		if err == nil && len(feedList) > 0 {
+			feed, err = dh.SvcSrcFeeds.Read(context.TODO(), feedList[0].Url)
 		}
 	}
-	//
 	url = feed.Url
-	var l usage.Limit
-	if err == nil {
-		ctxGroupId := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", dh.CfgFeeds.GroupId)
-		url = feed.Url
-		l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, url, usage.SubjectPublishEvents)
-	}
-	var u usage.Usage
-	if err == nil {
-		ctxGroupId := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", dh.CfgFeeds.GroupId)
-		url = feed.Url
-		u, err = dh.ClientAwk.ReadUsage(ctxGroupId, url, usage.SubjectPublishEvents)
-	}
 	//
 	if err == nil {
 		txtSummary := url
 		if feed.UserId != "" {
-			txtSummary += fmt.Sprintf("\n<a href=\"tg://user?id=%s\">Owner</a>", feed.UserId)
-		}
-		var txtExpires string
-		switch {
-		case feed.Expires.Seconds <= 0:
-			txtExpires = "never"
-		default:
-			txtExpires = feed.Expires.AsTime().Format(time.RFC3339)
+			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a>", feed.UserId)
 		}
 		var txtItemLast string
 		switch {
@@ -122,11 +86,6 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		txt := fmt.Sprintf(
 			fmtFeedDetails,
 			txtSummary,
-			l.Count,
-			txtExpires,
-			u.Count,
-			u.CountTotal,
-			u.Since.Format(time.RFC3339),
 			feed.UpdatePeriod.AsDuration(),
 			feed.NextUpdate.AsTime().Format(time.RFC3339),
 			txtItemLast,
@@ -142,11 +101,6 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 	var chatLink string
 	var title string
 	var descr string
-	var countLimitTxt string
-	var expiresTxt string
-	var countTodayTxt string
-	var countTotalTxt string
-	var since string
 	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
 		chatLink = fmt.Sprintf("@%s", url[len(tgChLinkPrefix):])
 		var chat *telebot.Chat
@@ -155,58 +109,20 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		case nil:
 			title = chat.Title
 			descr = chat.Description
-			ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", dh.CfgTelegram.GroupId)
-			srcUserId := strconv.FormatInt(chat.ID, 10)
-			var l usage.Limit
-			l, err = dh.ClientAwk.ReadUsageLimit(ctxGroupId, srcUserId, usage.SubjectPublishEvents)
-			switch {
-			case err != nil:
-				countLimitTxt = "N/A (error)"
-				expiresTxt = "N/A (error)"
-			case l.Expires.Unix() <= 0:
-				countLimitTxt = strconv.FormatInt(l.Count, 10)
-				expiresTxt = "never"
-			default:
-				countLimitTxt = strconv.FormatInt(l.Count, 10)
-				expiresTxt = l.Expires.Format(time.RFC3339)
-			}
-			var u usage.Usage
-			u, err = dh.ClientAwk.ReadUsage(ctxGroupId, srcUserId, usage.SubjectPublishEvents)
-			switch {
-			case err != nil:
-				countTodayTxt = "N/A (error)"
-				countTotalTxt = "N/A (error)"
-				since = "N/A (error)"
-			default:
-				countTodayTxt = strconv.FormatInt(u.Count, 10)
-				countTotalTxt = strconv.FormatInt(u.CountTotal, 10)
-				since = u.Since.Format(time.RFC3339)
-			}
 		default:
 			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatLink, err))
 			title = "N/A (error)"
 			descr = "N/A (error)"
-			countLimitTxt = "N/A (error)"
-			expiresTxt = "N/A (error)"
-			since = "N/A (error)"
 		}
 	} else {
 		chatLink = url
 		title = "N/A (private)"
 		descr = "N/A (private)"
-		countLimitTxt = "N/A (private)"
-		expiresTxt = "N/A (private)"
-		since = "N/A (private)"
 	}
 	//
 	detailsTxt := fmt.Sprintf(
 		fmtTgChDetails,
 		chatLink,
-		fmt.Sprintf("<pre>%s</pre>", countLimitTxt),
-		fmt.Sprintf("<pre>%s</pre>", expiresTxt),
-		fmt.Sprintf("<pre>%s</pre>", countTodayTxt),
-		fmt.Sprintf("<pre>%s</pre>", countTotalTxt),
-		fmt.Sprintf("<pre>%s</pre>", since),
 		title,
 		descr,
 	)
@@ -215,11 +131,6 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		detailsTxt = fmt.Sprintf(
 			fmtTgChDetails,
 			chatLink,
-			countLimitTxt,
-			expiresTxt,
-			countTodayTxt,
-			countTotalTxt,
-			since,
 			title,
 			descr,
 		)

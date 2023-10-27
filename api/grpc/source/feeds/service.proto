@@ -8,17 +8,17 @@ import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 
 service Service {
-  rpc Write(WriteRequest) returns (WriteResponse);
+  rpc Create(CreateRequest) returns (CreateResponse);
   rpc Read(ReadRequest) returns (ReadResponse);
-  rpc Extend(ExtendRequest) returns (ExtendResponse);
+  rpc Delete(DeleteRequest) returns (DeleteResponse);
   rpc List(ListRequest) returns (ListResponse);
 }
 
-message WriteRequest {
+message CreateRequest {
   Feed feed = 1;
 }
 
-message WriteResponse {
+message CreateResponse {
 }
 
 message ReadRequest {
@@ -29,12 +29,12 @@ message ReadResponse {
   Feed feed = 1;
 }
 
-message ExtendRequest {
+message DeleteRequest {
   string url = 1;
-  google.protobuf.Duration add = 2;
+  string userId = 2;
 }
 
-message ExtendResponse {
+message DeleteResponse {
 }
 
 message ListRequest {
@@ -44,17 +44,16 @@ message ListRequest {
 }
 
 message ListResponse {
-  repeated string page = 1;
+  repeated Feed page = 1;
 }
 
 message Feed {
   string url = 1;
-  string userId = 2;
+  string title = 2;
+  string userId = 3;
   google.protobuf.Duration updatePeriod = 4;
   google.protobuf.Timestamp nextUpdate = 5;
-  google.protobuf.Timestamp expires = 6;
-  google.protobuf.Timestamp itemLast = 7;
-  int64 itemCount = 8;
+  google.protobuf.Timestamp itemLast = 6;
 }
 
 message Filter {

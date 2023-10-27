@@ -154,11 +154,7 @@ func main() {
 		RestoreKbd:    menuKbd,
 	}
 	srcAddHandler := sources.AddHandler{
-		CfgPayment:     cfg.Payment,
-		CfgFeeds:       cfg.Api.Source.Feeds,
-		KbdRestore:     menuKbd,
 		SvcFeeds:       svcSrcFeeds,
-		SvcAdmin:       svcAdmin,
 		Log:            log,
 		SupportHandler: supportHandler,
 	}
@@ -216,13 +212,11 @@ func main() {
 		usage.PurposeLimits:         usage.ExtendLimitsPreCheckout(clientAwk, groupId, cfg.Payment),
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
-		sources.PurposeSrcAdd:       srcAddHandler.AddPrecheckout,
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimits:         usage.ExtendLimitsPaid(svcAdmin, groupId, log, cfg.Payment.Backoff),
 		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
-		sources.PurposeSrcAdd:       srcAddHandler.AddPaid,
 	}
 
 	// init Telegram bot
