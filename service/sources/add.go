@@ -92,13 +92,13 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 		err = ap.validate(tgCtx.Bot())
 	}
 	if err == nil {
-		switch ap.Src.Type {
-		case srcTypeTgCh:
-			_ = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
-		}
+		err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
 	}
 	if err == nil {
-		err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+		switch ap.Src.Type {
+		case srcTypeTgCh:
+			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
+		}
 	}
 	if err == nil {
 		err = tgCtx.Send(fmt.Sprintf("Source added successfully: %s", ap.Src.Addr))
