@@ -29,13 +29,13 @@ const CmdFeedDetailsOwn = "feed_own"
 const CmdTgChDetails = "tgch"
 
 const fmtFeedDetails = `Feed Details:
-%s
+Link: %s
 Update Period: <pre>%s</pre>
 Next Update: <pre>%s</pre>
 Last Message: <pre>%s</pre>
 `
 const fmtTgChDetails = `Source Telegram Channel Details:
-%s
+Link: %s
 Title: %s
 Description: %s
 `
@@ -83,7 +83,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			case dh.GroupId: // this bot
 				groupId = "@AwakariBot"
 			}
-			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from <pre>%s</pre>", feed.UserId, groupId)
+			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from %s", feed.UserId, groupId)
 		}
 		var txtItemLast string
 		switch {
