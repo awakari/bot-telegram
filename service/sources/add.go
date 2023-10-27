@@ -95,6 +95,7 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 		switch ap.Src.Type {
 		case srcTypeTgCh:
 			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
+			fallthrough
 		default:
 			err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
 			if err == nil {
