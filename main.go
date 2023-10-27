@@ -155,6 +155,7 @@ func main() {
 	}
 	srcAddHandler := sources.AddHandler{
 		SvcFeeds:       svcSrcFeeds,
+		SvcTelegram:    svcSrcTg,
 		Log:            log,
 		SupportHandler: supportHandler,
 		GroupId:        groupId,
@@ -174,9 +175,10 @@ func main() {
 		GroupId:     groupId,
 	}
 	srcDeleteHandler := sources.DeleteHandler{
-		SvcSrcFeeds: svcSrcFeeds,
-		RestoreKbd:  menuKbd,
-		GroupId:     groupId,
+		SvcSrcFeeds:    svcSrcFeeds,
+		SvcSrcTelegram: svcSrcTg,
+		RestoreKbd:     menuKbd,
+		GroupId:        groupId,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
