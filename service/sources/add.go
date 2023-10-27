@@ -52,7 +52,6 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 	case srcTypeTgCh:
 		var chat *telebot.Chat
 		chat, err = bot.ChatByUsername(ap.Src.Addr)
-		fmt.Printf("chat details: link=%s, %+v\n", chat.InviteLink, chat)
 		if err == nil && chat.Type != telebot.ChatChannel {
 			err = fmt.Errorf("%w: telegram chat type is %s, should be %s", errInvalidAddPayload, chat.Type, telebot.ChatChannel)
 		}

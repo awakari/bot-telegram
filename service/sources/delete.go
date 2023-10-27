@@ -21,7 +21,7 @@ type DeleteHandler struct {
 
 func (dh DeleteHandler) RequestConfirmation(tgCtx telebot.Context, args ...string) (err error) {
 	url := args[0]
-	_ = tgCtx.Send("Are you sure? Reply \"yes\" or \"no\" to the next message:", url)
+	_ = tgCtx.Send("Are you sure? Reply \"yes\" or \"no\" to the next message:")
 	err = tgCtx.Send(
 		fmt.Sprintf("%s %s", CmdDeleteConfirm, url),
 		&telebot.ReplyMarkup{
