@@ -75,7 +75,12 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	if err == nil {
 		txtSummary := url
 		if feed.UserId != "" {
-			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from <pre>%s</pre>", feed.UserId, feed.GroupId)
+			groupId := feed.GroupId
+			switch groupId {
+			case dh.GroupId: // this bot
+				groupId = "@AwakariBot"
+			}
+			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from <pre>%s</pre>", feed.UserId, groupId)
 		}
 		var txtItemLast string
 		switch {
