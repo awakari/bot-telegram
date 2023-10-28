@@ -41,8 +41,7 @@ Link: %s
 Title: %s
 Description: %s
 `
-const tgChLinkPrefix = "@"
-const tgChLinkPrefixPrivate = "https://t.me/c/"
+const tgChPubLinkPrefix = "@"
 
 func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err error) {
 	err = dh.getFeed(tgCtx, args[0], nil)
@@ -115,10 +114,12 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 }
 
 func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...string) (err error) {
+	//
 	url := args[0]
+	//
 	var title string
 	var descr string
-	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
+	if strings.HasPrefix(url, tgChPubLinkPrefix) {
 		var chat *telebot.Chat
 		chat, err = tgCtx.Bot().ChatByUsername(url)
 		switch err {
@@ -134,14 +135,24 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		title = "N/A (private)"
 		descr = "N/A (private)"
 	}
-	//
 	detailsTxt := fmt.Sprintf(
 		fmtTgChDetails,
 		url,
 		title,
 		descr,
 	)
-	err = tgCtx.Send(detailsTxt, telebot.ModeHTML)
+	//
+	m := &telebot.ReplyMarkup{}
+	var ch *telegram.Channel
+	ch, err = dh.SvcSrcTg.Read(context.TODO(), url)
+	if err == nil && ch.GroupId == dh.GroupId && ch.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
+		m.Inline(m.Row(telebot.Btn{
+			Text: "❌ Delete",
+			Data: fmt.Sprintf("%s %s", CmdDelete, url),
+		}))
+	}
+	//
+	err = tgCtx.Send(detailsTxt, m, telebot.ModeHTML)
 	if err != nil {
 		detailsTxt = fmt.Sprintf(
 			fmtTgChDetails,
@@ -149,7 +160,7 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 			title,
 			descr,
 		)
-		err = tgCtx.Send(detailsTxt)
+		err = tgCtx.Send(detailsTxt, m)
 	}
 	return
 }

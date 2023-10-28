@@ -41,13 +41,23 @@ func (dh DeleteHandler) HandleConfirmation(tgCtx telebot.Context, args ...string
 	url, reply := args[1], strings.ToLower(args[2])
 	switch reply {
 	case "yes":
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		err = dh.SvcSrcFeeds.Delete(context.TODO(), url, dh.GroupId, userId)
-		if err == nil {
-			err = tgCtx.Send("Source feed deleted", dh.RestoreKbd)
-		}
+		err = dh.delete(tgCtx, url)
 	default:
 		err = tgCtx.Send("Subscription deletion cancelled", dh.RestoreKbd)
+	}
+	return
+}
+
+func (dh DeleteHandler) delete(tgCtx telebot.Context, url string) (err error) {
+	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	switch {
+	case strings.HasPrefix(url, tgChPubLinkPrefix):
+		err = dh.SvcSrcTg.Delete(context.TODO(), url)
+	default:
+		err = dh.SvcSrcFeeds.Delete(context.TODO(), url, dh.GroupId, userId)
+	}
+	if err == nil {
+		err = tgCtx.Send("Source feed deleted", dh.RestoreKbd)
 	}
 	return
 }
