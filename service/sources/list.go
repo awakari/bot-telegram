@@ -56,7 +56,7 @@ func (lh ListHandler) TelegramChannelsOwn(tgCtx telebot.Context, args ...string)
 func (lh ListHandler) tgChList(tgCtx telebot.Context, filter *telegram.Filter, cursor string) (err error) {
 	var page []*telegram.Channel
 	if err == nil {
-		page, err = lh.SvcSrcTg.List(context.TODO(), nil, pageLimit, cursor)
+		page, err = lh.SvcSrcTg.List(context.TODO(), filter, pageLimit, cursor)
 	}
 	if err == nil {
 		//
