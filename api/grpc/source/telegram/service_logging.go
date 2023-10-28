@@ -51,13 +51,13 @@ func (sl serviceLogging) Delete(ctx context.Context, link string) (err error) {
 	return
 }
 
-func (sl serviceLogging) List(ctx context.Context, limit uint32, cursor string) (page []*Channel, err error) {
-	page, err = sl.svc.List(ctx, limit, cursor)
+func (sl serviceLogging) List(ctx context.Context, filter *Filter, limit uint32, cursor string) (page []*Channel, err error) {
+	page, err = sl.svc.List(ctx, filter, limit, cursor)
 	switch err {
 	case nil:
-		sl.log.Debug(fmt.Sprintf("api.grpc.source.telegram.List(%d, %s): %d", limit, cursor, len(page)))
+		sl.log.Debug(fmt.Sprintf("api.grpc.source.telegram.List(%+v, %d, %s): %d", filter, limit, cursor, len(page)))
 	default:
-		sl.log.Error(fmt.Sprintf("api.grpc.source.telegram.List(%d, %s): %s", limit, cursor, err))
+		sl.log.Error(fmt.Sprintf("api.grpc.source.telegram.List(%+v, %d, %s): %s", filter, limit, cursor, err))
 	}
 	return
 }

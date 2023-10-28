@@ -30,9 +30,6 @@ var btnSubNewCustom = telebot.Btn{
 
 var btnSubUsage = telebot.Btn{
 	Text: LabelSubUsage,
-	//WebApp: &telebot.WebApp{
-	//	URL: "https://awakari.app/price-calc-subs.html",
-	//},
 }
 
 var btnMsgs = telebot.Btn{

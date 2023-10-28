@@ -28,10 +28,16 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 						Data: sources.CmdFeedListOwn,
 					},
 				),
-				m.Row(telebot.Btn{
-					Text: "Telegram Channels",
-					Data: sources.CmdTgChanList,
-				}),
+				m.Row(
+					telebot.Btn{
+						Text: "All Telegram Channels",
+						Data: sources.CmdTgChListAll,
+					},
+					telebot.Btn{
+						Text: "Own Telegram Channels",
+						Data: sources.CmdTgChListOwn,
+					},
+				),
 			)
 			err = tgCtx.Send("Sources:", m)
 		}

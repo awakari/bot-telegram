@@ -19,12 +19,13 @@ type ListHandler struct {
 
 const CmdFeedListAll = "feeds_all"
 const CmdFeedListOwn = "feeds_own"
-const CmdTgChanList = "tgchans"
+const CmdTgChListAll = "tgchs_all"
+const CmdTgChListOwn = "tgchs_own"
 
 const pageLimit = 10
 const cmdLimit = 64
 
-func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (err error) {
+func (lh ListHandler) TelegramChannelsAll(tgCtx telebot.Context, args ...string) (err error) {
 	var cursor string
 	if len(args) > 0 {
 		cursor = args[0]
@@ -32,9 +33,30 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 	if err != nil {
 		err = tgCtx.Send("Failed to parse telegram chat id: %s, cause: %s", args[0], err)
 	}
+	err = lh.tgChList(tgCtx, nil, cursor)
+	return
+}
+
+func (lh ListHandler) TelegramChannelsOwn(tgCtx telebot.Context, args ...string) (err error) {
+	var cursor string
+	if len(args) > 0 {
+		cursor = args[0]
+	}
+	if err != nil {
+		err = tgCtx.Send("Failed to parse telegram chat id: %s, cause: %s", args[0], err)
+	}
+	filter := &telegram.Filter{
+		GroupId: lh.GroupId,
+		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+	}
+	err = lh.tgChList(tgCtx, filter, cursor)
+	return
+}
+
+func (lh ListHandler) tgChList(tgCtx telebot.Context, filter *telegram.Filter, cursor string) (err error) {
 	var page []*telegram.Channel
 	if err == nil {
-		page, err = lh.SvcSrcTg.List(context.TODO(), pageLimit, cursor)
+		page, err = lh.SvcSrcTg.List(context.TODO(), nil, pageLimit, cursor)
 	}
 	if err == nil {
 		//
@@ -56,7 +78,7 @@ func (lh ListHandler) TelegramChannels(tgCtx telebot.Context, args ...string) (e
 
 		}
 		if len(page) == pageLimit {
-			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChanList, page[len(page)-1].Link)
+			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChListAll, page[len(page)-1].Link)
 			if len(cmdNextPage) > cmdLimit {
 				cmdNextPage = cmdNextPage[:cmdLimit]
 			}
