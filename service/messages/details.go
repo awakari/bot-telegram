@@ -20,26 +20,32 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			m.Inline(
 				m.Row(
 					telebot.Btn{
-						Text: "All Feeds",
+						Text: "All",
 						Data: sources.CmdFeedListAll,
 					},
 					telebot.Btn{
-						Text: "Own Feeds",
+						Text: "Own",
 						Data: sources.CmdFeedListOwn,
 					},
 				),
+			)
+			err = tgCtx.Send("Source Feeds:", m)
+		}
+		if err == nil {
+			m := &telebot.ReplyMarkup{}
+			m.Inline(
 				m.Row(
 					telebot.Btn{
-						Text: "All Telegram Channels",
+						Text: "All",
 						Data: sources.CmdTgChListAll,
 					},
 					telebot.Btn{
-						Text: "Own Telegram Channels",
+						Text: "Own",
 						Data: sources.CmdTgChListOwn,
 					},
 				),
 			)
-			err = tgCtx.Send("Sources:", m)
+			err = tgCtx.Send("Source Telegram Channels:", m)
 		}
 		//
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)

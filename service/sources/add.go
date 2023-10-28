@@ -79,7 +79,7 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 
 type AddHandler struct {
 	SvcFeeds       feeds.Service
-	SvcTelegram    telegram.Service
+	SvcTg          telegram.Service
 	Log            *slog.Logger
 	SupportHandler service.SupportHandler
 	GroupId        string
@@ -143,6 +143,6 @@ func (ah AddHandler) registerTelegramChannel(ctx context.Context, chat *telebot.
 		Name:    chat.Title,
 		Link:    url,
 	}
-	err = ah.SvcTelegram.Create(ctx, &ch)
+	err = ah.SvcTg.Create(ctx, &ch)
 	return
 }

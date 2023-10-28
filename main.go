@@ -155,7 +155,7 @@ func main() {
 	}
 	srcAddHandler := sources.AddHandler{
 		SvcFeeds:       svcSrcFeeds,
-		SvcTelegram:    svcSrcTg,
+		SvcTg:          svcSrcTg,
 		Log:            log,
 		SupportHandler: supportHandler,
 		GroupId:        groupId,
@@ -171,14 +171,15 @@ func main() {
 		CfgTelegram: cfg.Api.Source.Telegram,
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
+		SvcSrcTg:    svcSrcTg,
 		Log:         log,
 		GroupId:     groupId,
 	}
 	srcDeleteHandler := sources.DeleteHandler{
-		SvcSrcFeeds:    svcSrcFeeds,
-		SvcSrcTelegram: svcSrcTg,
-		RestoreKbd:     menuKbd,
-		GroupId:        groupId,
+		SvcSrcFeeds: svcSrcFeeds,
+		SvcSrcTg:    svcSrcTg,
+		RestoreKbd:  menuKbd,
+		GroupId:     groupId,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),

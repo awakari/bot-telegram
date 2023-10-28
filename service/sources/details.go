@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
 	"google.golang.org/grpc/codes"
@@ -20,6 +21,7 @@ type DetailsHandler struct {
 	CfgTelegram config.TelegramConfig
 	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
+	SvcSrcTg    telegram.Service
 	Log         *slog.Logger
 	GroupId     string
 }
@@ -39,7 +41,7 @@ Link: %s
 Title: %s
 Description: %s
 `
-const tgChLinkPrefix = "https://t.me/"
+const tgChLinkPrefix = "@"
 const tgChLinkPrefixPrivate = "https://t.me/c/"
 
 func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err error) {
@@ -114,31 +116,28 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 
 func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...string) (err error) {
 	url := args[0]
-	var chatLink string
 	var title string
 	var descr string
 	if strings.HasPrefix(url, tgChLinkPrefix) && !strings.HasPrefix(url, tgChLinkPrefixPrivate) {
-		chatLink = fmt.Sprintf("@%s", url[len(tgChLinkPrefix):])
 		var chat *telebot.Chat
-		chat, err = tgCtx.Bot().ChatByUsername(chatLink)
+		chat, err = tgCtx.Bot().ChatByUsername(url)
 		switch err {
 		case nil:
 			title = chat.Title
 			descr = chat.Description
 		default:
-			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", chatLink, err))
+			dh.Log.Warn(fmt.Sprintf("Failed to resolve the chat by username: %s, cause: %s", url, err))
 			title = "N/A (error)"
 			descr = "N/A (error)"
 		}
 	} else {
-		chatLink = url
 		title = "N/A (private)"
 		descr = "N/A (private)"
 	}
 	//
 	detailsTxt := fmt.Sprintf(
 		fmtTgChDetails,
-		chatLink,
+		url,
 		title,
 		descr,
 	)
@@ -146,7 +145,7 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 	if err != nil {
 		detailsTxt = fmt.Sprintf(
 			fmtTgChDetails,
-			chatLink,
+			url,
 			title,
 			descr,
 		)

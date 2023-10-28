@@ -15,10 +15,10 @@ const CmdDelete = "src_del_req"
 const CmdDeleteConfirm = "src_del"
 
 type DeleteHandler struct {
-	SvcSrcFeeds    feeds.Service
-	SvcSrcTelegram telegram.Service
-	RestoreKbd     *telebot.ReplyMarkup
-	GroupId        string
+	SvcSrcFeeds feeds.Service
+	SvcSrcTg    telegram.Service
+	RestoreKbd  *telebot.ReplyMarkup
+	GroupId     string
 }
 
 func (dh DeleteHandler) RequestConfirmation(tgCtx telebot.Context, args ...string) (err error) {
