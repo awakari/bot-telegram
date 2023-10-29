@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-type OrderExtend struct {
+type OrderLimit struct {
 	Expires time.Time     `json:"expires"`
 	Count   uint32        `json:"count"`
 	Subject usage.Subject `json:"subject"`
@@ -20,38 +20,38 @@ const orderLimitCountMaxMsgs = 8333 // = $9999.6
 
 var errInvalidOrder = errors.New("invalid order")
 
-func (oe OrderExtend) validate() (err error) {
-	if err == nil && oe.Expires.Before(time.Now()) {
+func (ol OrderLimit) validate() (err error) {
+	if err == nil && ol.Expires.Before(time.Now()) {
 		err = fmt.Errorf(
 			"%w: new expiration date %s is in past",
 			errInvalidOrder,
-			oe.Expires.Format(time.RFC3339),
+			ol.Expires.Format(time.RFC3339),
 		)
 	}
 	if err == nil {
-		switch oe.Subject {
+		switch ol.Subject {
 		case usage.SubjectPublishEvents:
-			if oe.Count < orderLimitCountMinMsgs || oe.Count > orderLimitCountMaxMsgs {
+			if ol.Count < orderLimitCountMinMsgs || ol.Count > orderLimitCountMaxMsgs {
 				err = fmt.Errorf(
 					"%w: count is %d, should be in the range [%d; %d]",
 					errInvalidOrder,
-					oe.Count,
+					ol.Count,
 					orderLimitCountMinMsgs,
 					orderLimitCountMaxMsgs,
 				)
 			}
 		case usage.SubjectSubscriptions:
-			if oe.Count < orderLimitCountMinSubs || oe.Count > orderLimitCountMaxSubs {
+			if ol.Count < orderLimitCountMinSubs || ol.Count > orderLimitCountMaxSubs {
 				err = fmt.Errorf(
 					"%w: count is %d, should be in the range [%d; %d]",
 					errInvalidOrder,
-					oe.Count,
+					ol.Count,
 					orderLimitCountMinSubs,
 					orderLimitCountMaxSubs,
 				)
 			}
 		default:
-			err = fmt.Errorf("%w: unknown subject %s", errInvalidOrder, oe.Subject)
+			err = fmt.Errorf("%w: unknown subject %s", errInvalidOrder, ol.Subject)
 		}
 	}
 	return

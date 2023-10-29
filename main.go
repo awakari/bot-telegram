@@ -227,16 +227,17 @@ func main() {
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
 		usage.ReqLimitExtend:            limitsHandler.HandleExtension,
+		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
 		"support":                       supportHandler.Support,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimitExtend:    limitsHandler.ExtensionPreCheckout,
+		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimitExtend:    limitsHandler.HandleExtensionPaid,
+		usage.PurposeLimitSet:       limitsHandler.HandleLimitOrderPaid,
 		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}
