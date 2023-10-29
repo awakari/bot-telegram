@@ -13,8 +13,6 @@ type OrderExtend struct {
 	Subject usage.Subject `json:"subject"`
 }
 
-const orderLimitTimeDaysMin = 1
-const orderLimitTimeDaysMax = 3652
 const orderLimitCountMinMsgs = 11
 const orderLimitCountMinSubs = 2
 const orderLimitCountMaxSubs = 8333

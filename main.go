@@ -197,6 +197,7 @@ func main() {
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
 		usage.CmdExtend:              limitsHandler.RequestExtension,
+		usage.CmdIncrease:            limitsHandler.RequestIncrease,
 		sources.CmdTgChListAll:       srcListHandler.TelegramChannelsAll,
 		sources.CmdTgChListOwn:       srcListHandler.TelegramChannelsOwn,
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,

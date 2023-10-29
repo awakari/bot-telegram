@@ -22,6 +22,7 @@ const ExpiresDefaultDays = 30
 
 const LabelIncrease = "▲ Increase Limit"
 const CmdIncrease = "lim_incr"
+const ReqLimitIncrease = "lim_incr_req"
 
 const LabelExtend = "▲ Extend Time"
 const CmdExtend = "lim_extend"
@@ -197,5 +198,23 @@ func FormatUsageLimit(subj string, u usage.Usage, l usage.Limit) (txt string) {
 		expires = l.Expires.Format(time.RFC3339)
 	}
 	txt = fmt.Sprintf(msgFmtUsageLimit, subj, u.Count, l.Count, expires)
+	return
+}
+
+func (lh LimitsHandler) RequestIncrease(tgCtx telebot.Context, args ...string) (err error) {
+	var subjCode int64
+	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
+	if err == nil {
+		err = tgCtx.Send("Reply the count to add to the current limit:")
+	}
+	if err == nil {
+		err = tgCtx.Send(
+			fmt.Sprintf("%s %d", ReqLimitIncrease, subjCode),
+			&telebot.ReplyMarkup{
+				ForceReply:  true,
+				Placeholder: "10",
+			},
+		)
+	}
 	return
 }

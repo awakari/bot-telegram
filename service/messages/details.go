@@ -62,20 +62,20 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 		if err == nil {
 			respTxt := usage.FormatUsageLimit("Daily Messages Publishing", u, l)
 			m := &telebot.ReplyMarkup{}
-			rows := []telebot.Row{
-				m.Row(telebot.Btn{
+			btns := []telebot.Btn{
+				{
 					Text: usage.LabelIncrease,
 					Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectPublishEvents),
-				}),
+				},
 			}
 			switch {
 			case l.Expires.After(time.Now()):
-				rows = append(rows, m.Row(telebot.Btn{
+				btns = append(btns, telebot.Btn{
 					Text: usage.LabelExtend,
 					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectPublishEvents),
-				}))
+				})
 			}
-			m.Inline(rows...)
+			m.Inline(m.Row(btns...))
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		//
