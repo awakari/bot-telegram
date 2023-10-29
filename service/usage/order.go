@@ -15,8 +15,8 @@ type OrderLimit struct {
 
 const orderLimitCountMinMsgs = 11
 const orderLimitCountMinSubs = 2
-const orderLimitCountMaxSubs = 8333
-const orderLimitCountMaxMsgs = 8333 // = $9999.6
+const orderLimitCountMaxSubs = 100000
+const orderLimitCountMaxMsgs = 1000
 
 var errInvalidOrder = errors.New("invalid order")
 

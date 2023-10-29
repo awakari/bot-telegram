@@ -241,9 +241,11 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 	case true: // not expired yet, increase for remaining period only
 		days = int64(l.Expires.Sub(time.Now()) / (24 * time.Hour))
 		expiresNew = l.Expires
+		_ = tgCtx.Send(fmt.Sprintf("Current limit is not expired yet, increasing for the remaining %d days", days))
 	default: // expired, set the limit for the default period
 		days = ExpiresDefaultDays
 		expiresNew = time.Now().UTC().Add(time.Hour * time.Duration(24*days))
+		_ = tgCtx.Send(fmt.Sprintf("Current limit is expired/not set, setting until %s", expiresNew.Format(time.RFC3339)))
 	}
 	//
 	var priceTotal float64
