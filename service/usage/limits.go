@@ -21,7 +21,7 @@ import (
 
 const ExpiresDefaultDays = 30
 
-const LabelLimitIncrease = "▲ Increase Limit"
+const LabelLimitIncrease = "🛒 Set New Limit"
 const CmdLimit = "limit"
 const ReqLimitSet = "limit_set"
 
@@ -33,19 +33,22 @@ const msgFmtUsageLimit = `%s Usage:<pre>
 </pre>`
 const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
 
-func IncreaseLimit() service.ArgHandlerFunc {
+func RequestNewLimit() service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var subjCode int64
 		subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
 		subj := usage.Subject(subjCode)
-		switch subj {
-		case usage.SubjectSubscriptions:
-		case usage.SubjectPublishEvents:
-		default:
-			err = errors.New(fmt.Sprintf("unrecognzied subject code: %d", subjCode))
+		if err == nil {
+			switch subj {
+			case usage.SubjectSubscriptions:
+				err = tgCtx.Send("Reply with a new count limit (at least 2):")
+			case usage.SubjectPublishEvents:
+				err = tgCtx.Send("Reply with a new count limit (at least 11):")
+			default:
+				err = errors.New(fmt.Sprintf("unrecognzied subject code: %d", subjCode))
+			}
 		}
 		if err == nil {
-			_ = tgCtx.Send("Reply with a new count limit (at least 11):")
 			err = tgCtx.Send(
 				fmt.Sprintf("%s %d", ReqLimitSet, subjCode),
 				&telebot.ReplyMarkup{
@@ -58,7 +61,7 @@ func IncreaseLimit() service.ArgHandlerFunc {
 	}
 }
 
-func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
+func HandleNewLimit(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		var subjCode int64
 		subjCode, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
@@ -74,10 +77,11 @@ func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc
 			switch subj {
 			case usage.SubjectSubscriptions:
 				pricePerItem = cfgPayment.Price.Subscription.CountLimit
+				priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-1))
 			case usage.SubjectPublishEvents:
 				pricePerItem = cfgPayment.Price.MessagePublishing.DailyLimit
+				priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-10))
 			}
-			priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-10))
 			if priceTotal <= 0 {
 				err = fmt.Errorf("%w: non-positive total price %f", errInvalidOrder, priceTotal)
 			}
@@ -127,7 +131,7 @@ func ExtendLimitsInvoice(cfgPayment config.PaymentConfig) service.ArgHandlerFunc
 	}
 }
 
-func ExtendLimitsPreCheckout(
+func NewLimitPreCheckout(
 	clientAwk api.Client, groupId string, cfgPayment config.PaymentConfig,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
@@ -159,7 +163,7 @@ func ExtendLimitsPreCheckout(
 	}
 }
 
-func ExtendLimitsPaid(
+func HandleNewLimitPaid(
 	clientAdmin admin.Service,
 	groupId string,
 	log *slog.Logger,

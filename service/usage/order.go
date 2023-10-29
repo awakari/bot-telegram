@@ -16,7 +16,7 @@ const orderLimitTimeDaysMin = 7
 const orderLimitTimeDaysMax = 3652
 const orderLimitCountMin = 2
 const orderLimitCountMaxSubs = 256
-const orderLimitCountMaxMsgs = 1440
+const orderLimitCountMaxMsgs = 8333 // = $9999.6
 
 var errInvalidOrder = errors.New("invalid order")
 
