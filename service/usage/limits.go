@@ -175,7 +175,7 @@ func HandleNewLimitPaid(
 		err = json.Unmarshal([]byte(args[0]), &ol)
 		if err == nil {
 			expires := time.Now().Add(time.Duration(ol.TimeDays) * time.Hour * 24)
-			a := extendLimitsAction{
+			a := setLimitsAction{
 				clientAdmin: clientAdmin,
 				groupId:     groupId,
 				userId:      userId,
@@ -200,7 +200,7 @@ func HandleNewLimitPaid(
 	}
 }
 
-type extendLimitsAction struct {
+type setLimitsAction struct {
 	clientAdmin admin.Service
 	groupId     string
 	userId      string
@@ -208,7 +208,7 @@ type extendLimitsAction struct {
 	expires     time.Time
 }
 
-func (a extendLimitsAction) runOnce() (err error) {
+func (a setLimitsAction) runOnce() (err error) {
 	err = a.clientAdmin.SetLimits(context.TODO(), a.groupId, a.userId, a.ol.Subject, int64(a.ol.Count), a.expires)
 	return
 }
