@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFunc {
@@ -62,10 +63,10 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 			respTxt := usage.FormatUsageLimit("Daily Messages Publishing", u, l)
 			m := &telebot.ReplyMarkup{}
 			switch {
-			case l.Expires.IsZero():
+			case l.Expires.After(time.Now()):
 				m.Inline(m.Row(telebot.Btn{
-					Text: usage.LabelLimitSet,
-					Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
+					Text: usage.LabelExtend,
+					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectPublishEvents),
 				}))
 			}
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)

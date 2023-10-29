@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
+	"time"
 )
 
 func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
@@ -26,10 +27,10 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 			respTxt += usage.FormatUsageLimit("Subscriptions", u, l)
 			m := &telebot.ReplyMarkup{}
 			switch {
-			case l.Expires.IsZero():
+			case l.Expires.After(time.Now()):
 				m.Inline(m.Row(telebot.Btn{
-					Text: usage.LabelLimitSet,
-					Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
+					Text: usage.LabelExtend,
+					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectPublishEvents),
 				}))
 			}
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)

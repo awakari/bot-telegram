@@ -3,7 +3,6 @@ package usage
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
@@ -12,7 +11,6 @@ import (
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
@@ -21,195 +19,155 @@ import (
 
 const ExpiresDefaultDays = 30
 
-const LabelLimitSet = "▲ Upgrade"
-const CmdLimit = "limit"
-const ReqLimitSet = "limit_set"
+const LabelExtend = "▲ Extend Time"
+const CmdExtend = "usage_extend"
+const ReqUsageExtend = "usage_extend_req"
 
-const PurposeLimits = "limits"
+const PurposeUsageExtend = "usage_extend"
 const msgFmtUsageLimit = `%s Usage:<pre>
   Count:   %d
   Limit:   %d
   Expires: %s
 </pre>`
-const msgFmtRunOnceFailed = "failed to set limits, user id: %s, cause: %s, retrying in: %s"
+const msgFmtRunOnceFailed = "failed to set limit, user id: %s, cause: %s, retrying in: %s"
 
-func RequestNewLimit() service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		var subjCode int64
-		subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
-		subj := usage.Subject(subjCode)
-		if err == nil {
-			switch subj {
-			case usage.SubjectSubscriptions:
-				err = tgCtx.Send("Reply with a new count limit (at least 2):")
-			case usage.SubjectPublishEvents:
-				err = tgCtx.Send("Reply with a new count limit (at least 11):")
-			default:
-				err = errors.New(fmt.Sprintf("unrecognzied subject code: %d", subjCode))
-			}
-		}
-		if err == nil {
-			err = tgCtx.Send(
-				fmt.Sprintf("%s %d", ReqLimitSet, subjCode),
-				&telebot.ReplyMarkup{
-					ForceReply:  true,
-					Placeholder: "100",
-				},
-			)
-		}
-		return
-	}
+type LimitsHandler struct {
+	CfgPayment  config.PaymentConfig
+	ClientAdmin admin.Service
+	ClientAwk   api.Client
+	GroupId     string
+	Log         *slog.Logger
 }
 
-func HandleNewLimit(cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		var subjCode int64
-		subjCode, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
-		var subj usage.Subject
-		var count int64
-		if err == nil {
-			subj = usage.Subject(subjCode)
-			count, err = strconv.ParseInt(args[2], 10, strconv.IntSize)
-		}
-		var priceTotal float64
-		if err == nil {
-			var pricePerItem float64
-			switch subj {
-			case usage.SubjectSubscriptions:
-				pricePerItem = cfgPayment.Price.Subscription.CountLimit
-				priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-1))
-			case usage.SubjectPublishEvents:
-				pricePerItem = cfgPayment.Price.MessagePublishing.DailyLimit
-				priceTotal = pricePerItem * float64(ExpiresDefaultDays*(count-10))
-			}
-			if priceTotal <= 0 {
-				err = fmt.Errorf("%w: non-positive total price %f", errInvalidOrder, priceTotal)
-			}
-		}
-		var ol OrderLimit
-		if err == nil {
-			ol.TimeDays = ExpiresDefaultDays
-			ol.Count = uint32(count)
-			ol.Subject = usage.Subject(subjCode)
-			err = ol.validate()
-		}
-		var orderPayloadData []byte
-		if err == nil {
-			orderPayloadData, err = json.Marshal(ol)
-		}
-		var orderData []byte
-		if err == nil {
-			o := service.Order{
-				Purpose: PurposeLimits,
-				Payload: string(orderPayloadData),
-			}
-			orderData, err = json.Marshal(o)
-		}
-		label := fmt.Sprintf(
-			"%s: %d x %d days", formatUsageSubject(subj), count, ExpiresDefaultDays,
+func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) (err error) {
+	var subjCode int64
+	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
+	if err == nil {
+		err = tgCtx.Send("Reply with the count of days to add:")
+	}
+	if err == nil {
+		err = tgCtx.Send(
+			fmt.Sprintf("%s %d", ReqUsageExtend, subjCode),
+			&telebot.ReplyMarkup{
+				ForceReply:  true,
+				Placeholder: "30",
+			},
 		)
-		if err == nil {
-			price := int(priceTotal * cfgPayment.Currency.SubFactor)
-			invoice := telebot.Invoice{
-				Start:       uuid.NewString(),
-				Title:       fmt.Sprintf("%s limit", formatUsageSubject(subj)),
-				Description: label,
-				Payload:     string(orderData),
-				Currency:    cfgPayment.Currency.Code,
-				Prices: []telebot.Price{
-					{
-						Label:  label,
-						Amount: price,
-					},
+	}
+	return
+}
+
+func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (err error) {
+	var subjCode int64
+	subjCode, err = strconv.ParseInt(args[1], 10, strconv.IntSize)
+	var subj usage.Subject
+	var daysAdd int64
+	if err == nil {
+		subj = usage.Subject(subjCode)
+		daysAdd, err = strconv.ParseInt(args[2], 10, strconv.IntSize)
+	}
+	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	var l usage.Limit
+	l, err = lh.ClientAwk.ReadUsageLimit(context.TODO(), userId, subj)
+	var priceTotal float64
+	if err == nil {
+		var pricePerItem float64
+		switch subj {
+		case usage.SubjectSubscriptions:
+			pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
+			priceTotal = pricePerItem * float64(daysAdd*(l.Count-1))
+		case usage.SubjectPublishEvents:
+			pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
+			priceTotal = pricePerItem * float64(daysAdd*(l.Count-10))
+		}
+		if priceTotal <= 0 {
+			err = fmt.Errorf("%w: non-positive total price %f", errInvalidOrder, priceTotal)
+		}
+	}
+	var oe OrderExtend
+	if err == nil {
+		oe.Expires = l.Expires.Add(time.Duration(daysAdd) * time.Hour * 24).UTC()
+		oe.Count = uint32(l.Count)
+		oe.Subject = usage.Subject(subjCode)
+		err = oe.validate()
+	}
+	var orderPayloadData []byte
+	if err == nil {
+		orderPayloadData, err = json.Marshal(oe)
+	}
+	var orderData []byte
+	if err == nil {
+		o := service.Order{
+			Purpose: PurposeUsageExtend,
+			Payload: string(orderPayloadData),
+		}
+		orderData, err = json.Marshal(o)
+	}
+	label := fmt.Sprintf("%d %s: add %d days", l.Count, formatUsageSubject(subj), daysAdd)
+	if err == nil {
+		price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
+		invoice := telebot.Invoice{
+			Start:       uuid.NewString(),
+			Title:       fmt.Sprintf("%s new expiration time: %s", formatUsageSubject(subj), oe.Expires.Format(time.RFC3339)),
+			Description: label,
+			Payload:     string(orderData),
+			Currency:    lh.CfgPayment.Currency.Code,
+			Prices: []telebot.Price{
+				{
+					Label:  label,
+					Amount: price,
 				},
-				Token: cfgPayment.Provider.Token,
-				Total: price,
-			}
-			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+			},
+			Token: lh.CfgPayment.Provider.Token,
+			Total: price,
 		}
-		return
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
+	return
 }
 
-func NewLimitPreCheckout(
-	clientAwk api.Client, groupId string, cfgPayment config.PaymentConfig,
-) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
-		var ol OrderLimit
-		err = json.Unmarshal([]byte(args[0]), &ol)
-		var currentLimit usage.Limit
-		if err == nil {
-			ctx, cancel := context.WithTimeout(context.TODO(), cfgPayment.PreCheckout.Timeout)
-			defer cancel()
-			ctx = metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", groupId)
-			currentLimit, err = clientAwk.ReadUsageLimit(ctx, userId, ol.Subject)
-		}
-		if err == nil {
-			cle := currentLimit.Expires.UTC()
-			if !cle.IsZero() && cle.After(time.Now().UTC()) {
-				err = tgCtx.Accept(
-					fmt.Sprintf(
-						"can not apply new limit, current is not expired yet (expires: %s)",
-						cle.Format(time.RFC3339),
-					),
-				)
-			}
-		}
-		if err == nil {
-			err = tgCtx.Accept()
-		}
-		return
-	}
+func (lh LimitsHandler) ExtensionPreCheckout(tgCtx telebot.Context, args ...string) (err error) {
+	err = tgCtx.Accept()
+	return
 }
 
-func HandleNewLimitPaid(
-	clientAdmin admin.Service,
-	groupId string,
-	log *slog.Logger,
-	cfgBackoff config.BackoffConfig,
-) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var ol OrderLimit
-		err = json.Unmarshal([]byte(args[0]), &ol)
-		if err == nil {
-			expires := time.Now().Add(time.Duration(ol.TimeDays) * time.Hour * 24)
-			a := setLimitsAction{
-				clientAdmin: clientAdmin,
-				groupId:     groupId,
-				userId:      userId,
-				ol:          ol,
-				expires:     expires,
+func (lh LimitsHandler) HandleExtensionPaid(tgCtx telebot.Context, args ...string) (err error) {
+	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	var oe OrderExtend
+	err = json.Unmarshal([]byte(args[0]), &oe)
+	if err == nil {
+		a := extendAction{
+			clientAdmin: lh.ClientAdmin,
+			groupId:     lh.GroupId,
+			userId:      userId,
+			oe:          oe,
+		}
+		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = lh.CfgPayment.Backoff.Init
+		b.Multiplier = lh.CfgPayment.Backoff.Factor
+		b.MaxElapsedTime = lh.CfgPayment.Backoff.LimitTotal
+		err = backoff.RetryNotify(a.runOnce, b, func(err error, d time.Duration) {
+			lh.Log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, userId, err, d))
+			if d > 1*time.Second {
+				_ = tgCtx.Send("Updating the usage limit, please wait...")
 			}
-			b := backoff.NewExponentialBackOff()
-			b.InitialInterval = cfgBackoff.Init
-			b.Multiplier = cfgBackoff.Factor
-			b.MaxElapsedTime = cfgBackoff.LimitTotal
-			err = backoff.RetryNotify(a.runOnce, b, func(err error, d time.Duration) {
-				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, userId, err, d))
-				if d > 1*time.Second {
-					_ = tgCtx.Send("Updating the usage limit, please wait...")
-				}
-			})
-		}
-		if err == nil {
-			err = tgCtx.Send("Limit has been successfully increased")
-		}
-		return
+		})
 	}
+	if err == nil {
+		err = tgCtx.Send("Limit has been successfully increased")
+	}
+	return
 }
 
-type setLimitsAction struct {
+type extendAction struct {
 	clientAdmin admin.Service
 	groupId     string
 	userId      string
-	ol          OrderLimit
-	expires     time.Time
+	oe          OrderExtend
 }
 
-func (a setLimitsAction) runOnce() (err error) {
-	err = a.clientAdmin.SetLimits(context.TODO(), a.groupId, a.userId, a.ol.Subject, int64(a.ol.Count), a.expires)
+func (ea extendAction) runOnce() (err error) {
+	err = ea.clientAdmin.SetLimits(context.TODO(), ea.groupId, ea.userId, ea.oe.Subject, int64(ea.oe.Count), ea.oe.Expires)
 	return
 }
 

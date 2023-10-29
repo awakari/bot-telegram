@@ -181,6 +181,13 @@ func main() {
 		RestoreKbd:  menuKbd,
 		GroupId:     groupId,
 	}
+	limitsHandler := usage.LimitsHandler{
+		CfgPayment:  cfg.Payment,
+		ClientAdmin: svcAdmin,
+		ClientAwk:   clientAwk,
+		GroupId:     groupId,
+		Log:         log,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -189,7 +196,7 @@ func main() {
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
-		usage.CmdLimit:               usage.RequestNewLimit(),
+		usage.CmdExtend:              limitsHandler.RequestExtension,
 		sources.CmdTgChListAll:       srcListHandler.TelegramChannelsAll,
 		sources.CmdTgChListOwn:       srcListHandler.TelegramChannelsOwn,
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
@@ -202,7 +209,7 @@ func main() {
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		usage.LabelLimitSet:          usage.HandleNewLimit(cfg.Payment),
+		usage.LabelExtend:            limitsHandler.HandleExtension,
 		service.LabelPubAddSource:    srcAddHandler.HandleFormData,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
@@ -218,17 +225,17 @@ func main() {
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
 		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
-		usage.ReqLimitSet:               usage.HandleNewLimit(cfg.Payment),
+		usage.ReqUsageExtend:            limitsHandler.HandleExtension,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
 		"support":                       supportHandler.Support,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.NewLimitPreCheckout(clientAwk, groupId, cfg.Payment),
+		usage.PurposeUsageExtend:    limitsHandler.ExtensionPreCheckout,
 		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimits:         usage.HandleNewLimitPaid(svcAdmin, groupId, log, cfg.Payment.Backoff),
+		usage.PurposeUsageExtend:    limitsHandler.HandleExtensionPaid,
 		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}

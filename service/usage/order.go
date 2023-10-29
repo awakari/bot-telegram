@@ -4,62 +4,56 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/client-sdk-go/model/usage"
+	"time"
 )
 
-type OrderLimit struct {
-	TimeDays uint32        `json:"timeDays"`
-	Count    uint32        `json:"count"`
-	Subject  usage.Subject `json:"subject"`
+type OrderExtend struct {
+	Expires time.Time     `json:"expires"`
+	Count   uint32        `json:"count"`
+	Subject usage.Subject `json:"subject"`
 }
 
-const orderLimitTimeDaysMin = 7
+const orderLimitTimeDaysMin = 1
 const orderLimitTimeDaysMax = 3652
-const orderLimitCountMin = 2
-const orderLimitCountMaxSubs = 256
+const orderLimitCountMinMsgs = 2
+const orderLimitCountMinSubs = 10
+const orderLimitCountMaxSubs = 8333
 const orderLimitCountMaxMsgs = 8333 // = $9999.6
 
 var errInvalidOrder = errors.New("invalid order")
 
-func (o OrderLimit) validate() (err error) {
-	if err == nil && (o.TimeDays < orderLimitTimeDaysMin || o.TimeDays > orderLimitTimeDaysMax) {
+func (oe OrderExtend) validate() (err error) {
+	if err == nil && oe.Expires.Before(time.Now()) {
 		err = fmt.Errorf(
-			"%w: limit duration is %d days, should be in the range [%d; %d]",
+			"%w: new expiration date %s is in past",
 			errInvalidOrder,
-			o.TimeDays,
-			orderLimitTimeDaysMin,
-			orderLimitTimeDaysMax,
-		)
-	}
-	if err == nil && o.Count < orderLimitCountMin {
-		err = fmt.Errorf(
-			"%w: count is %d, should be greater or equal to %d",
-			errInvalidOrder,
-			o.Count,
-			orderLimitCountMin,
+			oe.Expires.Format(time.RFC3339),
 		)
 	}
 	if err == nil {
-		switch o.Subject {
+		switch oe.Subject {
 		case usage.SubjectPublishEvents:
-			if o.Count > orderLimitCountMaxMsgs {
+			if oe.Count < orderLimitCountMinMsgs || oe.Count > orderLimitCountMaxMsgs {
 				err = fmt.Errorf(
-					"%w: count is %d, should be less or or equal to %d",
+					"%w: count is %d, should be in the range [%d; %d]",
 					errInvalidOrder,
-					o.Count,
+					oe.Count,
+					orderLimitCountMinMsgs,
 					orderLimitCountMaxMsgs,
 				)
 			}
 		case usage.SubjectSubscriptions:
-			if o.Count > orderLimitCountMaxSubs {
+			if oe.Count < orderLimitCountMaxSubs || oe.Count > orderLimitCountMaxSubs {
 				err = fmt.Errorf(
-					"%w: count is %d, should be less or or equal to %d",
+					"%w: count is %d, should be in the range [%d; %d]",
 					errInvalidOrder,
-					o.Count,
+					oe.Count,
+					orderLimitCountMinSubs,
 					orderLimitCountMaxSubs,
 				)
 			}
 		default:
-			err = fmt.Errorf("%w: unknown subject %s", errInvalidOrder, o.Subject)
+			err = fmt.Errorf("%w: unknown subject %s", errInvalidOrder, oe.Subject)
 		}
 	}
 	return
