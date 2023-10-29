@@ -81,7 +81,7 @@ type BackoffConfig struct {
 
 type PriceConfig struct {
 	MessagePublishing struct {
-		DailyLimit float64 `envconfig:"PAYMENT_PRICE_MESSAGE_PUBLISHING_DAILY_LIMIT" required:"true" default:"0.1"`
+		DailyLimit float64 `envconfig:"PAYMENT_PRICE_MESSAGE_PUBLISHING_DAILY_LIMIT" required:"true" default:"0.04"`
 		Extra      float64 `envconfig:"PAYMENT_PRICE_MESSAGE_PUBLISHING_EXTRA" required:"true" default:"1"`
 	}
 	Subscription struct {
