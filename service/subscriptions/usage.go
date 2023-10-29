@@ -30,7 +30,7 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 			case l.Expires.After(time.Now()):
 				m.Inline(m.Row(telebot.Btn{
 					Text: usage.LabelExtend,
-					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectPublishEvents),
+					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectSubscriptions),
 				}))
 			}
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
