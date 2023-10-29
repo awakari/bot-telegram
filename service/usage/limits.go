@@ -11,6 +11,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/uuid"
+	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
@@ -68,7 +69,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 	}
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 	var l usage.Limit
-	ctxGroupId := context.WithValue(context.TODO(), "x-awakari-group-id", lh.GroupId)
+	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", lh.GroupId)
 	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
 	var priceTotal float64
 	if err == nil {
