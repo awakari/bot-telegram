@@ -20,11 +20,14 @@ import (
 
 const ExpiresDefaultDays = 30
 
-const LabelExtend = "▲ Extend Time"
-const CmdExtend = "usage_extend"
-const ReqUsageExtend = "usage_extend_req"
+const LabelIncrease = "▲ Increase Limit"
+const CmdIncrease = "lim_incr"
 
-const PurposeUsageExtend = "usage_extend"
+const LabelExtend = "▲ Extend Time"
+const CmdExtend = "lim_extend"
+const ReqLimitExtend = "lim_extend_req"
+
+const PurposeLimitExtend = "lim_extend"
 const msgFmtUsageLimit = `%s Usage:<pre>
   Count:   %d
   Limit:   %d
@@ -48,7 +51,7 @@ func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) 
 	}
 	if err == nil {
 		err = tgCtx.Send(
-			fmt.Sprintf("%s %d", ReqUsageExtend, subjCode),
+			fmt.Sprintf("%s %d", ReqLimitExtend, subjCode),
 			&telebot.ReplyMarkup{
 				ForceReply:  true,
 				Placeholder: "30",
@@ -100,7 +103,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 	var orderData []byte
 	if err == nil {
 		o := service.Order{
-			Purpose: PurposeUsageExtend,
+			Purpose: PurposeLimitExtend,
 			Payload: string(orderPayloadData),
 		}
 		orderData, err = json.Marshal(o)

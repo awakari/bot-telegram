@@ -26,13 +26,20 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 		if err == nil {
 			respTxt += usage.FormatUsageLimit("Subscriptions", u, l)
 			m := &telebot.ReplyMarkup{}
+			rows := []telebot.Row{
+				m.Row(telebot.Btn{
+					Text: usage.LabelIncrease,
+					Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectSubscriptions),
+				}),
+			}
 			switch {
 			case l.Expires.After(time.Now()):
-				m.Inline(m.Row(telebot.Btn{
+				rows = append(rows, m.Row(telebot.Btn{
 					Text: usage.LabelExtend,
 					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectSubscriptions),
 				}))
 			}
+			m.Inline(rows...)
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		return
