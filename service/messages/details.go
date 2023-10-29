@@ -61,10 +61,13 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) telebot.HandlerFun
 		if err == nil {
 			respTxt := usage.FormatUsageLimit("Daily Messages Publishing", u, l)
 			m := &telebot.ReplyMarkup{}
-			m.Inline(m.Row(telebot.Btn{
-				Text: usage.LabelLimitIncrease,
-				Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
-			}))
+			switch {
+			case l.Expires.IsZero():
+				m.Inline(m.Row(telebot.Btn{
+					Text: usage.LabelLimitSet,
+					Data: fmt.Sprintf("%s %d", usage.CmdLimit, awkUsage.SubjectPublishEvents),
+				}))
+			}
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}
 		//

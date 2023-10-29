@@ -21,7 +21,7 @@ import (
 
 const ExpiresDefaultDays = 30
 
-const LabelLimitIncrease = "🛒 Set New Limit"
+const LabelLimitSet = "▲ Upgrade"
 const CmdLimit = "limit"
 const ReqLimitSet = "limit_set"
 
