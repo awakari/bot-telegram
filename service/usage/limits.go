@@ -68,7 +68,8 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 	}
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 	var l usage.Limit
-	l, err = lh.ClientAwk.ReadUsageLimit(context.TODO(), userId, subj)
+	ctxGroupId := context.WithValue(context.TODO(), "x-awakari-group-id", lh.GroupId)
+	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
 	var priceTotal float64
 	if err == nil {
 		var pricePerItem float64
