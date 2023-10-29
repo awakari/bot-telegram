@@ -15,8 +15,8 @@ type OrderExtend struct {
 
 const orderLimitTimeDaysMin = 1
 const orderLimitTimeDaysMax = 3652
-const orderLimitCountMinMsgs = 2
-const orderLimitCountMinSubs = 11
+const orderLimitCountMinMsgs = 11
+const orderLimitCountMinSubs = 2
 const orderLimitCountMaxSubs = 8333
 const orderLimitCountMaxMsgs = 8333 // = $9999.6
 
