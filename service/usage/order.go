@@ -16,7 +16,7 @@ type OrderExtend struct {
 const orderLimitTimeDaysMin = 1
 const orderLimitTimeDaysMax = 3652
 const orderLimitCountMinMsgs = 2
-const orderLimitCountMinSubs = 10
+const orderLimitCountMinSubs = 11
 const orderLimitCountMaxSubs = 8333
 const orderLimitCountMaxMsgs = 8333 // = $9999.6
 
@@ -43,7 +43,7 @@ func (oe OrderExtend) validate() (err error) {
 				)
 			}
 		case usage.SubjectSubscriptions:
-			if oe.Count < orderLimitCountMaxSubs || oe.Count > orderLimitCountMaxSubs {
+			if oe.Count < orderLimitCountMinSubs || oe.Count > orderLimitCountMaxSubs {
 				err = fmt.Errorf(
 					"%w: count is %d, should be in the range [%d; %d]",
 					errInvalidOrder,
