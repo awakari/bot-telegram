@@ -147,7 +147,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 			Currency:    lh.CfgPayment.Currency.Code,
 			Prices: []telebot.Price{
 				{
-					Label:  fmt.Sprintf("add %d days for %d items", countExtra, daysAdd),
+					Label:  fmt.Sprintf("add %d days for %d items", daysAdd, countExtra),
 					Amount: price,
 				},
 			},
