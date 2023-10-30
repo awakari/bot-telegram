@@ -43,7 +43,7 @@ func (eh ExtendHandler) RequestExtensionDaysCount(tgCtx telebot.Context, args ..
 	subId := args[0]
 	_ = tgCtx.Send(
 		fmt.Sprintf(
-			"Reply the number of days to extend (%d-%d). Price is %s %f per subscription-day starting from 2nd.",
+			"Reply the number of days to extend (%d-%d). Price is %s %.2f per day.",
 			daysMin,
 			daysMax,
 			eh.CfgPayment.Currency.Code,

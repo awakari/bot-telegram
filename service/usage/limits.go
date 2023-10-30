@@ -3,6 +3,7 @@ package usage
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
@@ -50,7 +51,29 @@ func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) 
 	var subjCode int64
 	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
 	if err == nil {
-		err = tgCtx.Send("Reply with the count of days to add:")
+		subj := usage.Subject(subjCode)
+		switch subj {
+		case usage.SubjectSubscriptions:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					"The limit extension price is %s %.2f per day per subscription starting from 2nd. "+
+						"Reply with the count of days to add:",
+					lh.CfgPayment.Currency.Code,
+					lh.CfgPayment.Price.Subscription.CountLimit,
+				),
+			)
+		case usage.SubjectPublishEvents:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					"The limit extension price is %s %.2f per day per message starting from 11th. "+
+						"Reply with the count of days to add:",
+					lh.CfgPayment.Currency.Code,
+					lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+				),
+			)
+		default:
+			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
+		}
 	}
 	if err == nil {
 		err = tgCtx.Send(
@@ -207,7 +230,29 @@ func (lh LimitsHandler) RequestIncrease(tgCtx telebot.Context, args ...string) (
 	var subjCode int64
 	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
 	if err == nil {
-		err = tgCtx.Send("Reply the count to add to the current limit:")
+		subj := usage.Subject(subjCode)
+		switch subj {
+		case usage.SubjectSubscriptions:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					"The price is %s %.2f per day per additional subscription. "+
+						"Reply the count to add to the current limit:",
+					lh.CfgPayment.Currency.Code,
+					lh.CfgPayment.Price.Subscription.CountLimit,
+				),
+			)
+		case usage.SubjectPublishEvents:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					"The price is %s %.2f per day per additional message. "+
+						"Reply the count to add to the current limit:",
+					lh.CfgPayment.Currency.Code,
+					lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+				),
+			)
+		default:
+			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
+		}
 	}
 	if err == nil {
 		err = tgCtx.Send(
