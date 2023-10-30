@@ -20,12 +20,16 @@ const fmtMsgPrices = `
 <b>Prices</b> (in %s):
 
 - Custom Usage Limits:
-  - Subscriptions Count, starting from 2nd: %.2f per item per day
-  - Messages Publication, starting from 11th: %.2f per item per day
+  - Subscriptions Count, starting from 2nd: 
+	%.2f per item-day
+  - Messages Publication, starting from 11th: 
+	%.2f per item-day
 
 - On Demand:
-  - A subscription extension: %.2f per day 
-  - A message publication when limit is reached: %.2f
+  - A subscription extension:
+	%.2f per day
+  - A message publication when limit is reached: 
+	%.2f per message
 `
 
 func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
