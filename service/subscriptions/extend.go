@@ -88,24 +88,23 @@ func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...stri
 		orderData, err = json.Marshal(o)
 	}
 	if err == nil {
-		label := fmt.Sprintf("Subscription %s: add %d days", subId, countDays)
 		price := int(float64(countDays) * eh.CfgPayment.Price.Subscription.Extension * eh.CfgPayment.Currency.SubFactor)
 		invoice := telebot.Invoice{
 			Start:       uuid.NewString(),
-			Title:       fmt.Sprintf("Extend subscription by %d days", countDays),
-			Description: label,
+			Title:       "Subscription Extension",
+			Description: fmt.Sprintf("Subscription %s: extend by %d days", subId, countDays),
 			Payload:     string(orderData),
 			Currency:    eh.CfgPayment.Currency.Code,
 			Prices: []telebot.Price{
 				{
-					Label:  label,
+					Label:  fmt.Sprintf("extend by %d days", countDays),
 					Amount: price,
 				},
 			},
 			Token: eh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		err = tgCtx.Send("To proceed, please pay the below invoice", eh.RestoreKbd)
+		err = tgCtx.Send("To proceed, please pay the below invoice:", eh.RestoreKbd)
 		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
 	return

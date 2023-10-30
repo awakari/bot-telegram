@@ -100,16 +100,19 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 	var l usage.Limit
 	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", lh.GroupId)
 	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
+	var countExtra int64
 	var priceTotal float64
 	if err == nil {
 		var pricePerItem float64
 		switch subj {
 		case usage.SubjectSubscriptions:
 			pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
-			priceTotal = pricePerItem * float64(daysAdd*(l.Count-1))
+			countExtra = l.Count - 1 // 1st is for free
+			priceTotal = pricePerItem * float64(daysAdd*countExtra)
 		case usage.SubjectPublishEvents:
 			pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
-			priceTotal = pricePerItem * float64(daysAdd*(l.Count-10))
+			countExtra = l.Count - 10 // first 10 is for free
+			priceTotal = pricePerItem * float64(daysAdd*countExtra)
 		}
 		if priceTotal <= 1 {
 			err = fmt.Errorf("%w: total price too low: %s %f", errInvalidOrder, lh.CfgPayment.Currency.Code, priceTotal)
@@ -134,18 +137,17 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		}
 		orderData, err = json.Marshal(o)
 	}
-	label := fmt.Sprintf("%d %s: add %d days", l.Count, formatUsageSubject(subj), daysAdd)
 	if err == nil {
 		price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
 		invoice := telebot.Invoice{
 			Start:       uuid.NewString(),
-			Title:       fmt.Sprintf("%s new expiration time: %s", formatUsageSubject(subj), ol.Expires.Format(time.RFC3339)),
-			Description: label,
+			Title:       fmt.Sprintf("%s limit extension", formatUsageSubject(subj)),
+			Description: fmt.Sprintf("Extend %s limit of %d until %s", formatUsageSubject(subj), ol.Count, ol.Expires.Format(time.RFC3339)),
 			Payload:     string(orderData),
 			Currency:    lh.CfgPayment.Currency.Code,
 			Prices: []telebot.Price{
 				{
-					Label:  label,
+					Label:  fmt.Sprintf("add %d days for %d items", countExtra, daysAdd),
 					Amount: price,
 				},
 			},
@@ -330,18 +332,17 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		orderData, err = json.Marshal(o)
 	}
 	//
-	label := fmt.Sprintf("%s: %d x %d days", formatUsageSubject(subj), ol.Count, days)
 	if err == nil {
 		price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
 		invoice := telebot.Invoice{
 			Start:       uuid.NewString(),
-			Title:       fmt.Sprintf("%s set %d until %s", formatUsageSubject(subj), ol.Count, expiresNew.Format(time.RFC3339)),
-			Description: label,
+			Title:       fmt.Sprintf("%s limit increase", formatUsageSubject(subj)),
+			Description: fmt.Sprintf("Set %s limit to %d until %s", formatUsageSubject(subj), ol.Count, expiresNew.Format(time.RFC3339)),
 			Payload:     string(orderData),
 			Currency:    lh.CfgPayment.Currency.Code,
 			Prices: []telebot.Price{
 				{
-					Label:  label,
+					Label:  fmt.Sprintf("add %d items for %d days", countAdd, days),
 					Amount: price,
 				},
 			},
