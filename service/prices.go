@@ -12,12 +12,12 @@ type PricesHandler struct {
 }
 
 const fmtMsgPrices = `
-Always Free:
+**Always Free**:
 * 1 subscription that never expires. 
 * Publish up to 10 messages daily.
 * Adding own publishing sources.
 
-Prices:
+**Prices**:
 * Custom Usage Limit:
 	* Every subscription starting from the 2nd: %s %.2f per day
 	* Every message publication starting from 11th: %s %.2f per day
