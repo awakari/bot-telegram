@@ -34,7 +34,8 @@ func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.MessagePublishing.Extra,
 		),
-		telebot.ModeMarkdownV2,
+		ph.RestoreKbd,
+		telebot.ModeMarkdown,
 	)
 	return
 }
