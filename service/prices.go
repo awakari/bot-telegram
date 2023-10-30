@@ -19,16 +19,16 @@ const fmtMsgPrices = `
 
 <b>Prices</b> (in %s):
 
-Custom Usage Limits:
-  - Subscriptions Count, starting from 2nd: 
+Committed Usage:
+  - Subscriptions Count Limit above free level (starting from 2nd): 
 	  %.2f per item-day
-  - Messages Publication, starting from 11th: 
+  - Messages Publication Limit above free level (starting from 11th): 
 	  %.2f per item-day
 
 On Demand:
-  - A subscription extension:
+  - A subscription time extension:
 	  %.2f per day
-  - A message publication when limit is reached: 
+  - A message publication after the current limit is reached: 
 	  %.2f per message
 `
 
