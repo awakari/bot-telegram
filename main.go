@@ -242,7 +242,6 @@ func main() {
 		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
 		"support":                       supportHandler.Support,
-		"prices":                        pricesHandler.Prices,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
@@ -318,6 +317,7 @@ func main() {
 			ForceReply: true,
 		})
 	})
+	b.Handle("/prices", pricesHandler.Prices)
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))

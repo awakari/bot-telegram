@@ -23,7 +23,7 @@ Prices:
 * Every message publication above current limit: %s %.2f
 `
 
-func (ph PricesHandler) Prices(tgCtx telebot.Context, args ...string) (err error) {
+func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 	err = tgCtx.Send(
 		fmt.Sprintf(
 			fmtMsgPrices,
