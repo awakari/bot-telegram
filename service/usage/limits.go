@@ -43,6 +43,7 @@ type LimitsHandler struct {
 	ClientAwk   api.Client
 	GroupId     string
 	Log         *slog.Logger
+	RestoreKbd  *telebot.ReplyMarkup
 }
 
 func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) (err error) {
@@ -128,7 +129,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 			Token: lh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice, lh.RestoreKbd)
 	}
 	return
 }
@@ -161,7 +162,7 @@ func (lh LimitsHandler) HandleLimitOrderPaid(tgCtx telebot.Context, args ...stri
 		})
 	}
 	if err == nil {
-		err = tgCtx.Send("Limit has been successfully increased")
+		err = tgCtx.Send("Limit has been successfully increased", lh.RestoreKbd)
 	}
 	return
 }
@@ -302,7 +303,7 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 			Token: lh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice, lh.RestoreKbd)
 	}
 	//
 	return

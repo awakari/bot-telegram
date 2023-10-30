@@ -31,128 +31,131 @@ const daysMin = 10
 const daysMax = 365
 const msgFmtRunOnceFailed = "failed to extend subscription, id: %s, user id: %s, cause: %s, retrying in: %s"
 
-func ExtendReqHandlerFunc() service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		subId := args[0]
-		_ = tgCtx.Send(fmt.Sprintf("Reply the number of days to extend (%d-%d):", daysMin, daysMax))
-		err = tgCtx.Send(
-			fmt.Sprintf("%s %s", ReqSubExtend, subId),
-			&telebot.ReplyMarkup{
-				ForceReply:  true,
-				Placeholder: strconv.Itoa(usage.ExpiresDefaultDays),
-			},
-		)
-		return
-	}
+type ExtendHandler struct {
+	CfgPayment config.PaymentConfig
+	ClientAwk  api.Client
+	GroupId    string
+	Log        *slog.Logger
+	RestoreKbd *telebot.ReplyMarkup
 }
 
-func ExtendReplyHandlerFunc(cfgPayment config.PaymentConfig, kbd *telebot.ReplyMarkup) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		if len(args) != 3 {
-			err = errors.New("invalid argument count")
+func (eh ExtendHandler) RequestExtensionDaysCount(tgCtx telebot.Context, args ...string) (err error) {
+	subId := args[0]
+	_ = tgCtx.Send(
+		fmt.Sprintf(
+			"Reply the number of days to extend (%d-%d). Price is %s %f per subscription-day starting from 2nd.",
+			daysMin,
+			daysMax,
+			eh.CfgPayment.Currency.Code,
+			eh.CfgPayment.Price.Subscription.Extension,
+		),
+	)
+	err = tgCtx.Send(
+		fmt.Sprintf("%s %s", ReqSubExtend, subId),
+		&telebot.ReplyMarkup{
+			ForceReply:  true,
+			Placeholder: strconv.Itoa(usage.ExpiresDefaultDays),
+		},
+	)
+	return
+}
+
+func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...string) (err error) {
+	if len(args) != 3 {
+		err = errors.New("invalid argument count")
+	}
+	subId, daysReply := args[1], args[2]
+	var countDays uint64
+	countDays, err = strconv.ParseUint(daysReply, 10, 16)
+	if err == nil {
+		if countDays < daysMin || countDays > daysMax {
+			err = errors.New(fmt.Sprintf("invalid days count, should be %d-%d", daysMin, daysMax))
 		}
-		subId, daysReply := args[1], args[2]
-		var countDays uint64
-		countDays, err = strconv.ParseUint(daysReply, 10, 16)
-		if err == nil {
-			if countDays < daysMin || countDays > daysMax {
-				err = errors.New(fmt.Sprintf("invalid days count, should be %d-%d", daysMin, daysMax))
-			}
+	}
+	var orderPayloadData []byte
+	if err == nil {
+		orderPayloadData, err = json.Marshal(ExtendOrder{
+			SubId:   subId,
+			DaysAdd: countDays,
+		})
+	}
+	var orderData []byte
+	if err == nil {
+		o := service.Order{
+			Purpose: PurposeExtend,
+			Payload: string(orderPayloadData),
 		}
-		var orderPayloadData []byte
-		if err == nil {
-			orderPayloadData, err = json.Marshal(ExtendOrder{
-				SubId:   subId,
-				DaysAdd: countDays,
-			})
-		}
-		var orderData []byte
-		if err == nil {
-			o := service.Order{
-				Purpose: PurposeExtend,
-				Payload: string(orderPayloadData),
-			}
-			orderData, err = json.Marshal(o)
-		}
-		if err == nil {
-			label := fmt.Sprintf("Subscription %s: add %d days", subId, countDays)
-			price := int(float64(countDays) * cfgPayment.Price.Subscription.Extension * cfgPayment.Currency.SubFactor)
-			invoice := telebot.Invoice{
-				Start:       uuid.NewString(),
-				Title:       fmt.Sprintf("Extend subscription by %d days", countDays),
-				Description: label,
-				Payload:     string(orderData),
-				Currency:    cfgPayment.Currency.Code,
-				Prices: []telebot.Price{
-					{
-						Label:  label,
-						Amount: price,
-					},
+		orderData, err = json.Marshal(o)
+	}
+	if err == nil {
+		label := fmt.Sprintf("Subscription %s: add %d days", subId, countDays)
+		price := int(float64(countDays) * eh.CfgPayment.Price.Subscription.Extension * eh.CfgPayment.Currency.SubFactor)
+		invoice := telebot.Invoice{
+			Start:       uuid.NewString(),
+			Title:       fmt.Sprintf("Extend subscription by %d days", countDays),
+			Description: label,
+			Payload:     string(orderData),
+			Currency:    eh.CfgPayment.Currency.Code,
+			Prices: []telebot.Price{
+				{
+					Label:  label,
+					Amount: price,
 				},
-				Token: cfgPayment.Provider.Token,
-				Total: price,
-			}
-			err = tgCtx.Send("To proceed, please pay the below invoice", kbd)
-			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+			},
+			Token: eh.CfgPayment.Provider.Token,
+			Total: price,
 		}
-		return
+		err = tgCtx.Send("To proceed, please pay the below invoice", eh.RestoreKbd)
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
+	return
 }
 
-func ExtendPreCheckout(clientAwk api.Client, groupId string, cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		ctx, cancel := context.WithTimeout(context.TODO(), cfgPayment.PreCheckout.Timeout)
-		defer cancel()
-		groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
-		var op ExtendOrder
-		err = json.Unmarshal([]byte(args[0]), &op)
-		if err == nil {
-			_, err = clientAwk.ReadSubscription(groupIdCtx, userId, op.SubId)
-		}
-		switch err {
-		case nil:
-			err = tgCtx.Accept()
-		default:
-			err = tgCtx.Accept(err.Error())
-		}
-		return
+func (eh ExtendHandler) ExtensionPreCheckout(tgCtx telebot.Context, args ...string) (err error) {
+	ctx, cancel := context.WithTimeout(context.TODO(), eh.CfgPayment.PreCheckout.Timeout)
+	defer cancel()
+	groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", eh.GroupId)
+	userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
+	var op ExtendOrder
+	err = json.Unmarshal([]byte(args[0]), &op)
+	if err == nil {
+		_, err = eh.ClientAwk.ReadSubscription(groupIdCtx, userId, op.SubId)
 	}
+	switch err {
+	case nil:
+		err = tgCtx.Accept()
+	default:
+		err = tgCtx.Accept(err.Error())
+	}
+	return
 }
 
-func ExtendPaid(
-	clientAwk api.Client,
-	groupId string,
-	log *slog.Logger,
-	cfgBackoff config.BackoffConfig,
-) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		var op ExtendOrder
-		err = json.Unmarshal([]byte(args[0]), &op)
-		if err == nil {
-			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-			e := extendAction{
-				clientAwk: clientAwk,
-				groupId:   groupId,
-				userId:    userId,
-				op:        op,
+func (eh ExtendHandler) ExtendPaid(tgCtx telebot.Context, args ...string) (err error) {
+	var op ExtendOrder
+	err = json.Unmarshal([]byte(args[0]), &op)
+	if err == nil {
+		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		e := extendAction{
+			clientAwk: eh.ClientAwk,
+			groupId:   eh.GroupId,
+			userId:    userId,
+			op:        op,
+		}
+		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = eh.CfgPayment.Backoff.Init
+		b.Multiplier = eh.CfgPayment.Backoff.Factor
+		b.MaxElapsedTime = eh.CfgPayment.Backoff.LimitTotal
+		err = backoff.RetryNotify(e.runOnce, b, func(err error, d time.Duration) {
+			eh.Log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, op.SubId, userId, err, d))
+			if d > 1*time.Second {
+				_ = tgCtx.Send("Extending the subscription, please wait...")
 			}
-			b := backoff.NewExponentialBackOff()
-			b.InitialInterval = cfgBackoff.Init
-			b.Multiplier = cfgBackoff.Factor
-			b.MaxElapsedTime = cfgBackoff.LimitTotal
-			err = backoff.RetryNotify(e.runOnce, b, func(err error, d time.Duration) {
-				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, op.SubId, userId, err, d))
-				if d > 1*time.Second {
-					_ = tgCtx.Send("Extending the subscription, please wait...")
-				}
-			})
-		}
-		if err == nil {
-			err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd))
-		}
-		return
+		})
 	}
+	if err == nil {
+		err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd), eh.RestoreKbd)
+	}
+	return
 }
 
 type extendAction struct {

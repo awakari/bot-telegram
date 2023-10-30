@@ -187,12 +187,20 @@ func main() {
 		ClientAwk:   clientAwk,
 		GroupId:     groupId,
 		Log:         log,
+		RestoreKbd:  menuKbd,
+	}
+	subExtHandler := subscriptions.ExtendHandler{
+		CfgPayment: cfg.Payment,
+		ClientAwk:  clientAwk,
+		GroupId:    groupId,
+		Log:        log,
+		RestoreKbd: menuKbd,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
-		subscriptions.CmdExtend:      subscriptions.ExtendReqHandlerFunc(),
+		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
 		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
@@ -225,7 +233,7 @@ func main() {
 		subscriptions.ReqDelete:         subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
 		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
-		subscriptions.ReqSubExtend:      subscriptions.ExtendReplyHandlerFunc(cfg.Payment, menuKbd),
+		subscriptions.ReqSubExtend:      subExtHandler.HandleExtensionReply,
 		usage.ReqLimitExtend:            limitsHandler.HandleExtension,
 		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
@@ -233,12 +241,12 @@ func main() {
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
-		subscriptions.PurposeExtend: subscriptions.ExtendPreCheckout(clientAwk, groupId, cfg.Payment),
+		subscriptions.PurposeExtend: subExtHandler.ExtensionPreCheckout,
 		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.HandleLimitOrderPaid,
-		subscriptions.PurposeExtend: subscriptions.ExtendPaid(clientAwk, groupId, log, cfg.Payment.Backoff),
+		subscriptions.PurposeExtend: subExtHandler.ExtendPaid,
 		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}
 

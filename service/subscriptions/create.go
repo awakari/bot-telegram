@@ -25,19 +25,21 @@ const limitTextCondTermsLength = 256
 const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
 const ReqSubCreateBasic = "sub_create_basic"
-
-var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
-var errInvalidCondition = errors.New("invalid subscription condition")
-var errLimitReached = errors.New("subscription count limit reached")
-
-var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
-var msgSubCreated = `Subscription created, next: 
+const msgSubCreateBasic = "Creating a basic subscription with a single text matching condition. " +
+	"Reply a name followed by keywords to the next message. Example:\n" +
+	"<pre>Wishlist1 tesla iphone</pre>"
+const msgSubCreated = `Subscription created, next: 
 1. Create a target group chat to receive the matching messages. 
 2. Invite @AwakariBot to the group.
 3. Select the subscription in the group from the list.`
 
+var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
+var errInvalidCondition = errors.New("invalid subscription condition")
+var errLimitReached = errors.New("subscription count limit reached")
+var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
+
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
-	_ = tgCtx.Send("Reply with new subscription name followed by keywords")
+	_ = tgCtx.Send(msgSubCreateBasic, telebot.ModeHTML)
 	m := &telebot.ReplyMarkup{
 		ForceReply:  true,
 		Placeholder: "name keyword1 keyword2 ...",
@@ -127,7 +129,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		switch {
 		case errors.Is(err, limits.ErrReached):
 			err = fmt.Errorf(
-				"%w, increase using the button \"%s\" under the \"%s\" button in the main keyboard",
+				"%w, increase limit using the button \"%s\" under the \"%s\" button in the main keyboard",
 				errLimitReached,
 				service.LabelSubUsage,
 				service.LabelSubList,

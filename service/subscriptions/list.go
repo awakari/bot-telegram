@@ -17,6 +17,7 @@ const CmdPageNext = "subs_next"
 
 const pageLimit = 10
 const cmdLimit = 64
+const msgList = `Own subscriptions list. Select any to see the details and available actions:`
 
 func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
@@ -25,7 +26,7 @@ func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId strin
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails, "")
 		if err == nil {
-			err = tgCtx.Send("Select a subscription to see the details and available actions:", m, telebot.ModeHTML)
+			err = tgCtx.Send(msgList, m, telebot.ModeHTML)
 		}
 		return
 	}
@@ -38,7 +39,7 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart, "")
 		if err == nil {
-			err = tgCtx.Send("Select a subscription to read in this chat:", m)
+			err = tgCtx.Send("Own subscriptions list. Select one or more to read in this chat:", m)
 		}
 		return
 	}
@@ -51,7 +52,7 @@ func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) serv
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], args[1])
 		if err == nil {
-			err = tgCtx.Send("Select a subscription to see the details and available actions:", m, telebot.ModeHTML)
+			err = tgCtx.Send("Own subscriptions list page:", m, telebot.ModeHTML)
 		}
 		return
 	}
