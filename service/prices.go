@@ -12,18 +12,24 @@ type PricesHandler struct {
 }
 
 const fmtMsgPrices = `
-**Always Free**:
-✅ 1 subscription that never expires. 
-✅ Publish up to 10 messages daily.
-✅ Adding own publishing sources.
+<b>Always Free</b>:
+🎁 1 subscription that never expires. 
+🎁 Publish up to 10 messages daily.
+🎁 Adding own publishing sources.
 
-**Prices**:
-- Custom Usage Limit:
-	- Every subscription starting from the 2nd: %s %.2f per day
-	- Every message publication starting from 11th: %s %.2f per day
+<b>Prices</b> (in %s):
+<pre>
+- Custom Usage Limits:
+  - Subscriptions Count, starting from 2nd:
+	%.2f per item per day
+  - Messages Publication, starting from 11th: 
+	%.2f per item per day
 - On Demand:
-	- A subscription extension: %s %.2f per day 
-	- A message publication when limit is reached: %s %.2f
+  - A subscription extension: 
+	%.2f per day 
+  - A message publication when limit is reached: 
+	%.2f
+</pre>
 `
 
 func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
@@ -32,15 +38,12 @@ func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 			fmtMsgPrices,
 			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.Subscription.CountLimit,
-			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.MessagePublishing.DailyLimit,
-			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.Subscription.Extension,
-			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.MessagePublishing.Extra,
 		),
 		ph.RestoreKbd,
-		telebot.ModeMarkdown,
+		telebot.ModeHTML,
 	)
 	return
 }
