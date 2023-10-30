@@ -153,6 +153,10 @@ func main() {
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 		RestoreKbd:    menuKbd,
 	}
+	pricesHandler := service.PricesHandler{
+		CfgPayment: cfg.Payment,
+		RestoreKbd: menuKbd,
+	}
 	srcAddHandler := sources.AddHandler{
 		SvcFeeds:       svcSrcFeeds,
 		SvcTg:          svcSrcTg,
@@ -238,6 +242,7 @@ func main() {
 		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
 		"support":                       supportHandler.Support,
+		"prices":                        pricesHandler.Prices,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
