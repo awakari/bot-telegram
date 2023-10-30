@@ -154,7 +154,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 			Token: lh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice, lh.RestoreKbd)
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
 	return
 }
@@ -349,7 +349,7 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 			Token: lh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice, lh.RestoreKbd)
+		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
 	//
 	return
