@@ -18,9 +18,12 @@ Always Free:
 * Adding own publishing sources.
 
 Prices:
-* Every subscription starting from the 2nd, daily: %s %.2f
-* Every message publication starting from 11th, up to the limit: %s %.2f
-* Every message publication above current limit: %s %.2f
+* Custom Usage Limit:
+	* Every subscription starting from the 2nd: %s %.2f per day
+	* Every message publication starting from 11th: %s %.2f per day
+* On Demand:
+	* A subscription extension: %s %.2f per day 
+	* A message publication when limit is reached: %s %.2f
 `
 
 func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
@@ -31,6 +34,8 @@ func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 			ph.CfgPayment.Price.Subscription.CountLimit,
 			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.MessagePublishing.DailyLimit,
+			ph.CfgPayment.Currency.Code,
+			ph.CfgPayment.Price.Subscription.Extension,
 			ph.CfgPayment.Currency.Code,
 			ph.CfgPayment.Price.MessagePublishing.Extra,
 		),
