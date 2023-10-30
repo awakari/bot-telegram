@@ -11,8 +11,7 @@ type PricesHandler struct {
 	RestoreKbd *telebot.ReplyMarkup
 }
 
-const fmtMsgPrices = `
-<b>Always Free</b>:
+const fmtMsgPrices = `<b>Always Free</b>:
 🎁 1 subscription that never expires. 
 🎁 Publish up to 10 messages daily.
 🎁 Adding own publishing sources.
@@ -29,8 +28,7 @@ On Demand:
   - A subscription time extension:
 	  %.2f per day
   - A message publication after the current limit is reached: 
-	  %.2f per message
-`
+	  %.2f per message`
 
 func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 	err = tgCtx.Send(

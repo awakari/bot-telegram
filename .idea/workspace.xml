@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="ALL" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="84ad22f6-b088-4422-a475-ba1a5ca726bb" name="Changes" comment="+ /prices command">
+      <change afterPath="$PROJECT_DIR$/.idea/bot-telegram.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/prices.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/prices.go" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Go File" />
+      </list>
+    </option>
+  </component>
+  <component name="GOROOT" url="file:///usr/lib/go" />
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="KubernetesApiPersistence">
+    <option name="context" value="admin@kurilov-es-si-bd-dhn-41-test-0" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectId" id="2VWEhFJwwSfB3bYJfh9Wj0AGsaf" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultGoTemplateProperty&quot;: &quot;Go File&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.formatter.settings.were.checked&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.migrated.go.modules.settings&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.go.modules.go.list.on.any.changes.was.set&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;go.import.settings.migrated&quot;: &quot;true&quot;,
+    &quot;go.sdk.automatically.set&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/andrei/work/awakari/bot-telegram&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;google.protobuf.language&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="GoMoveDeclarationDialog.RECENT_KEY">
+      <recent name="$PROJECT_DIR$/service/usage" />
+      <recent name="$PROJECT_DIR$/service" />
+      <recent name="$PROJECT_DIR$/service/messages" />
+      <recent name="$PROJECT_DIR$/api/telegram/subscriptions" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/api/grpc/source/telegram" />
+      <recent name="$PROJECT_DIR$/helm/bot-telegram/templates" />
+      <recent name="$PROJECT_DIR$/api/grpc/source/feeds" />
+      <recent name="$PROJECT_DIR$/service/messages" />
+      <recent name="$PROJECT_DIR$/service" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/service/sources" />
+      <recent name="$PROJECT_DIR$/service/chats" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/api/grpc/subject" />
+      <recent name="$PROJECT_DIR$/api/telegram/subscriptions" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Go Test.storage_mongo_test.go (1)">
+    <configuration name="TestStorageMongo_Create in github.com/awakari/bot-telegram/service/chats" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="bot-telegram" />
+      <working_directory value="$PROJECT_DIR$/service/chats" />
+      <envs>
+        <env name="DB_URI_TEST_MONGO" value="mongodb+srv://akurilov:Yh8yXqDNOPnfILI2@dev0.n5hqdgn.mongodb.net/?retryWrites=true&amp;w=majority" />
+      </envs>
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/awakari/bot-telegram/service/chats" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestStorageMongo_Create\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestStorageMongo_Create/ok in github.com/awakari/bot-telegram/service/chats" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="bot-telegram" />
+      <working_directory value="$PROJECT_DIR$/service/chats" />
+      <envs>
+        <env name="DB_URI_TEST_MONGO" value="mongodb+srv://akurilov:Yh8yXqDNOPnfILI2@dev0.n5hqdgn.mongodb.net/?retryWrites=true&amp;w=majority" />
+      </envs>
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/awakari/bot-telegram/service/chats" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$" />
+      <framework value="gotest" />
+      <pattern value="^\QTestStorageMongo_Create\E$/^\Qok\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="TestStorageMongo_GetBatch in github.com/awakari/bot-telegram/service/chats" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="bot-telegram" />
+      <working_directory value="$PROJECT_DIR$/service/chats" />
+      <envs>
+        <env name="DB_URI_TEST_MONGO" value="mongodb+srv://akurilov:Yh8yXqDNOPnfILI2@dev0.n5hqdgn.mongodb.net/?retryWrites=true&amp;w=majority" />
+      </envs>
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="PACKAGE" />
+      <package value="github.com/awakari/bot-telegram/service/chats" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/service/chats/storage_mongo_test.go" />
+      <framework value="gotest" />
+      <pattern value="^\QTestStorageMongo_GetBatch\E$" />
+      <method v="2" />
+    </configuration>
+    <configuration name="config_test.go" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="bot-telegram" />
+      <working_directory value="$PROJECT_DIR$/config" />
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/config/config_test.go" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <configuration name="storage_mongo_test.go (1)" type="GoTestRunConfiguration" factoryName="Go Test" temporary="true" nameIsGenerated="true">
+      <module name="bot-telegram" />
+      <working_directory value="$PROJECT_DIR$/service/chats" />
+      <envs>
+        <env name="DB_URI_TEST_MONGO" value="mongodb+srv://akurilov:Yh8yXqDNOPnfILI2@dev0.n5hqdgn.mongodb.net/?retryWrites=true&amp;w=majority" />
+      </envs>
+      <root_directory value="$PROJECT_DIR$" />
+      <kind value="FILE" />
+      <package value="github.com/awakari/bot-telegram" />
+      <directory value="$PROJECT_DIR$" />
+      <filePath value="$PROJECT_DIR$/service/chats/storage_mongo_test.go" />
+      <framework value="gotest" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Go Test.storage_mongo_test.go (1)" />
+        <item itemvalue="Go Test.TestStorageMongo_GetBatch in github.com/awakari/bot-telegram/service/chats" />
+        <item itemvalue="Go Test.TestStorageMongo_Create in github.com/awakari/bot-telegram/service/chats" />
+        <item itemvalue="Go Test.TestStorageMongo_Create/ok in github.com/awakari/bot-telegram/service/chats" />
+        <item itemvalue="Go Test.config_test.go" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.History.Properties">
+    <option name="COLUMN_ID_ORDER">
+      <list>
+        <option value="Default.Root" />
+        <option value="Default.Author" />
+        <option value="Default.Date" />
+        <option value="Default.Subject" />
+        <option value="Space.CommitStatus" />
+      </list>
+    </option>
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="de7b8831-12d5-4abe-b1a2-eadc31f54579">
+          <value>
+            <State>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="de7b8831-12d5-4abe-b1a2-eadc31f54579" value="TOOL_WINDOW" />
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="- tmp debug output" />
+    <MESSAGE value="+ sources sub menu" />
+    <MESSAGE value="test msg icons" />
+    <MESSAGE value="rework" />
+    <MESSAGE value="feat: add custom feed source" />
+    <MESSAGE value="feat: list feeds" />
+    <MESSAGE value="feat: list feeds, add subs list pagination" />
+    <MESSAGE value="fix: sub unlink and stop delivering dup messages" />
+    <MESSAGE value="feat: extend feed source" />
+    <MESSAGE value="feat: telegram channel sources list button" />
+    <MESSAGE value="experiments" />
+    <MESSAGE value="experimental statefulset" />
+    <MESSAGE value="experimental statefulset - supports negative chat ids only" />
+    <MESSAGE value="feat: list tg chan sources" />
+    <MESSAGE value="feat: add src tg chan via support" />
+    <MESSAGE value="rework feed sources" />
+    <MESSAGE value="rework feed source add" />
+    <MESSAGE value="fix msg pub limit" />
+    <MESSAGE value="fix src feed add/del" />
+    <MESSAGE value="rework add tg chan src" />
+    <MESSAGE value="+ del tg chan src" />
+    <MESSAGE value="change extend limit to set new limit" />
+    <MESSAGE value="rework limits expiration time extension" />
+    <MESSAGE value="+ chatbot verbosity" />
+    <MESSAGE value="+ /prices command" />
+    <option name="LAST_COMMIT_MESSAGE" value="+ /prices command" />
+  </component>
+  <component name="VgoProject">
+    <settings-migrated>true</settings-migrated>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/bot_telegram$storage_mongo_test_go.out" NAME="storage_mongo_test.go Coverage Results" MODIFIED="1695544033393" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/bot_telegram$service_test_go.out" NAME="service_test.go Coverage Results" MODIFIED="1696496577525" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+    <SUITE FILE_PATH="coverage/bot_telegram$go_test_bot_telegram.out" NAME="go test bot-telegram Coverage Results" MODIFIED="1696520708986" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="GoCoverage" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" />
+  </component>
+</project>
