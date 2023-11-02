@@ -54,6 +54,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
 				})
 			}
+			rows = append(rows, m.Row(btns...))
 			// row 2
 			rows = append(rows, m.Row(
 				telebot.Btn{
