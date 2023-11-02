@@ -3,7 +3,6 @@ package subscriptions
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
@@ -13,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
-	"gopkg.in/yaml.v3"
 	"strconv"
 	"time"
 )
@@ -35,54 +33,43 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		var sd subscription.Data
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
+			// id, delete and condition button
 			m := &telebot.ReplyMarkup{}
-			var rows []telebot.Row
-			// row 1
-			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
-			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(condJsonTxt))
-			btns := []telebot.Btn{
-				{
-					Text: "Condition...",
-					WebApp: &telebot.WebApp{
-						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
-					},
-				},
-			}
-			if !sd.Expires.IsZero() {
-				btns = append(btns, telebot.Btn{
-					Text: "▲ Extend",
-					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
-				})
-			}
-			rows = append(rows, m.Row(btns...))
-			// row 2
-			rows = append(rows, m.Row(
+			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protojson.Format(encodeCondition(sd.Condition))))
+			m.Inline(m.Row(
 				telebot.Btn{
 					Text: "❌ Delete",
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 				},
 				telebot.Btn{
-					Text: "🏷 Describe",
-					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+					Text: "Condition",
+					WebApp: &telebot.WebApp{
+						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
+					},
 				},
 			))
-			m.Inline(rows...)
+			_ = tgCtx.Send(fmt.Sprintf("Subscription: <pre>%s</pre>", subId), m, telebot.ModeHTML)
+			// description: change
+			m = &telebot.ReplyMarkup{}
+			m.Inline(m.Row(telebot.Btn{
+				Text: "Change",
+				Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+			}))
+			_ = tgCtx.Send(fmt.Sprintf("Description: <pre>%s</pre>", sd.Description), m, telebot.ModeHTML)
+			// expires: extend
+			m = &telebot.ReplyMarkup{}
 			var expires string
 			switch {
 			case sd.Expires.IsZero():
 				expires = "never"
 			default:
 				expires = sd.Expires.Format(time.RFC3339)
+				m.Inline(m.Row(telebot.Btn{
+					Text: "▲ Extend",
+					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
+				}))
 			}
-			var condRaw map[string]interface{}
-			err = json.Unmarshal([]byte(condJsonTxt), &condRaw)
-			if err == nil {
-				var condYaml []byte
-				condYaml, err = yaml.Marshal(condRaw)
-				if err == nil {
-					_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, expires, string(condYaml)), m, telebot.ModeHTML)
-				}
-			}
+			_ = tgCtx.Send(fmt.Sprintf("Expires: <pre>%s</pre>", expires), m, telebot.ModeHTML)
 		}
 		return
 	}
