@@ -18,13 +18,6 @@ import (
 
 const CmdDetails = "details"
 
-const msgFmtDetails = `Subscription Details:
-Id: <pre>%s</pre>
-Description: <pre>%s</pre>
-Expires: <pre>%s</pre>
-Condition:
-<pre>%s</pre>`
-
 func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
@@ -42,20 +35,20 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
 				},
 				telebot.Btn{
-					Text: "Condition",
+					Text: "🔎 🔍 Condition",
 					WebApp: &telebot.WebApp{
 						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
 					},
 				},
 			))
-			_ = tgCtx.Send(fmt.Sprintf("Subscription: <pre>%s</pre>", subId), m, telebot.ModeHTML)
+			_ = tgCtx.Send(fmt.Sprintf("Subscription: %s", subId), m)
 			// description: change
 			m = &telebot.ReplyMarkup{}
 			m.Inline(m.Row(telebot.Btn{
 				Text: "Change",
 				Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 			}))
-			_ = tgCtx.Send(fmt.Sprintf("Description: <pre>%s</pre>", sd.Description), m, telebot.ModeHTML)
+			_ = tgCtx.Send(fmt.Sprintf("Description: %s", sd.Description), m)
 			// expires: extend
 			m = &telebot.ReplyMarkup{}
 			var expires string
@@ -69,7 +62,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
 				}))
 			}
-			_ = tgCtx.Send(fmt.Sprintf("Expires: <pre>%s</pre>", expires), m, telebot.ModeHTML)
+			_ = tgCtx.Send(fmt.Sprintf("Expires: %s", expires), m)
 		}
 		return
 	}
