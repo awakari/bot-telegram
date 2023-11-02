@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
@@ -11,6 +12,7 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
+	"gopkg.in/yaml.v3"
 	"strconv"
 	"time"
 )
@@ -53,7 +55,6 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 				})
 			}
 			m.Inline(m.Row(btns...))
-			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
 			var expires string
 			switch {
 			case sd.Expires.IsZero():
@@ -61,7 +62,15 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			default:
 				expires = sd.Expires.Format(time.RFC3339)
 			}
-			_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, expires, condJsonTxt), m, telebot.ModeHTML)
+			var condRaw map[string]interface{}
+			err = json.Unmarshal([]byte(protojson.Format(encodeCondition(sd.Condition))), &condRaw)
+			if err == nil {
+				var condYaml []byte
+				condYaml, err = yaml.Marshal(condRaw)
+				if err == nil {
+					_ = tgCtx.Send(fmt.Sprintf(msgFmtDetails, subId, sd.Description, expires, string(condYaml)), m, telebot.ModeHTML)
+				}
+			}
 		}
 		return
 	}

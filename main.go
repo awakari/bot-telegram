@@ -331,23 +331,6 @@ func main() {
 	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subListHandlerFunc, nil))
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
-	// experimental menu
-	err = b.SetMenuButton(
-		&telebot.User{
-			ID: 362697048,
-		},
-		&telebot.MenuButton{
-			Type: telebot.MenuButtonWebApp,
-			Text: "☰",
-			WebApp: &telebot.WebApp{
-				URL: "https://awakari.app/menu.html",
-			},
-		},
-	)
-	if err != nil {
-		log.Error(err.Error())
-	}
-
 	go func() {
 		var count uint32
 		count, err = chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
