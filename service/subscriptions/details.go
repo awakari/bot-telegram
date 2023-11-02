@@ -45,7 +45,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			// description: change
 			m = &telebot.ReplyMarkup{}
 			m.Inline(m.Row(telebot.Btn{
-				Text: "✏ 🖉 Change",
+				Text: "✏ Change",
 				Data: fmt.Sprintf("%s %s", CmdDescription, subId),
 			}))
 			_ = tgCtx.Send(fmt.Sprintf("Description: %s", sd.Description), m)
