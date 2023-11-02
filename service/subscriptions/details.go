@@ -18,6 +18,12 @@ import (
 
 const CmdDetails = "details"
 
+var protoJsonOpts = protojson.MarshalOptions{
+	EmitUnpopulated: true,
+	Multiline:       false,
+	UseEnumNumbers:  true,
+}
+
 func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
@@ -28,7 +34,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		if err == nil {
 			// id, delete and condition button
 			m := &telebot.ReplyMarkup{}
-			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protojson.Format(encodeCondition(sd.Condition))))
+			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protoJsonOpts.Format(encodeCondition(sd.Condition))))
 			m.Inline(m.Row(
 				telebot.Btn{
 					Text: "❌ Delete",
