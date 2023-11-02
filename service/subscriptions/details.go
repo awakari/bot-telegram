@@ -2,6 +2,7 @@ package subscriptions
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
@@ -35,26 +36,36 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
 			m := &telebot.ReplyMarkup{}
-			//var rows []telebot.Row
+			var rows []telebot.Row
 			// row 1
+			condJsonTxt := protojson.Format(encodeCondition(sd.Condition))
+			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(condJsonTxt))
 			btns := []telebot.Btn{
 				{
-					Text: "🏷 Describe",
-					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
-				},
-				{
-					Text: "❌ Delete",
-					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
+					Text: "Condition...",
+					WebApp: &telebot.WebApp{
+						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
+					},
 				},
 			}
-			// row 2
 			if !sd.Expires.IsZero() {
 				btns = append(btns, telebot.Btn{
 					Text: "▲ Extend",
 					Data: fmt.Sprintf("%s %s", CmdExtend, subId),
 				})
 			}
-			m.Inline(m.Row(btns...))
+			// row 2
+			rows = append(rows, m.Row(
+				telebot.Btn{
+					Text: "❌ Delete",
+					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
+				},
+				telebot.Btn{
+					Text: "🏷 Describe",
+					Data: fmt.Sprintf("%s %s", CmdDescription, subId),
+				},
+			))
+			m.Inline(rows...)
 			var expires string
 			switch {
 			case sd.Expires.IsZero():
@@ -63,7 +74,7 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 				expires = sd.Expires.Format(time.RFC3339)
 			}
 			var condRaw map[string]interface{}
-			err = json.Unmarshal([]byte(protojson.Format(encodeCondition(sd.Condition))), &condRaw)
+			err = json.Unmarshal([]byte(condJsonTxt), &condRaw)
 			if err == nil {
 				var condYaml []byte
 				condYaml, err = yaml.Marshal(condRaw)
