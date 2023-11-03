@@ -233,7 +233,7 @@ func main() {
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 		service.LabelUsageSub:       subscriptions.Usage(clientAwk, groupId),
-		service.LabelPublishing:     messages.DetailsHandlerFunc,
+		service.LabelPublishing:     messages.Details,
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 		service.LabelUsagePub:       pubUsageHandler.Show,
 	}

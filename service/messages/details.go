@@ -18,7 +18,7 @@ var btnPubAddSource = telebot.Btn{
 	},
 }
 
-func DetailsHandlerFunc(tgCtx telebot.Context) (err error) {
+func Details(tgCtx telebot.Context) (err error) {
 	if err == nil {
 		m := &telebot.ReplyMarkup{}
 		m.Inline(
@@ -52,8 +52,8 @@ func DetailsHandlerFunc(tgCtx telebot.Context) (err error) {
 		err = tgCtx.Send("Source Telegram Channels:", m)
 	}
 	if err == nil {
-		m := telebot.ReplyMarkup{}
-		m.Reply(m.Row(btnPubAddSource))
+		m := &telebot.ReplyMarkup{}
+		m.Reply(m.Row(btnMainMenu, btnPubAddSource))
 		err = tgCtx.Send("To add own source, use the corresponding reply keyboard button.", m)
 	}
 	return
