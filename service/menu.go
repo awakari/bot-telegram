@@ -11,7 +11,7 @@ const LabelUsageSub = "Usage"
 const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
-const LabelUsagePub = "Usage "
+const LabelUsagePub = "Usаge"
 const LabelPubAddSource = "+ Source"
 
 var btnSubList = telebot.Btn{

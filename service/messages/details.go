@@ -38,5 +38,10 @@ func DetailsHandlerFunc(tgCtx telebot.Context) (err error) {
 		)
 		err = tgCtx.Send("Source Telegram Channels:", m)
 	}
+	if err == nil {
+		m := telebot.ReplyMarkup{}
+		m.Reply(m.Row())
+		err = tgCtx.Send("To add own source, use the corresponding reply keyboard button.", m)
+	}
 	return
 }
