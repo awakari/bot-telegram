@@ -64,7 +64,9 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			}
 			_ = tgCtx.Send(fmt.Sprintf("Expires: %s", expires), m)
 			// condition
-			m = &telebot.ReplyMarkup{}
+			m = &telebot.ReplyMarkup{
+				ResizeKeyboard: true,
+			}
 			m.Reply(m.Row(
 				service.BtnMainMenu,
 				telebot.Btn{
