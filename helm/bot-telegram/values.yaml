@@ -100,12 +100,14 @@ api:
     provider:
       token: test
   telegram:
-    connections:
-      max: 1000
     support:
       chat:
         id: 0
     token: telegram-bot-token
+    webhook:
+      connections:
+        max: 100
+      token: "xxxxxxxxxx"
 chats:
   # Database related configuration.
   db:

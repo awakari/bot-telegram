@@ -255,9 +255,6 @@ func main() {
 	}
 
 	// init Telegram bot
-	//secret := make([]byte, binary.MaxVarintLen64)
-	//binary.PutUvarint(secret, rand.Uint64())
-	//secretToken := base64.URLEncoding.EncodeToString(secret[:6]), // 6 bytes = 8 base64 symbols
 	s := telebot.Settings{
 		Client: &http.Client{
 			Transport: &http.Transport{
@@ -274,7 +271,7 @@ func main() {
 			HasCustomCert:  true,
 			Listen:         fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
 			MaxConnections: int(cfg.Api.Telegram.Webhook.ConnMax),
-			SecretToken:    "_4zskYGi",
+			SecretToken:    cfg.Api.Telegram.Webhook.Token,
 		},
 		Token: cfg.Api.Telegram.Token,
 	}
