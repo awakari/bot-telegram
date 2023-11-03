@@ -14,6 +14,10 @@ type ConditionHandler struct {
 	GroupId   string
 }
 
+var jsonToProtoOpts = protojson.UnmarshalOptions{
+	DiscardUnknown: true,
+}
+
 func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err error) {
 	condProto := &subscriptions.Condition{}
 	err = convertConditionJsonToProto(args[0], condProto)
@@ -29,7 +33,7 @@ func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err er
 }
 
 func convertConditionJsonToProto(condJson string, condProto *subscriptions.Condition) (err error) {
-	err = protojson.Unmarshal([]byte(condJson), condProto)
+	err = jsonToProtoOpts.Unmarshal([]byte(condJson), condProto)
 	return
 }
 
