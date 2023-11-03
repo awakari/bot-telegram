@@ -13,15 +13,16 @@ type PricesHandler struct {
 
 const fmtMsgPrices = `<b>Always Free</b>:
 🎁 1 subscription that never expires.
+🎁 Up to 10 message publications daily ¹.
 🎁 Adding own publishing sources.
-🎁 Publish up to 10 messages daily *.
 
 <b>Prices</b> (in %s):
+<i>Payments are currently in the test mode. There are no real money transfer.</i>
 
 Committed Usage:
-  - Subscriptions quota **: 
+  - Subscriptions quota ²: 
 <pre>     %.2f per item-day</pre>
-  - Message publications quota ***: 
+  - Message publications quota ³: 
 <pre>     %.2f per item-day</pre>
 
 On Demand:
@@ -30,9 +31,9 @@ On Demand:
   - Publish a message after the current limit is reached: 
 <pre>     %.2f per message</pre>
 
-* Includes the messages been published from added sources.
-** Above free level (starting from 2nd subscription).
-***  Above free level (starting from 11th message per day)`
+(1) Includes the messages been published from added sources.
+(2) Starting from 2nd subscription.
+(3) Starting from 11th message per day.`
 
 func (ph PricesHandler) Prices(tgCtx telebot.Context) (err error) {
 	err = tgCtx.Send(
