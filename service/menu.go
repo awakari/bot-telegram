@@ -60,8 +60,7 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 		kbd.Row(btnSubList),
 		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsage),
 		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnUsage),
-		kbd.Row(btnPubAddSource),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnPubAddSource),
 	)
 	return
 }
