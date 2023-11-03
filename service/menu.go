@@ -7,7 +7,7 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
-const LabelSubUsage = "Usage"
+const LabelUsage = "Usage"
 const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
@@ -28,8 +28,8 @@ var btnSubNewCustom = telebot.Btn{
 	},
 }
 
-var btnSubUsage = telebot.Btn{
-	Text: LabelSubUsage,
+var btnUsage = telebot.Btn{
+	Text: LabelUsage,
 }
 
 var btnMsgs = telebot.Btn{
@@ -58,9 +58,10 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
 		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnSubUsage),
+		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsage),
 		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnPubAddSource),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnUsage),
+		kbd.Row(btnPubAddSource),
 	)
 	return
 }

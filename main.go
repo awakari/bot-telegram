@@ -228,7 +228,7 @@ func main() {
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
-		service.LabelSubUsage:       subscriptions.Usage(clientAwk, groupId),
+		service.LabelUsage:          subscriptions.Usage(clientAwk, groupId),
 		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 	}
