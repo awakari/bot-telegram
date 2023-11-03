@@ -12,6 +12,7 @@ const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
 const LabelUsagePub = "Usageᴾ"
+const LabelMainMenu = "< Main Menu"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -49,6 +50,10 @@ var btnMsgNewCustom = telebot.Btn{
 
 var btnUsagePub = telebot.Btn{
 	Text: LabelUsagePub,
+}
+
+var BtnMainMenu = telebot.Btn{
+	Text: LabelMainMenu,
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {

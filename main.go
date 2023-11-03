@@ -236,6 +236,9 @@ func main() {
 		service.LabelPublishing:     messages.Details,
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
 		service.LabelUsagePub:       pubUsageHandler.Show,
+		service.LabelMainMenu: func(tgCtx telebot.Context) error {
+			return tgCtx.Send("Main menu reply keyboard", menuKbd)
+		},
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
@@ -331,7 +334,7 @@ func main() {
 			case telebot.ChatSuperGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatPrivate:
-				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd)
+				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}

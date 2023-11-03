@@ -1,16 +1,13 @@
 package messages
 
 import (
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/sources"
 	"gopkg.in/telebot.v3"
 )
 
-const LabelMainMenu = "< Main Menu"
 const LabelPubAddSource = "+ Own Source"
 
-var btnMainMenu = telebot.Btn{
-	Text: LabelMainMenu,
-}
 var btnPubAddSource = telebot.Btn{
 	Text: LabelPubAddSource,
 	WebApp: &telebot.WebApp{
@@ -52,8 +49,10 @@ func Details(tgCtx telebot.Context) (err error) {
 		err = tgCtx.Send("Source Telegram Channels:", m)
 	}
 	if err == nil {
-		m := &telebot.ReplyMarkup{}
-		m.Reply(m.Row(btnMainMenu, btnPubAddSource))
+		m := &telebot.ReplyMarkup{
+			ResizeKeyboard: true,
+		}
+		m.Reply(m.Row(service.BtnMainMenu, btnPubAddSource))
 		err = tgCtx.Send("To add own source, use the corresponding reply keyboard button.", m)
 	}
 	return

@@ -18,7 +18,7 @@ func RootHandlerFunc(txtHandlers map[string]telebot.HandlerFunc, replyHandlers m
 			case true:
 				err = h(tgCtx)
 			default:
-				err = errors.New(fmt.Sprintf("unrecognized command, use the reply keyboard"))
+				err = errors.New(fmt.Sprintf("unrecognized command, use the reply keyboard menu"))
 			}
 		}
 		return
