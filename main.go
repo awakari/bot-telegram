@@ -205,8 +205,9 @@ func main() {
 		GroupId:   groupId,
 	}
 	subCondHandler := subscriptions.ConditionHandler{
-		ClientAwk: clientAwk,
-		GroupId:   groupId,
+		ClientAwk:  clientAwk,
+		GroupId:    groupId,
+		RestoreKbd: menuKbd,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),

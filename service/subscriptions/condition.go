@@ -15,8 +15,9 @@ import (
 )
 
 type ConditionHandler struct {
-	ClientAwk api.Client
-	GroupId   string
+	ClientAwk  api.Client
+	GroupId    string
+	RestoreKbd *telebot.ReplyMarkup
 }
 
 type subPayload struct {
@@ -48,11 +49,10 @@ func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err er
 	}
 	if err == nil {
 		sd.Condition = newCond
-		fmt.Printf("update subscription condition: %+v\n", sd.Condition)
 		err = ch.ClientAwk.UpdateSubscription(groupIdCtx, userId, subId, sd)
 	}
 	if err == nil {
-		_ = tgCtx.Send("Subscription updated.")
+		_ = tgCtx.Send("Subscription updated.", ch.RestoreKbd)
 	}
 	return
 }
