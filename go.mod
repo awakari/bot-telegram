@@ -3,7 +3,7 @@ module github.com/awakari/bot-telegram
 go 1.21
 
 require (
-	github.com/awakari/client-sdk-go v1.0.7
+	github.com/awakari/client-sdk-go v1.0.8
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.14.0
 	github.com/google/uuid v1.3.0
@@ -13,7 +13,6 @@ require (
 	github.com/stretchr/testify v1.8.4
 	go.mongodb.org/mongo-driver v1.12.1
 	go.uber.org/ratelimit v0.3.0
-	golang.org/x/sync v0.1.0
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/telebot.v3 v3.1.3
@@ -42,6 +41,7 @@ require (
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	golang.org/x/crypto v0.14.0 // indirect
 	golang.org/x/net v0.17.0 // indirect
+	golang.org/x/sync v0.1.0 // indirect
 	golang.org/x/sys v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/genproto v0.0.0-20230306155012-7f2fa6fef1f4 // indirect
