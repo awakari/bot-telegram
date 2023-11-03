@@ -20,9 +20,10 @@ type Config struct {
 		}
 		Telegram struct {
 			Webhook struct {
-				Host string `envconfig:"API_TELEGRAM_WEBHOOK_HOST" default:"demo.awakari.cloud" required:"true"`
-				Path string `envconfig:"API_TELEGRAM_WEBHOOK_PATH" default:"/" required:"true"`
-				Port uint16 `envconfig:"API_TELEGRAM_WEBHOOK_PORT" default:"8080" required:"true"`
+				Host    string `envconfig:"API_TELEGRAM_WEBHOOK_HOST" default:"demo.awakari.cloud" required:"true"`
+				Path    string `envconfig:"API_TELEGRAM_WEBHOOK_PATH" default:"/" required:"true"`
+				Port    uint16 `envconfig:"API_TELEGRAM_WEBHOOK_PORT" default:"8080" required:"true"`
+				ConnMax uint32 `envconfig:"API_TELEGRAM_WEBHOOK_CONN_MAX" default:"1000"`
 			}
 			SupportChatId int64  `envconfig:"API_TELEGRAM_SUPPORT_CHAT_ID" required:"true"`
 			Token         string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`

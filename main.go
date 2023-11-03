@@ -3,8 +3,6 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/base64"
-	"encoding/binary"
 	"fmt"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
@@ -23,7 +21,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
@@ -258,8 +255,9 @@ func main() {
 	}
 
 	// init Telegram bot
-	secret := make([]byte, binary.MaxVarintLen64)
-	binary.PutUvarint(secret, rand.Uint64())
+	//secret := make([]byte, binary.MaxVarintLen64)
+	//binary.PutUvarint(secret, rand.Uint64())
+	//secretToken := base64.URLEncoding.EncodeToString(secret[:6]), // 6 bytes = 8 base64 symbols
 	s := telebot.Settings{
 		Client: &http.Client{
 			Transport: &http.Transport{
@@ -273,9 +271,10 @@ func main() {
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Telegram.Webhook.Host, cfg.Api.Telegram.Webhook.Path),
 				Cert:      "/etc/server-cert/tls.crt",
 			},
-			HasCustomCert: true,
-			Listen:        fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
-			SecretToken:   base64.URLEncoding.EncodeToString(secret[:6]), // 6 bytes = 8 base64 symbols
+			HasCustomCert:  true,
+			Listen:         fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
+			MaxConnections: int(cfg.Api.Telegram.Webhook.ConnMax),
+			SecretToken:    "_4zskYGi",
 		},
 		Token: cfg.Api.Telegram.Token,
 	}

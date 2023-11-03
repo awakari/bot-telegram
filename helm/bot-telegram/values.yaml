@@ -100,6 +100,8 @@ api:
     provider:
       token: test
   telegram:
+    connections:
+      max: 1000
     support:
       chat:
         id: 0
