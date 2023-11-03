@@ -7,10 +7,11 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
-const LabelUsage = "Usage"
+const LabelUsageSub = "Usage Sub"
 const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
+const LabelUsagePub = "Usage Pub"
 const LabelPubAddSource = "+ Source"
 
 var btnSubList = telebot.Btn{
@@ -28,9 +29,8 @@ var btnSubNewCustom = telebot.Btn{
 	},
 }
 
-var btnUsage = telebot.Btn{
-	Text: LabelUsage,
-	Data: "subs_usage",
+var btnUsageSub = telebot.Btn{
+	Text: LabelUsageSub,
 }
 
 var btnMsgs = telebot.Btn{
@@ -48,6 +48,10 @@ var btnMsgNewCustom = telebot.Btn{
 	},
 }
 
+var btnUsagePub = telebot.Btn{
+	Text: LabelUsagePub,
+}
+
 var btnPubAddSource = telebot.Btn{
 	Text: LabelPubAddSource,
 	WebApp: &telebot.WebApp{
@@ -59,9 +63,9 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{}
 	kbd.Reply(
 		kbd.Row(btnSubList),
-		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsage),
+		kbd.Row(btnSubNewBasic, btnSubNewCustom, btnUsageSub),
 		kbd.Row(btnMsgs),
-		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnPubAddSource),
+		kbd.Row(btnMsgNewBasic, btnMsgNewCustom, btnUsagePub),
 	)
 	return
 }

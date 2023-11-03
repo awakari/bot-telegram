@@ -131,7 +131,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 			err = fmt.Errorf(
 				"%w, increase limit using the button \"%s\" under the \"%s\" button in the main keyboard",
 				errLimitReached,
-				service.LabelUsage,
+				service.LabelUsageSub,
 				service.LabelSubList,
 			)
 		}
