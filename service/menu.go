@@ -30,6 +30,7 @@ var btnSubNewCustom = telebot.Btn{
 
 var btnUsage = telebot.Btn{
 	Text: LabelUsage,
+	Data: "subs_usage",
 }
 
 var btnMsgs = telebot.Btn{

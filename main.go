@@ -281,6 +281,35 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	err = b.SetCommands([]telebot.Command{
+		{
+			Text:        "start",
+			Description: "Start and show main menu",
+		},
+		{
+			Text:        "support",
+			Description: "Request support",
+		},
+		{
+			Text:        "prices",
+			Description: "Prices information",
+		},
+		{
+			Text:        "help",
+			Description: "User guide",
+		},
+		{
+			Text:        "terms",
+			Description: "Terms of service",
+		},
+		{
+			Text:        "privacy",
+			Description: "Privacy policy",
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
