@@ -12,7 +12,6 @@ const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
 const LabelUsagePub = "Usаge"
-const LabelPubAddSource = "+ Source"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -50,13 +49,6 @@ var btnMsgNewCustom = telebot.Btn{
 
 var btnUsagePub = telebot.Btn{
 	Text: LabelUsagePub,
-}
-
-var btnPubAddSource = telebot.Btn{
-	Text: LabelPubAddSource,
-	WebApp: &telebot.WebApp{
-		URL: "https://awakari.app/source-add.html",
-	},
 }
 
 func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {

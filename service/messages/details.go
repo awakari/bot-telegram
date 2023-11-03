@@ -5,6 +5,19 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+const LabelMainMenu = "< Main Menu"
+const LabelPubAddSource = "+ Own Source"
+
+var btnMainMenu = telebot.Btn{
+	Text: LabelMainMenu,
+}
+var btnPubAddSource = telebot.Btn{
+	Text: LabelPubAddSource,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/source-add.html",
+	},
+}
+
 func DetailsHandlerFunc(tgCtx telebot.Context) (err error) {
 	if err == nil {
 		m := &telebot.ReplyMarkup{}
@@ -40,7 +53,7 @@ func DetailsHandlerFunc(tgCtx telebot.Context) (err error) {
 	}
 	if err == nil {
 		m := telebot.ReplyMarkup{}
-		m.Reply(m.Row())
+		m.Reply(m.Row(btnPubAddSource))
 		err = tgCtx.Send("To add own source, use the corresponding reply keyboard button.", m)
 	}
 	return
