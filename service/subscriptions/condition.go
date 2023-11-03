@@ -1,12 +1,17 @@
 package subscriptions
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
+	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
+	"strconv"
 )
 
 type ConditionHandler struct {
@@ -14,26 +19,45 @@ type ConditionHandler struct {
 	GroupId   string
 }
 
+type subPayload struct {
+	Id string `json:"id"`
+}
+
 var jsonToProtoOpts = protojson.UnmarshalOptions{
 	DiscardUnknown: true,
 }
 
 func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err error) {
+	payload := []byte(args[0])
+	var sp subPayload
+	err = json.Unmarshal(payload, &sp)
 	condProto := &subscriptions.Condition{}
-	err = convertConditionJsonToProto(args[0], condProto)
-	//var cond condition.Condition
-	//if err == nil {
-	//    cond, err = decodeCondition(condProto)
-	//}
-	//
-	//if err == nil {
-	//    ch.ClientAwk.UpdateSubscription()
-	//}
+	if err == nil {
+		err = convertConditionJsonToProto(payload, condProto)
+	}
+	var newCond condition.Condition
+	if err == nil {
+		newCond, err = decodeCondition(condProto)
+	}
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "X-Awakari-Group-Id", ch.GroupId)
+	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	subId := sp.Id
+	var sd subscription.Data
+	if err == nil {
+		sd, err = ch.ClientAwk.ReadSubscription(groupIdCtx, userId, subId)
+	}
+	if err == nil {
+		sd.Condition = newCond
+		err = ch.ClientAwk.UpdateSubscription(groupIdCtx, userId, subId, sd)
+	}
+	if err == nil {
+		_ = tgCtx.Send("Subscription updated.")
+	}
 	return
 }
 
-func convertConditionJsonToProto(condJson string, condProto *subscriptions.Condition) (err error) {
-	err = jsonToProtoOpts.Unmarshal([]byte(condJson), condProto)
+func convertConditionJsonToProto(in []byte, out *subscriptions.Condition) (err error) {
+	err = jsonToProtoOpts.Unmarshal(in, out)
 	return
 }
 
