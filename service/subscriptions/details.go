@@ -32,19 +32,13 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		var sd subscription.Data
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			// id, delete and condition button
+			// id: delete
 			m := &telebot.ReplyMarkup{}
 			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protoJsonOpts.Format(encodeCondition(sd.Condition))))
 			m.Inline(m.Row(
 				telebot.Btn{
 					Text: "❌ Delete",
 					Data: fmt.Sprintf("%s %s", CmdDelete, subId),
-				},
-				telebot.Btn{
-					Text: "🔎 Condition",
-					WebApp: &telebot.WebApp{
-						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
-					},
 				},
 			))
 			_ = tgCtx.Send(fmt.Sprintf("Subscription: %s", subId), m)
@@ -69,6 +63,18 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 				}))
 			}
 			_ = tgCtx.Send(fmt.Sprintf("Expires: %s", expires), m)
+			// condition
+			m = &telebot.ReplyMarkup{}
+			m.Reply(m.Row(
+				service.BtnMainMenu,
+				telebot.Btn{
+					Text: "🔎 Condition",
+					WebApp: &telebot.WebApp{
+						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
+					},
+				},
+			))
+			err = tgCtx.Send("To view/edit the subscription's condition, use the corresponding reply keyboard button.", m)
 		}
 		return
 	}
