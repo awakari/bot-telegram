@@ -200,6 +200,10 @@ func main() {
 		Log:        log,
 		RestoreKbd: menuKbd,
 	}
+	pubUsageHandler := messages.UsageHandler{
+		ClientAwk: clientAwk,
+		GroupId:   groupId,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -229,8 +233,9 @@ func main() {
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
 		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
 		service.LabelUsageSub:       subscriptions.Usage(clientAwk, groupId),
-		service.LabelPublishing:     messages.DetailsHandlerFunc(clientAwk, groupId),
+		service.LabelPublishing:     messages.DetailsHandlerFunc,
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
+		service.LabelUsagePub:       pubUsageHandler.Show,
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
