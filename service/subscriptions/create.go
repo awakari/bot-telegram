@@ -139,43 +139,6 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 	return
 }
 
-func decodeCondition(src *subscriptions.Condition) (dst condition.Condition, err error) {
-	gc, nc, tc := src.GetGc(), src.GetNc(), src.GetTc()
-	switch {
-	case gc != nil:
-		var group []condition.Condition
-		var childDst condition.Condition
-		for _, childSrc := range gc.Group {
-			childDst, err = decodeCondition(childSrc)
-			if err != nil {
-				break
-			}
-			group = append(group, childDst)
-		}
-		if err == nil {
-			dst = condition.NewGroupCondition(
-				condition.NewCondition(src.Not),
-				condition.GroupLogic(gc.GetLogic()),
-				group,
-			)
-		}
-	case nc != nil:
-		dstOp := decodeNumOp(nc.Op)
-		dst = condition.NewNumberCondition(
-			condition.NewKeyCondition(condition.NewCondition(src.Not), nc.GetKey()),
-			dstOp, nc.Val,
-		)
-	case tc != nil:
-		dst = condition.NewTextCondition(
-			condition.NewKeyCondition(condition.NewCondition(src.Not), tc.GetKey()),
-			tc.GetTerm(), tc.GetExact(),
-		)
-	default:
-		err = fmt.Errorf("unsupported condition type: %+v", src)
-	}
-	return
-}
-
 func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
 	switch src {
 	case subscriptions.Operation_Gt:

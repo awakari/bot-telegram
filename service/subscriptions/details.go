@@ -17,6 +17,7 @@ import (
 )
 
 const CmdDetails = "details"
+const LabelCond = "🔎 Condition"
 
 var protoJsonOpts = protojson.MarshalOptions{
 	EmitUnpopulated: true,
@@ -34,7 +35,6 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 		if err == nil {
 			// id: delete
 			m := &telebot.ReplyMarkup{}
-			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protoJsonOpts.Format(encodeCondition(sd.Condition))))
 			m.Inline(m.Row(
 				telebot.Btn{
 					Text: "❌ Delete",
@@ -64,15 +64,17 @@ func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandler
 			}
 			_ = tgCtx.Send(fmt.Sprintf("Expires: %s", expires), m)
 			// condition
+			condJsonUrl := base64.URLEncoding.EncodeToString([]byte(protoJsonOpts.Format(encodeCondition(sd.Condition))))
+
 			m = &telebot.ReplyMarkup{
 				ResizeKeyboard: true,
 			}
 			m.Reply(m.Row(
 				service.BtnMainMenu,
 				telebot.Btn{
-					Text: "🔎 Condition",
+					Text: LabelCond,
 					WebApp: &telebot.WebApp{
-						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?cond=%s", condJsonUrl),
+						URL: fmt.Sprintf("https://awakari.app/sub-cond.html?id=%s&cond=%s", subId, condJsonUrl),
 					},
 				},
 			))

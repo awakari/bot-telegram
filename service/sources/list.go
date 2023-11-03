@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
+	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
@@ -21,9 +22,6 @@ const CmdFeedListAll = "feeds_all"
 const CmdFeedListOwn = "feeds_own"
 const CmdTgChListAll = "tgchs_all"
 const CmdTgChListOwn = "tgchs_own"
-
-const pageLimit = 10
-const cmdLimit = 64
 
 func (lh ListHandler) TelegramChannelsAll(tgCtx telebot.Context, args ...string) (err error) {
 	var cursor string
@@ -56,7 +54,7 @@ func (lh ListHandler) TelegramChannelsOwn(tgCtx telebot.Context, args ...string)
 func (lh ListHandler) tgChList(tgCtx telebot.Context, filter *telegram.Filter, cursor string) (err error) {
 	var page []*telegram.Channel
 	if err == nil {
-		page, err = lh.SvcSrcTg.List(context.TODO(), filter, pageLimit, cursor)
+		page, err = lh.SvcSrcTg.List(context.TODO(), filter, service.PageLimit, cursor)
 	}
 	if err == nil {
 		//
@@ -64,7 +62,7 @@ func (lh ListHandler) tgChList(tgCtx telebot.Context, filter *telegram.Filter, c
 		var rows []telebot.Row
 		for _, ch := range page {
 			cmd := fmt.Sprintf("%s %s", CmdTgChDetails, ch.Link)
-			if len(cmd) > cmdLimit {
+			if len(cmd) > service.CmdLimit {
 				rows = append(rows, m.Row(telebot.Btn{
 					Text: ch.Name,
 					URL:  ch.Link,
@@ -77,10 +75,10 @@ func (lh ListHandler) tgChList(tgCtx telebot.Context, filter *telegram.Filter, c
 			}
 
 		}
-		if len(page) == pageLimit {
+		if len(page) == service.PageLimit {
 			cmdNextPage := fmt.Sprintf("%s %s", CmdTgChListAll, page[len(page)-1].Link)
-			if len(cmdNextPage) > cmdLimit {
-				cmdNextPage = cmdNextPage[:cmdLimit]
+			if len(cmdNextPage) > service.CmdLimit {
+				cmdNextPage = cmdNextPage[:service.CmdLimit]
 			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",
@@ -118,7 +116,7 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 		cursor = args[0]
 	}
 	var page []string
-	page, err = lh.SvcSrcFeeds.ListUrls(context.TODO(), filter, pageLimit, cursor)
+	page, err = lh.SvcSrcFeeds.ListUrls(context.TODO(), filter, service.PageLimit, cursor)
 	if err == nil {
 		m := &telebot.ReplyMarkup{}
 		var rows []telebot.Row
@@ -130,15 +128,15 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 			default:
 				cmdData = fmt.Sprintf("%s %s", CmdFeedDetailsOwn, url)
 			}
-			if len(cmdData) > cmdLimit {
-				cmdData = cmdData[:cmdLimit]
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
 			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: url,
 				Data: cmdData,
 			}))
 		}
-		if len(page) == pageLimit {
+		if len(page) == service.PageLimit {
 			var cmdList string
 			switch filter {
 			case nil:
@@ -147,8 +145,8 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 				cmdList = CmdFeedListOwn
 			}
 			cmdData := fmt.Sprintf("%s %s", cmdList, page[len(page)-1])
-			if len(cmdData) > cmdLimit {
-				cmdData = cmdData[:cmdLimit]
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
 			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",

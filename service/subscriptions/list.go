@@ -15,8 +15,6 @@ import (
 
 const CmdPageNext = "subs_next"
 
-const pageLimit = 10
-const cmdLimit = 64
 const msgList = `Own subscriptions list. Select any to see the details and available actions:`
 
 func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
@@ -68,7 +66,7 @@ func listButtons(
 	cursor string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
-	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, pageLimit, cursor)
+	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, service.PageLimit, cursor)
 	if err == nil {
 		m = &telebot.ReplyMarkup{}
 		var sub subscription.Data
@@ -119,10 +117,10 @@ func listButtons(
 				break
 			}
 		}
-		if len(subIds) == pageLimit {
+		if len(subIds) == service.PageLimit {
 			cmdData := fmt.Sprintf("%s %s %s", CmdPageNext, btnCmd, subIds[len(subIds)-1])
-			if len(cmdData) > cmdLimit {
-				cmdData = cmdData[:cmdLimit]
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
 			}
 			rows = append(rows, m.Row(telebot.Btn{
 				Text: "Next Page >",

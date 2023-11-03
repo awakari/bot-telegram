@@ -77,7 +77,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 	}
 	//
 	if err == nil {
-		txtSummary := url
+		txtSummary := feed.Url
 		if feed.UserId != "" {
 			groupId := feed.GroupId
 			switch groupId {
@@ -104,7 +104,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 		if feed.GroupId == dh.GroupId && feed.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
 			m.Inline(m.Row(telebot.Btn{
 				Text: "❌ Delete",
-				Data: fmt.Sprintf("%s %s", CmdDelete, url),
+				Data: fmt.Sprintf("%s %s", CmdDelete, feed.Url),
 			}))
 		}
 		err = tgCtx.Send(txt, m, telebot.ModeHTML)

@@ -204,6 +204,10 @@ func main() {
 		ClientAwk: clientAwk,
 		GroupId:   groupId,
 	}
+	subCondHandler := subscriptions.ConditionHandler{
+		ClientAwk: clientAwk,
+		GroupId:   groupId,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
 		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
@@ -228,6 +232,7 @@ func main() {
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelExtend:            limitsHandler.HandleExtension,
 		messages.LabelPubAddSource:   srcAddHandler.HandleFormData,
+		subscriptions.LabelCond:      subCondHandler.Update,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
 		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
