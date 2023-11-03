@@ -7,11 +7,11 @@ import (
 const LabelSubList = "Subscriptions"
 const LabelSubCreateBasic = "+ Basic"
 const LabelSubCreateCustom = "+ Custom"
-const LabelUsageSub = "Usage"
+const LabelUsageSub = "Usageˢ"
 const LabelPublishing = "Publishing"
 const LabelPubMsgBasic = "▷ Basic"
 const LabelPubMsgCustom = "▷ Custom"
-const LabelUsagePub = "Usаge"
+const LabelUsagePub = "Usageᴾ"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,

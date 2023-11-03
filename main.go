@@ -331,7 +331,7 @@ func main() {
 			case telebot.ChatSuperGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatPrivate:
-				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd, telebot.ModeHTML)
+				err = tgCtx.Send("Use the reply keyboard buttons.", menuKbd)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
