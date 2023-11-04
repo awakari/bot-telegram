@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
+	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
 	"strconv"
 	"strings"
@@ -15,10 +16,11 @@ const CmdDelete = "src_del_req"
 const CmdDeleteConfirm = "src_del"
 
 type DeleteHandler struct {
-	SvcSrcFeeds feeds.Service
-	SvcSrcTg    telegram.Service
-	RestoreKbd  *telebot.ReplyMarkup
-	GroupId     string
+	SvcSrcFeeds    feeds.Service
+	SvcSrcTg       telegram.Service
+	RestoreKbd     *telebot.ReplyMarkup
+	GroupId        string
+	SupportHandler service.SupportHandler
 }
 
 func (dh DeleteHandler) RequestConfirmation(tgCtx telebot.Context, args ...string) (err error) {
@@ -53,6 +55,10 @@ func (dh DeleteHandler) delete(tgCtx telebot.Context, url string) (err error) {
 	switch {
 	case strings.HasPrefix(url, tgChPubLinkPrefix):
 		err = dh.SvcSrcTg.Delete(context.TODO(), url)
+		_ = dh.SupportHandler.Support(
+			tgCtx,
+			fmt.Sprintf("User %s deleted the source telegram channel: %s", userId, url),
+		)
 	default:
 		err = dh.SvcSrcFeeds.Delete(context.TODO(), url, dh.GroupId, userId)
 	}

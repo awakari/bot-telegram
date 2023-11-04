@@ -180,10 +180,11 @@ func main() {
 		GroupId:     groupId,
 	}
 	srcDeleteHandler := sources.DeleteHandler{
-		SvcSrcFeeds: svcSrcFeeds,
-		SvcSrcTg:    svcSrcTg,
-		RestoreKbd:  menuKbd,
-		GroupId:     groupId,
+		SvcSrcFeeds:    svcSrcFeeds,
+		SvcSrcTg:       svcSrcTg,
+		RestoreKbd:     menuKbd,
+		GroupId:        groupId,
+		SupportHandler: supportHandler,
 	}
 	limitsHandler := usage.LimitsHandler{
 		CfgPayment:  cfg.Payment,
