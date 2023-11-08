@@ -116,9 +116,13 @@ func (ah AddHandler) registerSource(ctx context.Context, tgCtx telebot.Context, 
 		if err == nil && chat.Type != telebot.ChatChannel {
 			err = fmt.Errorf("%w: telegram chat type is %s, should be %s", errInvalidAddPayload, chat.Type, telebot.ChatChannel)
 		}
-		if err == nil {
-			err = ah.registerTelegramChannel(ctx, chat, chat.InviteLink, userId)
-		}
+		var inviteLink string
+	        if err == nil {
+	            inviteLink, err = tgCtx.Bot().InviteLink(chat)
+	        }
+	        if err == nil {
+	            err = ah.registerTelegramChannel(ctx, chat, inviteLink, userId)
+	        }
 	}
 	return
 }
