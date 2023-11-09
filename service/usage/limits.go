@@ -45,7 +45,6 @@ type LimitsHandler struct {
 	Log            *slog.Logger
 	RestoreKbd     *telebot.ReplyMarkup
 	SupportHandler support.Handler
-	DonateMsg      *telebot.Message
 }
 
 func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) (err error) {
@@ -129,13 +128,10 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		err = ol.validate()
 	}
 	if err == nil {
-		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: %+v", PurposeLimitSet, ol))
+		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: uid: %s, %+v", PurposeLimitSet, userId, ol))
 	}
 	if err == nil {
-		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible.")
-		if lh.DonateMsg != nil {
-			_ = tgCtx.Forward(lh.DonateMsg)
-		}
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.", lh.RestoreKbd)
 	}
 	// TODO: uncomment the code below only when payments are in use
 	//var orderPayloadData []byte
@@ -336,13 +332,10 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		err = ol.validate()
 	}
 	if err == nil {
-		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: %+v", PurposeLimitSet, ol))
+		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: uid: %s, %+v", PurposeLimitSet, userId, ol))
 	}
 	if err == nil {
-		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible.")
-		if lh.DonateMsg != nil {
-			_ = tgCtx.Forward(lh.DonateMsg)
-		}
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.", lh.RestoreKbd)
 	}
 	// TODO: uncomment the code below only when payments are in use
 	//var orderPayloadData []byte

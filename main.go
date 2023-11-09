@@ -334,7 +334,6 @@ func main() {
 	if donateMsg == nil {
 		panic(fmt.Sprintf("Failed to resolve the pinned donation invoice message in the chat: %+v", dCh))
 	}
-	limitsHandler.DonateMsg = donateMsg
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {

@@ -246,7 +246,8 @@ func publish(
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	switch {
 	case ackCount == 0 && errors.Is(err, limits.ErrReached):
-		ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
+		// ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
+		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to donate and increase your limit using the \"%s\" button in the main menu.", service.LabelUsagePub))
 	case ackCount == 1:
 		if kbd == nil {
 			err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
