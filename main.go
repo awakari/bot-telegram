@@ -153,10 +153,6 @@ func main() {
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 		RestoreKbd:    menuKbd,
 	}
-	pricesHandler := service.PricesHandler{
-		CfgPayment: cfg.Payment,
-		RestoreKbd: menuKbd,
-	}
 	srcAddHandler := sources.AddHandler{
 		SvcFeeds:       svcSrcFeeds,
 		SvcTg:          svcSrcTg,
@@ -306,12 +302,12 @@ func main() {
 			Description: "Request support",
 		},
 		{
-			Text:        "prices",
-			Description: "Prices information",
-		},
-		{
 			Text:        "help",
 			Description: "User guide",
+		},
+		{
+			Text:        "donate",
+			Description: "Help to improve the service",
 		},
 		{
 			Text:        "terms",
@@ -326,6 +322,17 @@ func main() {
 		panic(err)
 	}
 
+	// resolve the donation invoice - should be pinned in the dedicated private channel
+	var dCh *telebot.Chat
+	dCh, err = b.ChatByID(cfg.Payment.DonationChatId)
+	if err != nil {
+		panic(err)
+	}
+	donationInvoiceMsg := dCh.PinnedMessage
+	if donationInvoiceMsg == nil {
+		panic(fmt.Sprintf("Failed to resolve the pinned donation invoice message in the chat: %+v", dCh))
+	}
+
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
@@ -335,15 +342,22 @@ func main() {
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
-			switch chat.Type {
-			case telebot.ChatGroup:
-				err = subListHandlerFunc(tgCtx)
-			case telebot.ChatSuperGroup:
-				err = subListHandlerFunc(tgCtx)
-			case telebot.ChatPrivate:
-				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
-			default:
-				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
+			var msg *telebot.Message
+			msg, err = b.Forward(chat, donationInvoiceMsg)
+			if err == nil {
+				err = b.Pin(msg)
+			}
+			if err == nil {
+				switch chat.Type {
+				case telebot.ChatGroup:
+					err = subListHandlerFunc(tgCtx)
+				case telebot.ChatSuperGroup:
+					err = subListHandlerFunc(tgCtx)
+				case telebot.ChatPrivate:
+					err = tgCtx.Send("Main menu reply keyboard", menuKbd)
+				default:
+					err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
+				}
 			}
 			return
 		}, menuKbd),
@@ -363,14 +377,8 @@ func main() {
 			ForceReply: true,
 		})
 	})
-	b.Handle("/prices", pricesHandler.Prices)
 	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
-		var srcCh *telebot.Chat
-		srcCh, err = tgCtx.Bot().ChatByID(-1001904051055)
-		if err == nil {
-			err = tgCtx.Send(srcCh.PinnedMessage)
-		}
-		return
+		return tgCtx.Forward(donationInvoiceMsg)
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))

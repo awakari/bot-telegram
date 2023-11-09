@@ -96,9 +96,6 @@ api:
     telegram:
       uri: "source-telegram:50051"
   cert: server-cert
-  payment:
-    provider:
-      token: test
   telegram:
     support:
       chat:

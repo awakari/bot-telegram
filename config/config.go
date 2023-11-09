@@ -66,7 +66,8 @@ type PaymentConfig struct {
 		Code      string  `envconfig:"PAYMENT_CURRENCY_CODE" required:"true" default:"EUR"`
 		SubFactor float64 `envconfig:"PAYMENT_CURRENCY_SUB_FACTOR" required:"true" default:"100"`
 	}
-	PreCheckout struct {
+	DonationChatId int64 `envconfig:"PAYMENT_DONATION_CHAT_ID" required:"true"`
+	PreCheckout    struct {
 		Timeout time.Duration `envconfig:"PAYMENT_PRE_CHECKOUT_TIMEOUT" required:"true" default:"10s"`
 	}
 	Price    PriceConfig
