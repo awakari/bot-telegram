@@ -9,7 +9,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
-	"time"
 )
 
 func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
@@ -32,13 +31,14 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 					Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectSubscriptions),
 				},
 			}
-			switch {
-			case l.Expires.After(time.Now()):
-				btns = append(btns, telebot.Btn{
-					Text: usage.LabelExtend,
-					Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectSubscriptions),
-				})
-			}
+			// TODO: uncomment the code below only when payments are in use
+			//switch {
+			//case l.Expires.After(time.Now()):
+			//	btns = append(btns, telebot.Btn{
+			//		Text: usage.LabelExtend,
+			//		Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectSubscriptions),
+			//	})
+			//}
 			m.Inline(m.Row(btns...))
 			err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
 		}

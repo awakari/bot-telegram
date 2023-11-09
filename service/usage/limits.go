@@ -7,11 +7,10 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
-	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
@@ -39,12 +38,14 @@ const msgFmtUsageLimit = `%s Usage:<pre>
 const msgFmtRunOnceFailed = "failed to set limit, user id: %s, cause: %s, retrying in: %s"
 
 type LimitsHandler struct {
-	CfgPayment  config.PaymentConfig
-	ClientAdmin admin.Service
-	ClientAwk   api.Client
-	GroupId     string
-	Log         *slog.Logger
-	RestoreKbd  *telebot.ReplyMarkup
+	CfgPayment     config.PaymentConfig
+	ClientAdmin    admin.Service
+	ClientAwk      api.Client
+	GroupId        string
+	Log            *slog.Logger
+	RestoreKbd     *telebot.ReplyMarkup
+	SupportHandler support.Handler
+	DonateMsg      *telebot.Message
 }
 
 func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) (err error) {
@@ -53,24 +54,26 @@ func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) 
 	if err == nil {
 		subj := usage.Subject(subjCode)
 		switch subj {
-		case usage.SubjectSubscriptions:
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"The limit extension price is %s %.2f per day per subscription starting from 2nd. "+
-						"Reply with the count of days to add:",
-					lh.CfgPayment.Currency.Code,
-					lh.CfgPayment.Price.Subscription.CountLimit,
-				),
-			)
+		// TODO: uncomment the code below only when payments are in use
+		//case usage.SubjectSubscriptions:
+		//    err = tgCtx.Send(
+		//        fmt.Sprintf(
+		//            "The limit extension price is %s %.2f per day per subscription starting from 2nd. "+
+		//                "Reply with the count of days to add:",
+		//            lh.CfgPayment.Currency.Code,
+		//            lh.CfgPayment.Price.Subscription.CountLimit,
+		//        ),
+		//    )
 		case usage.SubjectPublishEvents:
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"The limit extension price is %s %.2f per day per message starting from 11th. "+
-						"Reply with the count of days to add:",
-					lh.CfgPayment.Currency.Code,
-					lh.CfgPayment.Price.MessagePublishing.DailyLimit,
-				),
-			)
+			// TODO: uncomment the code below only when payments are in use
+			//err = tgCtx.Send(
+			//    fmt.Sprintf(
+			//        "The limit extension price is %s %.2f per day per message starting from 11th. "+
+			//            "Reply with the count of days to add:",
+			//        lh.CfgPayment.Currency.Code,
+			//        lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+			//    ),
+			//)
 		default:
 			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
 		}
@@ -125,37 +128,47 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		ol.Subject = usage.Subject(subjCode)
 		err = ol.validate()
 	}
-	var orderPayloadData []byte
 	if err == nil {
-		orderPayloadData, err = json.Marshal(ol)
+		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: %+v", PurposeLimitSet, ol))
 	}
-	var orderData []byte
 	if err == nil {
-		o := service.Order{
-			Purpose: PurposeLimitSet,
-			Payload: string(orderPayloadData),
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible.")
+		if lh.DonateMsg != nil {
+			_ = tgCtx.Forward(lh.DonateMsg)
 		}
-		orderData, err = json.Marshal(o)
 	}
-	if err == nil {
-		price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
-		invoice := telebot.Invoice{
-			Start:       uuid.NewString(),
-			Title:       fmt.Sprintf("%s limit extension", formatUsageSubject(subj)),
-			Description: fmt.Sprintf("Extend %s limit of %d until %s", formatUsageSubject(subj), ol.Count, ol.Expires.Format(time.RFC3339)),
-			Payload:     string(orderData),
-			Currency:    lh.CfgPayment.Currency.Code,
-			Prices: []telebot.Price{
-				{
-					Label:  fmt.Sprintf("add %d days for %d items", daysAdd, countExtra),
-					Amount: price,
-				},
-			},
-			Token: lh.CfgPayment.Provider.Token,
-			Total: price,
-		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
-	}
+	// TODO: uncomment the code below only when payments are in use
+	//var orderPayloadData []byte
+	//if err == nil {
+	//    orderPayloadData, err = json.Marshal(ol)
+	//}
+	//var orderData []byte
+	//if err == nil {
+	//    o := service.Order{
+	//        Purpose: PurposeLimitSet,
+	//        Payload: string(orderPayloadData),
+	//    }
+	//    orderData, err = json.Marshal(o)
+	//}
+	//if err == nil {
+	//    price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
+	//    invoice := telebot.Invoice{
+	//        Start:       uuid.NewString(),
+	//        Title:       fmt.Sprintf("%s limit extension", formatUsageSubject(subj)),
+	//        Description: fmt.Sprintf("Extend %s limit of %d until %s", formatUsageSubject(subj), ol.Count, ol.Expires.Format(time.RFC3339)),
+	//        Payload:     string(orderData),
+	//        Currency:    lh.CfgPayment.Currency.Code,
+	//        Prices: []telebot.Price{
+	//            {
+	//                Label:  fmt.Sprintf("add %d days for %d items", daysAdd, countExtra),
+	//                Amount: price,
+	//            },
+	//        },
+	//        Token: lh.CfgPayment.Provider.Token,
+	//        Total: price,
+	//    }
+	//    _, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+	//}
 	return
 }
 
@@ -231,31 +244,32 @@ func FormatUsageLimit(subj string, u usage.Usage, l usage.Limit) (txt string) {
 func (lh LimitsHandler) RequestIncrease(tgCtx telebot.Context, args ...string) (err error) {
 	var subjCode int64
 	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
-	if err == nil {
-		subj := usage.Subject(subjCode)
-		switch subj {
-		case usage.SubjectSubscriptions:
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"The price is %s %.2f per day per additional subscription. "+
-						"Reply the count to add to the current limit:",
-					lh.CfgPayment.Currency.Code,
-					lh.CfgPayment.Price.Subscription.CountLimit,
-				),
-			)
-		case usage.SubjectPublishEvents:
-			err = tgCtx.Send(
-				fmt.Sprintf(
-					"The price is %s %.2f per day per additional message. "+
-						"Reply the count to add to the current limit:",
-					lh.CfgPayment.Currency.Code,
-					lh.CfgPayment.Price.MessagePublishing.DailyLimit,
-				),
-			)
-		default:
-			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
-		}
-	}
+	// TODO: uncomment the code below only when payments are in use
+	//if err == nil {
+	//	subj := usage.Subject(subjCode)
+	//	switch subj {
+	//	case usage.SubjectSubscriptions:
+	//		err = tgCtx.Send(
+	//			fmt.Sprintf(
+	//				"The price is %s %.2f per day per additional subscription. "+
+	//					"Reply the count to add to the current limit:",
+	//				lh.CfgPayment.Currency.Code,
+	//				lh.CfgPayment.Price.Subscription.CountLimit,
+	//			),
+	//		)
+	//	case usage.SubjectPublishEvents:
+	//		err = tgCtx.Send(
+	//			fmt.Sprintf(
+	//				"The price is %s %.2f per day per additional message. "+
+	//					"Reply the count to add to the current limit:",
+	//				lh.CfgPayment.Currency.Code,
+	//				lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+	//			),
+	//		)
+	//	default:
+	//		err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
+	//	}
+	//}
 	if err == nil {
 		err = tgCtx.Send(
 			fmt.Sprintf("%s %d", ReqLimitIncrease, subjCode),
@@ -319,38 +333,51 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		ol.Subject = usage.Subject(subjCode)
 		err = ol.validate()
 	}
-	var orderPayloadData []byte
 	if err == nil {
-		orderPayloadData, err = json.Marshal(ol)
-	}
-	var orderData []byte
-	if err == nil {
-		o := service.Order{
-			Purpose: PurposeLimitSet,
-			Payload: string(orderPayloadData),
+		if subj == usage.SubjectSubscriptions {
+			ol.Expires = time.Time{} // subscription limit should not expire until payments are in use
 		}
-		orderData, err = json.Marshal(o)
+		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: %+v", PurposeLimitSet, ol))
 	}
-	//
 	if err == nil {
-		price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
-		invoice := telebot.Invoice{
-			Start:       uuid.NewString(),
-			Title:       fmt.Sprintf("%s limit increase", formatUsageSubject(subj)),
-			Description: fmt.Sprintf("Set %s limit to %d until %s", formatUsageSubject(subj), ol.Count, expiresNew.Format(time.RFC3339)),
-			Payload:     string(orderData),
-			Currency:    lh.CfgPayment.Currency.Code,
-			Prices: []telebot.Price{
-				{
-					Label:  fmt.Sprintf("add %d items for %d days", countAdd, days),
-					Amount: price,
-				},
-			},
-			Token: lh.CfgPayment.Provider.Token,
-			Total: price,
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible.")
+		if lh.DonateMsg != nil {
+			_ = tgCtx.Forward(lh.DonateMsg)
 		}
-		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
+	// TODO: uncomment the code below only when payments are in use
+	//var orderPayloadData []byte
+	//if err == nil {
+	//    orderPayloadData, err = json.Marshal(ol)
+	//}
+	//var orderData []byte
+	//if err == nil {
+	//    o := service.Order{
+	//        Purpose: PurposeLimitSet,
+	//        Payload: string(orderPayloadData),
+	//    }
+	//    orderData, err = json.Marshal(o)
+	//}
+	////
+	//if err == nil {
+	//    price := int(priceTotal * lh.CfgPayment.Currency.SubFactor)
+	//    invoice := telebot.Invoice{
+	//        Start:       uuid.NewString(),
+	//        Title:       fmt.Sprintf("%s limit increase", formatUsageSubject(subj)),
+	//        Description: fmt.Sprintf("Set %s limit to %d until %s", formatUsageSubject(subj), ol.Count, expiresNew.Format(time.RFC3339)),
+	//        Payload:     string(orderData),
+	//        Currency:    lh.CfgPayment.Currency.Code,
+	//        Prices: []telebot.Price{
+	//            {
+	//                Label:  fmt.Sprintf("add %d items for %d days", countAdd, days),
+	//                Amount: price,
+	//            },
+	//        },
+	//        Token: lh.CfgPayment.Provider.Token,
+	//        Total: price,
+	//    }
+	//    _, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
+	//}
 	//
 	return
 }

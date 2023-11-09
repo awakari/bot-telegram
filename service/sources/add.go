@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
-	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/support"
 	"github.com/mmcdole/gofeed"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -81,7 +81,7 @@ type AddHandler struct {
 	SvcFeeds       feeds.Service
 	SvcTg          telegram.Service
 	Log            *slog.Logger
-	SupportHandler service.SupportHandler
+	SupportHandler support.Handler
 	GroupId        string
 }
 
@@ -97,7 +97,7 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	if err == nil {
 		switch ap.Src.Type {
 		case srcTypeTgCh:
-			err = ah.SupportHandler.Support(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
+			err = ah.SupportHandler.Request(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
 		}
 	}
 	if err == nil {

@@ -14,6 +14,7 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/sources"
 	"github.com/awakari/bot-telegram/service/subscriptions"
+	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/microcosm-cc/bluemonday"
@@ -149,7 +150,7 @@ func main() {
 	// init handlers
 	groupId := cfg.Api.GroupId
 	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
-	supportHandler := service.SupportHandler{
+	supportHandler := support.Handler{
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 		RestoreKbd:    menuKbd,
 	}
@@ -183,12 +184,13 @@ func main() {
 		SupportHandler: supportHandler,
 	}
 	limitsHandler := usage.LimitsHandler{
-		CfgPayment:  cfg.Payment,
-		ClientAdmin: svcAdmin,
-		ClientAwk:   clientAwk,
-		GroupId:     groupId,
-		Log:         log,
-		RestoreKbd:  menuKbd,
+		CfgPayment:     cfg.Payment,
+		ClientAdmin:    svcAdmin,
+		ClientAwk:      clientAwk,
+		GroupId:        groupId,
+		Log:            log,
+		RestoreKbd:     menuKbd,
+		SupportHandler: supportHandler,
 	}
 	subExtHandler := subscriptions.ExtendHandler{
 		CfgPayment: cfg.Payment,
@@ -252,7 +254,7 @@ func main() {
 		usage.ReqLimitExtend:            limitsHandler.HandleExtension,
 		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
 		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
-		"support":                       supportHandler.Support,
+		"support":                       supportHandler.Request,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
@@ -328,10 +330,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	donationInvoiceMsg := dCh.PinnedMessage
-	if donationInvoiceMsg == nil {
+	donateMsg := dCh.PinnedMessage
+	if donateMsg == nil {
 		panic(fmt.Sprintf("Failed to resolve the pinned donation invoice message in the chat: %+v", dCh))
 	}
+	limitsHandler.DonateMsg = donateMsg
 
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
@@ -343,7 +346,7 @@ func main() {
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
 			var msg *telebot.Message
-			msg, err = b.Forward(chat, donationInvoiceMsg)
+			msg, err = b.Forward(chat, donateMsg)
 			if err == nil {
 				err = b.Pin(msg)
 			}
@@ -377,7 +380,7 @@ func main() {
 		})
 	})
 	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
-		return tgCtx.Forward(donationInvoiceMsg)
+		return tgCtx.Forward(donateMsg)
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))

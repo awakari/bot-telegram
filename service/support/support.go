@@ -1,16 +1,16 @@
-package service
+package support
 
 import (
 	"fmt"
 	"gopkg.in/telebot.v3"
 )
 
-type SupportHandler struct {
+type Handler struct {
 	SupportChatId int64
 	RestoreKbd    *telebot.ReplyMarkup
 }
 
-func (sh SupportHandler) Support(tgCtx telebot.Context, args ...string) (err error) {
+func (sh Handler) Request(tgCtx telebot.Context, args ...string) (err error) {
 	tgCtxSupport := tgCtx.Bot().NewContext(telebot.Update{
 		Message: &telebot.Message{
 			Chat: &telebot.Chat{
