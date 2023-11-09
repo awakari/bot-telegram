@@ -35,7 +35,7 @@ const msgSubCreated = `Subscription created, next:
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
-var errLimitReached = errors.New("subscription count limit reached")
+var errLimitReached = errors.New("limit reached")
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
@@ -130,10 +130,9 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		switch {
 		case errors.Is(err, limits.ErrReached):
 			err = fmt.Errorf(
-				"%w, increase limit using the button \"%s\" under the \"%s\" button in the main keyboard",
+				"%w, consider to donate and increase limit using the button \"%s\" in the main keyboard",
 				errLimitReached,
 				service.LabelUsageSub,
-				service.LabelSubList,
 			)
 		}
 	}

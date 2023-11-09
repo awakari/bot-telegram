@@ -166,6 +166,7 @@ func (sm storageMongo) UnlinkSubscription(ctx context.Context, subId string) (er
 }
 
 func (sm storageMongo) Delete(ctx context.Context, id int64) (count int64, err error) {
+	fmt.Printf("delete all persisted chat %d links\n", id)
 	q := bson.M{
 		attrId: id,
 	}
