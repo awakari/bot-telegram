@@ -299,15 +299,17 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 	//
 	var days int64
 	var expiresNew time.Time
-	switch l.Expires.After(time.Now()) {
-	case true: // not expired yet, increase for remaining period only
-		days = int64(l.Expires.Sub(time.Now()) / (24 * time.Hour))
-		expiresNew = l.Expires
-		_ = tgCtx.Send(fmt.Sprintf("Current limit is not expired yet, increasing for the remaining %d days", days))
-	default: // expired, set the limit for the default period
-		days = ExpiresDefaultDays
-		expiresNew = time.Now().UTC().Add(time.Hour * time.Duration(24*days))
-		_ = tgCtx.Send(fmt.Sprintf("Current limit is expired/not set, setting until %s", expiresNew.Format(time.RFC3339)))
+	if subj == usage.SubjectPublishEvents { // TODO: remove this condition only when payments are in use
+		switch l.Expires.After(time.Now()) {
+		case true: // not expired yet, increase for remaining period only
+			days = int64(l.Expires.Sub(time.Now()) / (24 * time.Hour))
+			expiresNew = l.Expires
+			_ = tgCtx.Send(fmt.Sprintf("Current limit is not expired yet, increasing for the remaining %d days", days))
+		default: // expired, set the limit for the default period
+			days = ExpiresDefaultDays
+			expiresNew = time.Now().UTC().Add(time.Hour * time.Duration(24*days))
+			_ = tgCtx.Send(fmt.Sprintf("Current limit is expired/not set, setting until %s", expiresNew.Format(time.RFC3339)))
+		}
 	}
 	//
 	var priceTotal float64
@@ -334,9 +336,6 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		err = ol.validate()
 	}
 	if err == nil {
-		if subj == usage.SubjectSubscriptions {
-			ol.Expires = time.Time{} // subscription limit should not expire until payments are in use
-		}
 		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: %+v", PurposeLimitSet, ol))
 	}
 	if err == nil {
