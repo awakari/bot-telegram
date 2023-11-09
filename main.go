@@ -368,7 +368,7 @@ func main() {
 		var srcCh *telebot.Chat
 		srcCh, err = tgCtx.Bot().ChatByID(-1001904051055)
 		if err == nil {
-			err = tgCtx.Forward(srcCh.PinnedMessage)
+			err = tgCtx.Send(srcCh.PinnedMessage)
 		}
 		return
 	})
