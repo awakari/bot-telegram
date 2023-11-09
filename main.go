@@ -364,6 +364,16 @@ func main() {
 		})
 	})
 	b.Handle("/prices", pricesHandler.Prices)
+	b.Handle("/donate", func(tgCtx telebot.Context) error {
+		return tgCtx.Forward(&telebot.Message{
+			OriginalChat: &telebot.Chat{
+				ID:    -1001904051055,
+				Type:  "channel",
+				Title: "AwakariBot",
+			},
+			OriginalMessageID: 11,
+		})
+	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
 	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
