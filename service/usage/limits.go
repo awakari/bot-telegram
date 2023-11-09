@@ -64,15 +64,16 @@ func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) 
 		//        ),
 		//    )
 		case usage.SubjectPublishEvents:
-			// TODO: uncomment the code below only when payments are in use
-			//err = tgCtx.Send(
-			//    fmt.Sprintf(
-			//        "The limit extension price is %s %.2f per day per message starting from 11th. "+
-			//            "Reply with the count of days to add:",
-			//        lh.CfgPayment.Currency.Code,
-			//        lh.CfgPayment.Price.MessagePublishing.DailyLimit,
-			//    ),
-			//)
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					// TODO: uncomment the code below only when payments are in use
+					//"The limit extension price is %s %.2f per day per message starting from 11th. "+
+					"Reply with the count of days to add:",
+					// TODO: uncomment the code below only when payments are in use
+					//lh.CfgPayment.Currency.Code,
+					//lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+				),
+			)
 		default:
 			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
 		}
@@ -102,24 +103,25 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 	var l usage.Limit
 	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", lh.GroupId)
 	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
-	var countExtra int64
-	var priceTotal float64
-	if err == nil {
-		var pricePerItem float64
-		switch subj {
-		case usage.SubjectSubscriptions:
-			pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
-			countExtra = l.Count - 1 // 1st is for free
-			priceTotal = pricePerItem * float64(daysAdd*countExtra)
-		case usage.SubjectPublishEvents:
-			pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
-			countExtra = l.Count - 10 // first 10 is for free
-			priceTotal = pricePerItem * float64(daysAdd*countExtra)
-		}
-		if priceTotal <= 1 {
-			err = fmt.Errorf("%w: total price too low: %s %f", errInvalidOrder, lh.CfgPayment.Currency.Code, priceTotal)
-		}
-	}
+	// TODO: uncomment the code below only when payments are in use
+	//var countExtra int64
+	//var priceTotal float64
+	//if err == nil {
+	//    var pricePerItem float64
+	//    switch subj {
+	//    case usage.SubjectSubscriptions:
+	//        pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
+	//        countExtra = l.Count - 1 // 1st is for free
+	//        priceTotal = pricePerItem * float64(daysAdd*countExtra)
+	//    case usage.SubjectPublishEvents:
+	//        pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
+	//        countExtra = l.Count - 10 // first 10 is for free
+	//        priceTotal = pricePerItem * float64(daysAdd*countExtra)
+	//    }
+	//    if priceTotal <= 1 {
+	//    	err = fmt.Errorf("%w: total price too low: %s %f", errInvalidOrder, lh.CfgPayment.Currency.Code, priceTotal)
+	//    }
+	//}
 	var ol OrderLimit
 	if err == nil {
 		ol.Expires = l.Expires.Add(time.Duration(daysAdd) * time.Hour * 24).UTC()
@@ -240,32 +242,35 @@ func FormatUsageLimit(subj string, u usage.Usage, l usage.Limit) (txt string) {
 func (lh LimitsHandler) RequestIncrease(tgCtx telebot.Context, args ...string) (err error) {
 	var subjCode int64
 	subjCode, err = strconv.ParseInt(args[0], 10, strconv.IntSize)
-	// TODO: uncomment the code below only when payments are in use
-	//if err == nil {
-	//	subj := usage.Subject(subjCode)
-	//	switch subj {
-	//	case usage.SubjectSubscriptions:
-	//		err = tgCtx.Send(
-	//			fmt.Sprintf(
-	//				"The price is %s %.2f per day per additional subscription. "+
-	//					"Reply the count to add to the current limit:",
-	//				lh.CfgPayment.Currency.Code,
-	//				lh.CfgPayment.Price.Subscription.CountLimit,
-	//			),
-	//		)
-	//	case usage.SubjectPublishEvents:
-	//		err = tgCtx.Send(
-	//			fmt.Sprintf(
-	//				"The price is %s %.2f per day per additional message. "+
-	//					"Reply the count to add to the current limit:",
-	//				lh.CfgPayment.Currency.Code,
-	//				lh.CfgPayment.Price.MessagePublishing.DailyLimit,
-	//			),
-	//		)
-	//	default:
-	//		err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
-	//	}
-	//}
+	if err == nil {
+		subj := usage.Subject(subjCode)
+		switch subj {
+		case usage.SubjectSubscriptions:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					// TODO: uncomment the code below only when payments are in use
+					//"The price is %s %.2f per day per additional subscription. "+
+					"Reply the count to add to the current limit:",
+					// TODO: uncomment the code below only when payments are in use
+					//lh.CfgPayment.Currency.Code,
+					//lh.CfgPayment.Price.Subscription.CountLimit,
+				),
+			)
+		case usage.SubjectPublishEvents:
+			err = tgCtx.Send(
+				fmt.Sprintf(
+					// TODO: uncomment the code below only when payments are in use
+					//"The price is %s %.2f per day per additional message. "+
+					"Reply the count to add to the current limit:",
+					// TODO: uncomment the code below only when payments are in use
+					//lh.CfgPayment.Currency.Code,
+					//lh.CfgPayment.Price.MessagePublishing.DailyLimit,
+				),
+			)
+		default:
+			err = errors.New(fmt.Sprintf("unrecognized usage subject: %s", subj))
+		}
+	}
 	if err == nil {
 		err = tgCtx.Send(
 			fmt.Sprintf("%s %d", ReqLimitIncrease, subjCode),
@@ -308,21 +313,22 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		}
 	}
 	//
-	var priceTotal float64
-	if err == nil {
-		var pricePerItem float64
-		switch subj {
-		case usage.SubjectSubscriptions:
-			pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
-			priceTotal = pricePerItem * float64(days*countAdd)
-		case usage.SubjectPublishEvents:
-			pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
-			priceTotal = pricePerItem * float64(days*countAdd)
-		}
-		if priceTotal <= 1 {
-			err = fmt.Errorf("%w: total price too low: %s %f", errInvalidOrder, lh.CfgPayment.Currency.Code, priceTotal)
-		}
-	}
+	// TODO: uncomment the code below only when payments are in use
+	//var priceTotal float64
+	//if err == nil {
+	//    var pricePerItem float64
+	//    switch subj {
+	//    case usage.SubjectSubscriptions:
+	//        pricePerItem = lh.CfgPayment.Price.Subscription.CountLimit
+	//        priceTotal = pricePerItem * float64(days*countAdd)
+	//    case usage.SubjectPublishEvents:
+	//        pricePerItem = lh.CfgPayment.Price.MessagePublishing.DailyLimit
+	//        priceTotal = pricePerItem * float64(days*countAdd)
+	//    }
+	//    if priceTotal <= 1 {
+	//       err = fmt.Errorf("%w: total price too low: %s %f", errInvalidOrder, lh.CfgPayment.Currency.Code, priceTotal)
+	//    }
+	//}
 	//
 	var ol OrderLimit
 	if err == nil {
