@@ -344,18 +344,18 @@ func main() {
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
-			var msg *telebot.Message
-			msg, err = b.Forward(chat, donateMsg)
-			if err == nil {
-				err = b.Pin(msg)
-			}
-			log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 			switch chat.Type {
 			case telebot.ChatGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatSuperGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatPrivate:
+				var msg *telebot.Message
+				msg, err = b.Forward(chat, donateMsg)
+				if err == nil {
+					err = b.Pin(msg)
+				}
+				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
@@ -391,7 +391,16 @@ func main() {
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
 	//
-	b.Handle(telebot.OnAddedToGroup, service.ErrorHandlerFunc(subListHandlerFunc, nil))
+	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
+		chat := tgCtx.Chat()
+		var msg *telebot.Message
+		msg, err = b.Forward(chat, donateMsg)
+		if err == nil {
+			err = b.Pin(msg)
+		}
+		log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
+		return service.ErrorHandlerFunc(subListHandlerFunc, nil)(tgCtx)
+	})
 	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
 
 	go func() {

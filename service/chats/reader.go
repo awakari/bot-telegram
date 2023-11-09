@@ -86,7 +86,6 @@ func StopChatReaders(chatId int64) {
 	defer runtimeReadersLock.Unlock()
 	for _, r := range runtimeReaders {
 		if r.chatId == chatId {
-			fmt.Printf("stop chat %d reader\n", chatId)
 			r.stop = true
 		}
 	}

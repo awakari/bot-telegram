@@ -10,7 +10,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"strconv"
-	"time"
 )
 
 const CmdPageNext = "subs_next"
@@ -93,15 +92,16 @@ func listButtons(
 				} else if subLinked {
 					descr += " 🔗"
 				}
-				now := time.Now().UTC()
-				switch {
-				case sub.Expires.IsZero(): // never expires
-					descr += " ∞"
-				case sub.Expires.Before(now):
-					descr += " ⚠"
-				case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
-					descr += " ⏳"
-				}
+				// TODO: uncomment the code below when payments are in use
+				//now := time.Now().UTC()
+				//switch {
+				//case sub.Expires.IsZero(): // never expires
+				//	descr += " ∞"
+				//case sub.Expires.Before(now):
+				//	descr += " ⚠"
+				//case sub.Expires.Sub(now) < 168*time.Hour: // expires earlier than in 1 week
+				//	descr += " ⏳"
+				//}
 				btn := telebot.Btn{
 					Text: descr,
 				}

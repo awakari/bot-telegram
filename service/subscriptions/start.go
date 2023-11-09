@@ -16,7 +16,7 @@ import (
 )
 
 const CmdStart = "sub_start"
-const msgFmtChatLinked = "Linked the subscription \"<pre>%s</pre>\" to this chat. New matching messages will appear here."
+const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. New matching messages will appear here."
 
 func Start(
 	log *slog.Logger,
