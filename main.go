@@ -347,17 +347,16 @@ func main() {
 			if err == nil {
 				err = b.Pin(msg)
 			}
-			if err == nil {
-				switch chat.Type {
-				case telebot.ChatGroup:
-					err = subListHandlerFunc(tgCtx)
-				case telebot.ChatSuperGroup:
-					err = subListHandlerFunc(tgCtx)
-				case telebot.ChatPrivate:
-					err = tgCtx.Send("Main menu reply keyboard", menuKbd)
-				default:
-					err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
-				}
+			log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
+			switch chat.Type {
+			case telebot.ChatGroup:
+				err = subListHandlerFunc(tgCtx)
+			case telebot.ChatSuperGroup:
+				err = subListHandlerFunc(tgCtx)
+			case telebot.ChatPrivate:
+				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
+			default:
+				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
 			return
 		}, menuKbd),
