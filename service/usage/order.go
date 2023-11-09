@@ -21,7 +21,8 @@ const orderLimitCountMaxMsgs = 100000
 var errInvalidOrder = errors.New("invalid order")
 
 func (ol OrderLimit) validate() (err error) {
-	if err == nil && ol.Expires.Before(time.Now()) {
+	// TODO: remove the subject from the condition below when payments are in use
+	if err == nil && ol.Subject == usage.SubjectSubscriptions && ol.Expires.Before(time.Now()) {
 		err = fmt.Errorf(
 			"%w: new expiration date %s is in past",
 			errInvalidOrder,

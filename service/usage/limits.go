@@ -309,7 +309,7 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		default: // expired, set the limit for the default period
 			days = ExpiresDefaultDays
 			expiresNew = time.Now().UTC().Add(time.Hour * time.Duration(24*days))
-			_ = tgCtx.Send(fmt.Sprintf("Current limit is expired/not set, setting until %s", expiresNew.Format(time.RFC3339)))
+			_ = tgCtx.Send(fmt.Sprintf("Current limit is expired/not set, set new until %s", expiresNew.Format(time.RFC3339)))
 		}
 	}
 	//
