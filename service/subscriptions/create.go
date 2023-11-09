@@ -114,15 +114,16 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 	//
-	var existingIds []string
-	existingIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, 1, "")
-	if err == nil {
-		switch len(existingIds) {
-		case 0: // leave expires = 0 (means "never") when user has no subscriptions
-		default:
-			sd.Expires = time.Now().Add(expiresDefaultDuration) // expire in a fixed period
-		}
-	}
+	// TODO: use the below code only when payments are connected
+	//var existingIds []string
+	//existingIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, 1, "")
+	//if err == nil {
+	//	switch len(existingIds) {
+	//	case 0: // leave expires = 0 (means "never") when user has no subscriptions
+	//	default:
+	//		sd.Expires = time.Now().Add(expiresDefaultDuration) // expire in a fixed period
+	//	}
+	//}
 	//
 	if err == nil {
 		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
