@@ -53,6 +53,7 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 	}
 	switch ap.Src.Type {
 	case srcTypeTgCh:
+	case srcTypeSite:
 	case srcTypeFeed:
 		if ap.Limit.Freq < 1 || ap.Limit.Freq > updatesPerDayMax {
 			err = fmt.Errorf("%w: source fetch daily frequency is %d, should be [1..%d]", errInvalidAddPayload, ap.Limit.Freq, updatesPerDayMax)
