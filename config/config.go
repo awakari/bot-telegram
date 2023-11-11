@@ -16,6 +16,7 @@ type Config struct {
 		}
 		Source struct {
 			Feeds    FeedsConfig
+			Sites    SitesConfig
 			Telegram TelegramConfig
 		}
 		Telegram struct {
@@ -101,6 +102,10 @@ type FeedsConfig struct {
 type TelegramConfig struct {
 	GroupId string `envconfig:"API_SOURCE_TELEGRAM_GROUP_ID" default:"com.github.awakari.source-telegram"`
 	Uri     string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
+}
+
+type SitesConfig struct {
+	Uri string `envconfig:"API_SOURCE_SITES_URI" default:"source-sites:50051" required:"true"`
 }
 
 type ReplicaConfig struct {

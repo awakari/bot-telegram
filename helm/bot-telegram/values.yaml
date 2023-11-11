@@ -93,6 +93,8 @@ api:
   source:
     feeds:
       uri: "source-feeds:50051"
+    sites:
+      uri: "source-sites:50051"
     telegram:
       uri: "source-telegram:50051"
   cert: server-cert

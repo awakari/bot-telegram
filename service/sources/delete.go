@@ -50,17 +50,17 @@ func (dh DeleteHandler) HandleConfirmation(tgCtx telebot.Context, args ...string
 	return
 }
 
-func (dh DeleteHandler) delete(tgCtx telebot.Context, url string) (err error) {
+func (dh DeleteHandler) delete(tgCtx telebot.Context, addr string) (err error) {
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
 	switch {
-	case strings.HasPrefix(url, tgChPubLinkPrefix):
-		err = dh.SvcSrcTg.Delete(context.TODO(), url)
+	case strings.HasPrefix(addr, tgChPubLinkPrefix):
+		err = dh.SvcSrcTg.Delete(context.TODO(), addr)
 		_ = dh.SupportHandler.Request(
 			tgCtx,
-			fmt.Sprintf("User %s deleted the source telegram channel: %s", userId, url),
+			fmt.Sprintf("User %s deleted the source telegram channel: %s", userId, addr),
 		)
 	default:
-		err = dh.SvcSrcFeeds.Delete(context.TODO(), url, dh.GroupId, userId)
+		err = dh.SvcSrcFeeds.Delete(context.TODO(), addr, dh.GroupId, userId)
 	}
 	if err == nil {
 		err = tgCtx.Send("Source feed deleted", dh.RestoreKbd)

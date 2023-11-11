@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/sites"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
@@ -14,6 +15,7 @@ import (
 type ListHandler struct {
 	SvcSrcFeeds feeds.Service
 	SvcSrcTg    telegram.Service
+	SvcSrcSites sites.Service
 	Log         *slog.Logger
 	GroupId     string
 }
@@ -22,6 +24,8 @@ const CmdFeedListAll = "feeds_all"
 const CmdFeedListOwn = "feeds_own"
 const CmdTgChListAll = "tgchs_all"
 const CmdTgChListOwn = "tgchs_own"
+const CmdSitesListAll = "sites_all"
+const CmdSitesListOwn = "sites_own"
 
 func (lh ListHandler) TelegramChannelsAll(tgCtx telebot.Context, args ...string) (err error) {
 	var cursor string
@@ -159,6 +163,74 @@ func (lh ListHandler) feedList(tgCtx telebot.Context, filter *feeds.Filter, args
 			err = tgCtx.Send("End of the list")
 		default:
 			err = tgCtx.Send("Source Feeds:", m)
+		}
+	}
+	return
+}
+
+func (lh ListHandler) SiteListAll(tgCtx telebot.Context, args ...string) (err error) {
+	err = lh.siteList(tgCtx, nil, args...)
+	return
+}
+
+func (lh ListHandler) SiteListOwn(tgCtx telebot.Context, args ...string) (err error) {
+	filterOwn := &sites.Filter{
+		GroupId: lh.GroupId,
+		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+	}
+	err = lh.siteList(tgCtx, filterOwn, args...)
+	return
+}
+
+func (lh ListHandler) siteList(tgCtx telebot.Context, filter *sites.Filter, args ...string) (err error) {
+	var cursor string
+	if len(args) > 0 {
+		cursor = args[0]
+	}
+	var page []string
+	page, err = lh.SvcSrcSites.List(context.TODO(), filter, service.PageLimit, cursor)
+	if err == nil {
+		m := &telebot.ReplyMarkup{}
+		var rows []telebot.Row
+		for _, addr := range page {
+			var cmdData string
+			switch filter {
+			case nil:
+				cmdData = fmt.Sprintf("%s %s", CmdSiteDetailsAny, addr)
+			default:
+				cmdData = fmt.Sprintf("%s %s", CmdSiteDetailsOwn, addr)
+			}
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
+			}
+			rows = append(rows, m.Row(telebot.Btn{
+				Text: addr,
+				Data: cmdData,
+			}))
+		}
+		if len(page) == service.PageLimit {
+			var cmdList string
+			switch filter {
+			case nil:
+				cmdList = CmdSitesListAll
+			default:
+				cmdList = CmdSitesListOwn
+			}
+			cmdData := fmt.Sprintf("%s %s", cmdList, page[len(page)-1])
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
+			}
+			rows = append(rows, m.Row(telebot.Btn{
+				Text: "Next Page >",
+				Data: cmdData,
+			}))
+		}
+		m.Inline(rows...)
+		switch len(page) {
+		case 0:
+			err = tgCtx.Send("End of the list")
+		default:
+			err = tgCtx.Send("Source Web Sites:", m)
 		}
 	}
 	return

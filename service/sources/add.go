@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/sites"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/mmcdole/gofeed"
@@ -21,6 +22,7 @@ import (
 
 const srcTypeTgCh = "tgch"
 const srcTypeFeed = "feed"
+const srcTypeSite = "site"
 const feedFetchTimeout = 1 * time.Minute
 const srcAddrLenMax = 80
 const day = 24 * time.Hour
@@ -79,6 +81,7 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 
 type AddHandler struct {
 	SvcFeeds       feeds.Service
+	SvcSites       sites.Service
 	SvcTg          telegram.Service
 	Log            *slog.Logger
 	SupportHandler support.Handler
@@ -91,13 +94,14 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	if err == nil {
 		err = ap.validate(tgCtx.Bot())
 	}
+	sender := tgCtx.Sender()
 	if err == nil {
-		err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(tgCtx.Sender().ID, 10))
+		err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(sender.ID, 10))
 	}
 	if err == nil {
 		switch ap.Src.Type {
 		case srcTypeTgCh:
-			err = ah.SupportHandler.Request(tgCtx, fmt.Sprintf("Request to add source telegram channel:\n%+v", ap.Src.Addr))
+			err = ah.SupportHandler.Request(tgCtx, fmt.Sprintf("User @%s added a telegram channel: %s", sender.Username, ap.Src.Addr))
 		}
 	}
 	if err == nil {
@@ -110,7 +114,7 @@ func (ah AddHandler) registerSource(ctx context.Context, tgCtx telebot.Context, 
 	switch ap.Src.Type {
 	case srcTypeFeed:
 		err = ah.registerFeed(ctx, ap, userId)
-	default:
+	case srcTypeTgCh:
 		var chat *telebot.Chat
 		chat, err = tgCtx.Bot().ChatByUsername(ap.Src.Addr)
 		if err == nil && chat.Type != telebot.ChatChannel {
@@ -119,6 +123,10 @@ func (ah AddHandler) registerSource(ctx context.Context, tgCtx telebot.Context, 
 		if err == nil {
 			err = ah.registerTelegramChannel(ctx, chat, ap.Src.Addr, userId)
 		}
+	case srcTypeSite:
+		err = ah.registerSite(ctx, ap, userId)
+	default:
+		err = fmt.Errorf("unrecognized source type: %s", ap.Src.Type)
 	}
 	return
 }
@@ -144,5 +152,15 @@ func (ah AddHandler) registerTelegramChannel(ctx context.Context, chat *telebot.
 		Link:    url,
 	}
 	err = ah.SvcTg.Create(ctx, &ch)
+	return
+}
+
+func (ah AddHandler) registerSite(ctx context.Context, ap addPayload, userId string) (err error) {
+	site := sites.Site{
+		Addr:    ap.Src.Addr,
+		GroupId: ah.GroupId,
+		UserId:  userId,
+	}
+	err = ah.SvcSites.Create(ctx, &site)
 	return
 }

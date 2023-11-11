@@ -22,6 +22,22 @@ func Details(tgCtx telebot.Context) (err error) {
 			m.Row(
 				telebot.Btn{
 					Text: "All",
+					Data: sources.CmdTgChListAll,
+				},
+				telebot.Btn{
+					Text: "Own",
+					Data: sources.CmdTgChListOwn,
+				},
+			),
+		)
+		err = tgCtx.Send("Source Telegram Channels:", m)
+	}
+	if err == nil {
+		m := &telebot.ReplyMarkup{}
+		m.Inline(
+			m.Row(
+				telebot.Btn{
+					Text: "All",
 					Data: sources.CmdFeedListAll,
 				},
 				telebot.Btn{
@@ -38,15 +54,15 @@ func Details(tgCtx telebot.Context) (err error) {
 			m.Row(
 				telebot.Btn{
 					Text: "All",
-					Data: sources.CmdTgChListAll,
+					Data: sources.CmdSitesListAll,
 				},
 				telebot.Btn{
 					Text: "Own",
-					Data: sources.CmdTgChListOwn,
+					Data: sources.CmdSitesListOwn,
 				},
 			),
 		)
-		err = tgCtx.Send("Source Telegram Channels:", m)
+		err = tgCtx.Send("Source Web Sites:", m)
 	}
 	if err == nil {
 		m := &telebot.ReplyMarkup{

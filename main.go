@@ -7,6 +7,7 @@ import (
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	grpcApiSrcSites "github.com/awakari/bot-telegram/api/grpc/source/sites"
 	grpcApiSrcTg "github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
@@ -117,6 +118,18 @@ func main() {
 	svcSrcTg := grpcApiSrcTg.NewService(clientSrcTg)
 	svcSrcTg = grpcApiSrcTg.NewServiceLogging(svcSrcTg, log)
 
+	// init the source-sites client
+	connSrcSites, err := grpc.Dial(cfg.Api.Source.Sites.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err == nil {
+		log.Info("connected the source-sites service")
+		defer connMsgs.Close()
+	} else {
+		log.Error("failed to connect the source-sites service", err)
+	}
+	clientSrcSites := grpcApiSrcSites.NewServiceClient(connSrcSites)
+	svcSrcSites := grpcApiSrcSites.NewService(clientSrcSites)
+	svcSrcSites = grpcApiSrcSites.NewServiceLogging(svcSrcSites, log)
+
 	// init chat storage
 	var chatStor chats.Storage
 	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
@@ -156,6 +169,7 @@ func main() {
 	}
 	srcAddHandler := sources.AddHandler{
 		SvcFeeds:       svcSrcFeeds,
+		SvcSites:       svcSrcSites,
 		SvcTg:          svcSrcTg,
 		Log:            log,
 		SupportHandler: supportHandler,
@@ -164,6 +178,7 @@ func main() {
 	srcListHandler := sources.ListHandler{
 		SvcSrcFeeds: svcSrcFeeds,
 		SvcSrcTg:    svcSrcTg,
+		SvcSrcSites: svcSrcSites,
 		Log:         log,
 		GroupId:     groupId,
 	}
@@ -173,6 +188,7 @@ func main() {
 		ClientAwk:   clientAwk,
 		SvcSrcFeeds: svcSrcFeeds,
 		SvcSrcTg:    svcSrcTg,
+		SvcSrcSites: svcSrcSites,
 		Log:         log,
 		GroupId:     groupId,
 	}
@@ -222,8 +238,12 @@ func main() {
 		sources.CmdTgChListOwn:       srcListHandler.TelegramChannelsOwn,
 		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
 		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
+		sources.CmdSitesListAll:      srcListHandler.SiteListAll,
+		sources.CmdSitesListOwn:      srcListHandler.SiteListOwn,
 		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
 		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
+		sources.CmdSiteDetailsAny:    srcDetailsHandler.GetSiteAny,
+		sources.CmdSiteDetailsOwn:    srcDetailsHandler.GetSiteOwn,
 		sources.CmdTgChDetails:       srcDetailsHandler.GetTelegramChannel,
 		sources.CmdDelete:            srcDeleteHandler.RequestConfirmation,
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
+	"github.com/awakari/bot-telegram/api/grpc/source/sites"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/client-sdk-go/api"
@@ -22,6 +23,7 @@ type DetailsHandler struct {
 	ClientAwk   api.Client
 	SvcSrcFeeds feeds.Service
 	SvcSrcTg    telegram.Service
+	SvcSrcSites sites.Service
 	Log         *slog.Logger
 	GroupId     string
 }
@@ -29,6 +31,8 @@ type DetailsHandler struct {
 const CmdFeedDetailsAny = "feed_any"
 const CmdFeedDetailsOwn = "feed_own"
 const CmdTgChDetails = "tgch"
+const CmdSiteDetailsAny = "site_any"
+const CmdSiteDetailsOwn = "site_own"
 
 const fmtFeedDetails = `Feed Details:
 Link: %s
@@ -42,6 +46,11 @@ Title: %s
 Description: %s
 `
 const tgChPubLinkPrefix = "@"
+
+const fmtSiteDetails = `Web Site Details:
+Address: %s
+Last Update: <pre>%s</pre>
+`
 
 func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err error) {
 	err = dh.getFeed(tgCtx, args[0], nil)
@@ -162,5 +171,69 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 		)
 		err = tgCtx.Send(detailsTxt, m)
 	}
+	return
+}
+
+func (dh DetailsHandler) GetSiteAny(tgCtx telebot.Context, args ...string) (err error) {
+	err = dh.getSite(tgCtx, args[0], nil)
+	return
+}
+
+func (dh DetailsHandler) GetSiteOwn(tgCtx telebot.Context, args ...string) (err error) {
+	filterOwn := &sites.Filter{
+		GroupId: dh.GroupId,
+		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+	}
+	err = dh.getSite(tgCtx, args[0], filterOwn)
+	return
+}
+func (dh DetailsHandler) getSite(tgCtx telebot.Context, addr string, filter *sites.Filter) (err error) {
+	//
+	ctx := context.TODO()
+	//
+	var site *sites.Site
+	site, err = dh.SvcSrcSites.Read(ctx, addr)
+	switch {
+	case status.Code(err) == codes.NotFound:
+		dh.Log.Warn(fmt.Sprintf("Site not found, address may be truncated: %s", addr))
+		var addrs []string
+		addrs, err = dh.SvcSrcSites.List(context.TODO(), filter, 1, addr)
+		dh.Log.Debug(fmt.Sprintf("List sites with cursor \"%s\" results: %+v, %s", addr, addrs, err))
+		if err == nil && len(addrs) > 0 {
+			site, err = dh.SvcSrcSites.Read(context.TODO(), addrs[0])
+		}
+	}
+	if site != nil {
+		addr = site.Addr
+	}
+	//
+	if err == nil {
+		txtSummary := site.Addr
+		if site.UserId != "" {
+			groupId := site.GroupId
+			switch groupId {
+			case dh.GroupId: // this bot
+				groupId = "@AwakariBot"
+			}
+			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from %s", site.UserId, groupId)
+		}
+		var lastUpdated string
+		switch {
+		case site.LastUpdate == nil || site.LastUpdate.Seconds <= 0:
+			lastUpdated = "never"
+		default:
+			lastUpdated = site.LastUpdate.AsTime().Format(time.RFC3339)
+		}
+		txt := fmt.Sprintf(fmtSiteDetails, txtSummary, lastUpdated)
+		m := &telebot.ReplyMarkup{}
+		if site.GroupId == dh.GroupId && site.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
+			m.Inline(m.Row(telebot.Btn{
+				Text: "❌ Delete",
+				Data: fmt.Sprintf("%s %s", CmdDelete, site.Addr),
+			}))
+		}
+		err = tgCtx.Send(txt, m, telebot.ModeHTML)
+	}
+	//
 	return
 }
