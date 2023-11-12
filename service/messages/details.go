@@ -21,31 +21,31 @@ func Details(tgCtx telebot.Context) (err error) {
 		m.Inline(
 			m.Row(
 				telebot.Btn{
-					Text: "Telegram Channels",
+					Text: "Telegram - All",
 					Data: sources.CmdTgChListAll,
 				},
 				telebot.Btn{
-					Text: "Own",
+					Text: "Telegram - Own",
 					Data: sources.CmdTgChListOwn,
 				},
 			),
 			m.Row(
 				telebot.Btn{
-					Text: "Feeds",
+					Text: "Feeds - All",
 					Data: sources.CmdFeedListAll,
 				},
 				telebot.Btn{
-					Text: "Own",
+					Text: "Feeds - Own",
 					Data: sources.CmdFeedListOwn,
 				},
 			),
 			m.Row(
 				telebot.Btn{
-					Text: "Web Sites",
+					Text: "Sites - All",
 					Data: sources.CmdSitesListAll,
 				},
 				telebot.Btn{
-					Text: "Own",
+					Text: "Sites - Own",
 					Data: sources.CmdSitesListOwn,
 				},
 			),
