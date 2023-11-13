@@ -2,7 +2,6 @@ package sources
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -15,7 +14,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"net/http"
 	"strconv"
 	"time"
 )
@@ -55,25 +53,7 @@ func (ap addPayload) validate(bot *telebot.Bot) (err error) {
 	case srcTypeTgCh:
 	case srcTypeSite:
 	case srcTypeFeed:
-		if ap.Limit.Freq < 1 || ap.Limit.Freq > updatesPerDayMax {
-			err = fmt.Errorf("%w: source fetch daily frequency is %d, should be [1..%d]", errInvalidAddPayload, ap.Limit.Freq, updatesPerDayMax)
-		}
-		var resp *http.Response
-		if err == nil {
-			clientHttp := http.Client{
-				Timeout: feedFetchTimeout,
-				Transport: &http.Transport{
-					TLSClientConfig: &tls.Config{
-						InsecureSkipVerify: true,
-					},
-				},
-			}
-			resp, err = clientHttp.Get(ap.Src.Addr)
-		}
-		if err == nil {
-			defer resp.Body.Close()
-			_, err = gofeed.NewParser().Parse(resp.Body)
-		}
+		_, err = gofeed.NewParser().ParseURL(ap.Src.Addr)
 	default:
 		err = fmt.Errorf("%w: unrecognized source type %s", errInvalidAddPayload, ap.Src.Type)
 	}
