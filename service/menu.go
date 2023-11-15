@@ -101,8 +101,8 @@ func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(btnPub, btnPubs),
-		kbd.Row(btnSub, btnSubs),
+		kbd.Row(btnPub, btnSub),
+		kbd.Row(btnPubs, btnSubs),
 	)
 	return
 }
