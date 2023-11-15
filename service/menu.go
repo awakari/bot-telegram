@@ -15,7 +15,7 @@ const LabelUsagePub = "Usage ᵖ"
 const LabelMainMenu = "< Main Menu"
 
 const LabelPub = "📢 Publish"
-const LabelSub = "⭐ Subscribe"
+const LabelSub = "🔍 Subscribe"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -63,10 +63,6 @@ var btnSub = telebot.Btn{
 	Text: LabelSub,
 }
 
-var btnMore = telebot.Btn{
-	Text: "More...",
-}
-
 var BtnMainMenu = telebot.Btn{
 	Text: LabelMainMenu,
 }
@@ -84,12 +80,20 @@ func MakeReplyKeyboard() (kbd *telebot.ReplyMarkup) {
 	return
 }
 
-func MakeMainMenuReplyKeyboad() (kbd *telebot.ReplyMarkup) {
+func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(btnPub, btnSub, btnMore),
+		kbd.Row(btnPub, btnSub),
+		kbd.Row(
+			telebot.Btn{
+				Text: "Publications",
+			},
+			telebot.Btn{
+				Text: "Subscriptions",
+			},
+		),
 	)
 	return
 }

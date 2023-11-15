@@ -378,7 +378,7 @@ func main() {
 				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 				switch tgCtx.Sender().ID {
 				case 362697048:
-					err = tgCtx.Send("Main menu reply keyboard", service.MakeMainMenuReplyKeyboad())
+					err = tgCtx.Send("Main menu reply keyboard", service.MakeMainMenu())
 				default:
 					err = tgCtx.Send("Main menu reply keyboard", menuKbd)
 				}
