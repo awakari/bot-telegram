@@ -15,7 +15,9 @@ const LabelUsagePub = "Usage ᵖ"
 const LabelMainMenu = "< Main Menu"
 
 const LabelPub = "📢 Publish"
+const LabelPubs = "Publishing >"
 const LabelSub = "🔍 Subscribe"
+const LabelSubs = "Subscriptions >"
 
 var btnSubList = telebot.Btn{
 	Text: LabelSubList,
@@ -57,10 +59,24 @@ var btnUsagePub = telebot.Btn{
 
 var btnPub = telebot.Btn{
 	Text: LabelPub,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/msg-new.html",
+	},
+}
+
+var btnPubs = telebot.Btn{
+	Text: LabelPubs,
 }
 
 var btnSub = telebot.Btn{
 	Text: LabelSub,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/sub-new.html",
+	},
+}
+
+var btnSubs = telebot.Btn{
+	Text: LabelSubs,
 }
 
 var BtnMainMenu = telebot.Btn{
@@ -85,18 +101,8 @@ func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(
-			btnPub,
-			telebot.Btn{
-				Text: "📢 More >",
-			},
-		),
-		kbd.Row(
-			btnSub,
-			telebot.Btn{
-				Text: "🔍 More >",
-			},
-		),
+		kbd.Row(btnPub, btnPubs),
+		kbd.Row(btnSub, btnSubs),
 	)
 	return
 }
