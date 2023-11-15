@@ -14,7 +14,7 @@ const LabelPubMsgCustom = "▷ Custom"
 const LabelUsagePub = "Usage ᵖ"
 const LabelMainMenu = "< Main Menu"
 
-const LabelPub = "▶✉🖄🖃 Publish"
+const LabelPub = "📢 Publish"
 const LabelSub = "⭐ Subscribe"
 
 var btnSubList = telebot.Btn{
