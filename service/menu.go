@@ -84,6 +84,9 @@ func MakeMainMenuReplyKeyboad() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{
 		ResizeKeyboard: true,
 	}
-	kbd.Reply(kbd.Row(btnPub, btnSub))
+	kbd.Reply(
+		kbd.Row(btnPub, btnSub),
+		kbd.Row(btnUsagePub),
+	)
 	return
 }
