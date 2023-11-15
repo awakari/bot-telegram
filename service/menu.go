@@ -87,14 +87,14 @@ func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 	kbd.Reply(
 		kbd.Row(
 			btnPub,
-			btnSub,
+			telebot.Btn{
+				Text: "📢 More >",
+			},
 		),
 		kbd.Row(
+			btnSub,
 			telebot.Btn{
-				Text: "Publishing >",
-			},
-			telebot.Btn{
-				Text: "Subscriptions >",
+				Text: "🔍 More >",
 			},
 		),
 	)
