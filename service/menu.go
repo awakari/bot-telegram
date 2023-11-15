@@ -63,6 +63,10 @@ var btnSub = telebot.Btn{
 	Text: LabelSub,
 }
 
+var btnMore = telebot.Btn{
+	Text: "More...",
+}
+
 var BtnMainMenu = telebot.Btn{
 	Text: LabelMainMenu,
 }
@@ -85,8 +89,7 @@ func MakeMainMenuReplyKeyboad() (kbd *telebot.ReplyMarkup) {
 		ResizeKeyboard: true,
 	}
 	kbd.Reply(
-		kbd.Row(btnPub, btnSub),
-		kbd.Row(btnUsagePub),
+		kbd.Row(btnPub, btnSub, btnMore),
 	)
 	return
 }
