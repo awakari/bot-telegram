@@ -65,7 +65,7 @@ var btnPub = telebot.Btn{
 }
 
 var btnPubs = telebot.Btn{
-	Text: LabelPubs,
+	Text: "More >",
 }
 
 var btnSub = telebot.Btn{
@@ -102,7 +102,7 @@ func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 	}
 	kbd.Reply(
 		kbd.Row(btnPub, btnSub),
-		kbd.Row(btnPubs, btnSubs),
+		kbd.Row(btnPubs),
 	)
 	return
 }
