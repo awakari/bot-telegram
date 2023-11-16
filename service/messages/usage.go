@@ -45,7 +45,7 @@ func (uh UsageHandler) Show(tgCtx telebot.Context) (err error) {
 			Text: usage.LabelIncrease,
 			Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectPublishEvents),
 		}))
-		err = tgCtx.Send(fmt.Sprintf("Publishing:\nCount Today: %d\nDaily Limit: %d", u.Count, l.Count), m)
+		err = tgCtx.Send(fmt.Sprintf("Published Today: %d\n(including events from own sources)\nDaily Limit: %d", u.Count, l.Count), m)
 	}
 	if err == nil {
 		m := &telebot.ReplyMarkup{}

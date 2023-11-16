@@ -23,7 +23,7 @@ func Usage(clientAwk api.Client, groupId string) telebot.HandlerFunc {
 				Text: "List",
 				Data: fmt.Sprintf("%s %s", CmdPageNext, CmdDetails),
 			}))
-			err = tgCtx.Send(fmt.Sprintf("Subscriptions:\nCount: %d", u.Count), m)
+			err = tgCtx.Send(fmt.Sprintf("Count: %d", u.Count), m)
 		}
 		var l awkUsage.Limit
 		if err == nil {
