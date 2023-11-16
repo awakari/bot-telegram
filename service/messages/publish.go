@@ -24,10 +24,8 @@ import (
 
 const ReqMsgPubBasic = "msg_pub_basic"
 const PurposePublish = "msg_pub"
-const attrKeyAuthor = "author"
 const attrKeyMsgId = "tgmessageid"
 const attrValSpecVersion = "1.0"
-const fmtUserName = "%s %s"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
 const msgLimitReached = "Message daily publishing limit reached. Payment is required to proceed. The message is being kept for 1 week"

@@ -98,7 +98,7 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 			txt += fmt.Sprintf("%s\n\n", txtData)
 		}
 	}
-	txt += fmt.Sprintf("source: %s\nsubscription: %s\n", evt.Source, subDescr)
+	txt += fmt.Sprintf("Subscription: %s\n\nsource: %s\n", subDescr, evt.Source)
 	var attrsTxt string
 	if attrs {
 		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
@@ -106,9 +106,9 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	if attrsTxt != "" {
 		switch mode {
 		case FormatModeHtml:
-			txt += fmt.Sprintf("Extra Attributes:\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
+			txt += fmt.Sprintf("\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
 		default:
-			txt += fmt.Sprintf("Extra Attributes:\n%s\n", attrsTxt)
+			txt += fmt.Sprintf("\n%s\n", attrsTxt)
 		}
 	}
 	return
@@ -132,13 +132,11 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 }
 
 func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
-
 	txt += fmt.Sprintf("id: %s\n", evt.Id)
-
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
-		case "title":
 		case "summary":
+		case "title":
 		case "awakarimatchfound": // internal
 		case "awakariuserid": // do not expose
 		case "feedcategories":
