@@ -262,8 +262,8 @@ func main() {
 		service.LabelUsageSub:       subscriptions.Usage(clientAwk, groupId),
 		service.LabelPublishing:     messages.Details,
 		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
-		service.LabelPubs:           messages.Details,
-		service.LabelSubs:           subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
+		service.LabelPubs:           pubUsageHandler.Show,
+		service.LabelSubs:           subscriptions.Usage(clientAwk, groupId),
 		service.LabelUsagePub:       pubUsageHandler.Show,
 		service.LabelMainMenu: func(tgCtx telebot.Context) error {
 			return tgCtx.Send("Main menu reply keyboard", menuKbd)
