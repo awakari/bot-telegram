@@ -249,7 +249,9 @@ func main() {
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
+		service.LabelPub:             messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
+		service.LabelSub:             subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
 		usage.LabelExtend:            limitsHandler.HandleExtension,
 		messages.LabelPubAddSource:   srcAddHandler.HandleFormData,
 		subscriptions.LabelCond:      subCondHandler.Update,
@@ -322,16 +324,24 @@ func main() {
 			Description: "Start and show main menu",
 		},
 		{
-			Text:        "support",
-			Description: "Request support",
+			Text:        "pub",
+			Description: "Publish a basic message",
+		},
+		{
+			Text:        "sub",
+			Description: "Subscribe for keywords",
+		},
+		{
+			Text:        "donate",
+			Description: "Help Awakari to be Free",
 		},
 		{
 			Text:        "help",
 			Description: "User guide",
 		},
 		{
-			Text:        "donate",
-			Description: "Help to improve the service",
+			Text:        "support",
+			Description: "Request support",
 		},
 		{
 			Text:        "terms",
@@ -390,14 +400,13 @@ func main() {
 			return
 		}, menuKbd),
 	)
+	b.Handle("/pub", messages.PublishBasicRequest)
+	b.Handle("/sub", subscriptions.CreateBasicRequest)
+	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
+		return tgCtx.Forward(donateMsg)
+	})
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
-	})
-	b.Handle("/terms", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/tos.html\">terms link</a>", telebot.ModeHTML)
-	})
-	b.Handle("/privacy", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/privacy.html\">privacy link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/support", func(tgCtx telebot.Context) error {
 		_ = tgCtx.Send("Describe the issue in the reply to the next message")
@@ -405,8 +414,11 @@ func main() {
 			ForceReply: true,
 		})
 	})
-	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
-		return tgCtx.Forward(donateMsg)
+	b.Handle("/terms", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/tos.html\">terms link</a>", telebot.ModeHTML)
+	})
+	b.Handle("/privacy", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("Open the <a href=\"https://awakari.app/privacy.html\">privacy link</a>", telebot.ModeHTML)
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
 	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))

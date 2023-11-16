@@ -27,7 +27,6 @@ const PurposePublish = "msg_pub"
 const attrKeyAuthor = "author"
 const attrKeyMsgId = "tgmessageid"
 const attrValSpecVersion = "1.0"
-const fmtLinkUser = "@%s"
 const fmtUserName = "%s %s"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
@@ -78,13 +77,13 @@ func PublishBasicReplyHandlerFunc(
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		evt := pb.CloudEvent{
 			Id:          uuid.NewString(),
-			Source:      fmt.Sprintf(fmtLinkUser, sender.Username),
+			Source:      "@AwakariBot",
 			SpecVersion: attrValSpecVersion,
 			Type:        groupId,
 		}
 		if err == nil {
 			defer w.Close()
-			err = toCloudEvent(sender, tgCtx.Message(), args[1], &evt)
+			err = toCloudEvent(tgCtx.Message(), args[1], &evt)
 		}
 		if err == nil {
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, kbd)
@@ -93,13 +92,8 @@ func PublishBasicReplyHandlerFunc(
 	}
 }
 
-func toCloudEvent(sender *telebot.User, msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
+func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
 	evt.Attributes = map[string]*pb.CloudEventAttributeValue{
-		attrKeyAuthor: {
-			Attr: &pb.CloudEventAttributeValue_CeString{
-				CeString: fmt.Sprintf(fmtUserName, sender.FirstName, sender.LastName),
-			},
-		},
 		attrKeyMsgId: {
 			Attr: &pb.CloudEventAttributeValue_CeString{
 				CeString: strconv.Itoa(msg.ID),
@@ -217,15 +211,7 @@ func PublishCustomHandlerFunc(
 			err = protojson.Unmarshal([]byte(data), &evt)
 		}
 		if err == nil {
-			evt.Source = fmt.Sprintf(fmtLinkUser, sender.Username)
-			_, attrKeyAuthorFound := evt.Attributes[attrKeyAuthor]
-			if !attrKeyAuthorFound {
-				evt.Attributes[attrKeyAuthor] = &pb.CloudEventAttributeValue{
-					Attr: &pb.CloudEventAttributeValue_CeString{
-						CeString: fmt.Sprintf(fmtUserName, sender.FirstName, sender.LastName),
-					},
-				}
-			}
+			evt.Source = "@AwakariBot"
 			evt.SpecVersion = attrValSpecVersion
 			evt.Type = groupId
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)

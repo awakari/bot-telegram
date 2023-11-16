@@ -67,7 +67,7 @@ func (f Format) Convert(evt *pb.CloudEvent, subDescr string, mode FormatMode) (t
 		case true:
 			// no need to truncate for telegram when message is from telegram
 			// no need to convert any other attributes except text and footer
-			tgMsg = f.convert(evt, subDescr, mode, false, false)
+			tgMsg = f.convert(evt, subDescr, mode, false, true)
 		default:
 			tgMsg = f.convert(evt, subDescr, mode, true, true)
 		}
@@ -98,7 +98,7 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 			txt += fmt.Sprintf("%s\n\n", txtData)
 		}
 	}
-	txt += fmt.Sprintf("Source: %s\nSubscription: %s\n", evt.Source, subDescr)
+	txt += fmt.Sprintf("source: %s\nsubscription: %s\n", evt.Source, subDescr)
 	var attrsTxt string
 	if attrs {
 		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
@@ -111,7 +111,6 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 			txt += fmt.Sprintf("Extra Attributes:\n%s\n", attrsTxt)
 		}
 	}
-	txt += "Delivered by: @AwakariBot"
 	return
 }
 
@@ -133,6 +132,8 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 }
 
 func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
+
+	txt += fmt.Sprintf("id: %s\n", evt.Id)
 
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {

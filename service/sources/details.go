@@ -93,7 +93,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			case dh.GroupId: // this bot
 				groupId = "@AwakariBot"
 			}
-			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from %s", feed.UserId, groupId)
+			txtSummary += fmt.Sprintf("\nAdded by a user from %s", groupId)
 		}
 		var txtItemLast string
 		switch {
@@ -215,7 +215,7 @@ func (dh DetailsHandler) getSite(tgCtx telebot.Context, addr string, filter *sit
 			case dh.GroupId: // this bot
 				groupId = "@AwakariBot"
 			}
-			txtSummary += fmt.Sprintf("\nAdded by <a href=\"tg://user?id=%s\">the user</a> from %s", site.UserId, groupId)
+			txtSummary += fmt.Sprintf("\nAdded by a user from %s", groupId)
 		}
 		var lastUpdated string
 		switch {
