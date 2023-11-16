@@ -65,7 +65,7 @@ var btnPub = telebot.Btn{
 }
 
 var btnPubs = telebot.Btn{
-	Text: "More >",
+	Text: LabelPubs,
 }
 
 var btnSub = telebot.Btn{
@@ -100,6 +100,9 @@ func MakeMainMenu() (kbd *telebot.ReplyMarkup) {
 	kbd = &telebot.ReplyMarkup{
 		ResizeKeyboard: true,
 	}
-	kbd.Reply(kbd.Row(btnPub, btnSub, btnPubs))
+	kbd.Reply(
+		kbd.Row(btnPub, btnSub),
+		kbd.Row(btnPubs, btnSubs),
+	)
 	return
 }
