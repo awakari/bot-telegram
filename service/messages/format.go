@@ -106,9 +106,9 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	if attrsTxt != "" {
 		switch mode {
 		case FormatModeHtml:
-			txt += fmt.Sprintf("\n<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
+			txt += fmt.Sprintf("<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
 		default:
-			txt += fmt.Sprintf("\n%s\n", attrsTxt)
+			txt += fmt.Sprintf("%s\n", attrsTxt)
 		}
 	}
 	return
