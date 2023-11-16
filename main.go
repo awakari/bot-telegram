@@ -380,12 +380,7 @@ func main() {
 					err = b.Pin(msg)
 				}
 				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
-				switch tgCtx.Sender().ID {
-				case 362697048:
-					err = tgCtx.Send("Main menu reply keyboard", service.MakeMainMenu())
-				default:
-					err = tgCtx.Send("Main menu reply keyboard", menuKbd)
-				}
+				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
