@@ -47,7 +47,7 @@ func TestConditionHandler_Update(t *testing.T) {
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
 			out := &subscriptions.Condition{}
-			err := convertConditionJsonToProto(c.in, out)
+			err := convertConditionJsonToProto([]byte(c.in), out)
 			assert.ErrorIs(t, err, c.err)
 			assert.Equal(t, c.out.Not, out.Not)
 		})

@@ -3,6 +3,8 @@ package messages
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/sources"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	awkUsage "github.com/awakari/client-sdk-go/model/usage"
@@ -29,23 +31,72 @@ func (uh UsageHandler) Show(tgCtx telebot.Context) (err error) {
 		l, err = uh.ClientAwk.ReadUsageLimit(groupIdCtx, userId, awkUsage.SubjectPublishEvents)
 	}
 	if err == nil {
-		respTxt := usage.FormatUsageLimit("Daily Messages Publishing", u, l)
 		m := &telebot.ReplyMarkup{}
-		btns := []telebot.Btn{
-			{
-				Text: usage.LabelIncrease,
-				Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectPublishEvents),
-			},
-		}
+		m.Inline(m.Row(telebot.Btn{
+			Text: usage.LabelIncrease,
+			Data: fmt.Sprintf("%s %d", usage.CmdIncrease, awkUsage.SubjectPublishEvents),
+		}))
+		err = tgCtx.Send(fmt.Sprintf("Publishing:\nCount Today: %d\nDaily Limit: %d", u.Count, l.Count), m)
+	}
+	if err == nil {
+		m := &telebot.ReplyMarkup{}
+		var expires string
 		switch {
+		case l.Expires.IsZero():
+			expires = "never"
 		case l.Expires.After(time.Now()):
-			btns = append(btns, telebot.Btn{
+			m.Inline(m.Row(telebot.Btn{
 				Text: usage.LabelExtend,
 				Data: fmt.Sprintf("%s %d", usage.CmdExtend, awkUsage.SubjectPublishEvents),
-			})
+			}))
+			expires = l.Expires.Format(time.RFC3339)
+		default:
+			expires = l.Expires.Format(time.RFC3339)
 		}
-		m.Inline(m.Row(btns...))
-		err = tgCtx.Send(respTxt, m, telebot.ModeHTML)
+		err = tgCtx.Send(fmt.Sprintf("Limit Expires: %s", expires), m)
+	}
+	if err == nil {
+		m := &telebot.ReplyMarkup{}
+		m.Inline(
+			m.Row(
+				telebot.Btn{
+					Text: "Telegram - All",
+					Data: sources.CmdTgChListAll,
+				},
+				telebot.Btn{
+					Text: "Telegram - Own",
+					Data: sources.CmdTgChListOwn,
+				},
+			),
+			m.Row(
+				telebot.Btn{
+					Text: "Feeds - All",
+					Data: sources.CmdFeedListAll,
+				},
+				telebot.Btn{
+					Text: "Feeds - Own",
+					Data: sources.CmdFeedListOwn,
+				},
+			),
+			m.Row(
+				telebot.Btn{
+					Text: "Sites - All",
+					Data: sources.CmdSitesListAll,
+				},
+				telebot.Btn{
+					Text: "Sites - Own",
+					Data: sources.CmdSitesListOwn,
+				},
+			),
+		)
+		err = tgCtx.Send("Sources:", m)
+	}
+	if err == nil {
+		m := &telebot.ReplyMarkup{
+			ResizeKeyboard: true,
+		}
+		m.Reply(m.Row(service.BtnMainMenu, btnPubAddSource))
+		err = tgCtx.Send("To add own source, use the corresponding reply keyboard button.", m)
 	}
 	return
 }

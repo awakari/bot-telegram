@@ -46,8 +46,12 @@ func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) serv
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
 		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		var cursor string
+		if len(args) > 1 {
+			cursor = args[1]
+		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], args[1])
+		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], cursor)
 		if err == nil {
 			err = tgCtx.Send("Own subscriptions list page:", m, telebot.ModeHTML)
 		}
