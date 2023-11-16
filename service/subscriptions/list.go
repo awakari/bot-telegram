@@ -14,21 +14,6 @@ import (
 
 const CmdPageNext = "subs_next"
 
-const msgList = `Own subscriptions list. Select any to see the details and available actions:`
-
-func ListHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
-	return func(tgCtx telebot.Context) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
-		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdDetails, "")
-		if err == nil {
-			err = tgCtx.Send(msgList, m, telebot.ModeHTML)
-		}
-		return
-	}
-}
-
 func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)

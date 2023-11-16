@@ -19,6 +19,15 @@ type UsageHandler struct {
 	GroupId   string
 }
 
+const LabelPubAddSource = "+ Own Source"
+
+var btnPubAddSource = telebot.Btn{
+	Text: LabelPubAddSource,
+	WebApp: &telebot.WebApp{
+		URL: "https://awakari.app/source-add.html",
+	},
+}
+
 func (uh UsageHandler) Show(tgCtx telebot.Context) (err error) {
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", uh.GroupId)
 	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)

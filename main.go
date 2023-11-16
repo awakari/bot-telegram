@@ -162,7 +162,7 @@ func main() {
 
 	// init handlers
 	groupId := cfg.Api.GroupId
-	menuKbd := service.MakeReplyKeyboard() // main menu keyboard
+	menuKbd := service.MakeMainMenu()
 	supportHandler := support.Handler{
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 		RestoreKbd:    menuKbd,
@@ -248,23 +248,15 @@ func main() {
 		sources.CmdDelete:            srcDeleteHandler.RequestConfirmation,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelPubMsgCustom:    messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
-		service.LabelPub:             messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
-		service.LabelSubCreateCustom: subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		service.LabelSub:             subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		usage.LabelExtend:            limitsHandler.HandleExtension,
-		messages.LabelPubAddSource:   srcAddHandler.HandleFormData,
-		subscriptions.LabelCond:      subCondHandler.Update,
+		service.LabelPub:           messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
+		service.LabelSub:           subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
+		usage.LabelExtend:          limitsHandler.HandleExtension,
+		messages.LabelPubAddSource: srcAddHandler.HandleFormData,
+		subscriptions.LabelCond:    subCondHandler.Update,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelSubList:        subscriptions.ListHandlerFunc(clientAwk, chatStor, groupId),
-		service.LabelSubCreateBasic: subscriptions.CreateBasicRequest,
-		service.LabelUsageSub:       subscriptions.Usage(clientAwk, groupId),
-		service.LabelPublishing:     messages.Details,
-		service.LabelPubMsgBasic:    messages.PublishBasicRequest,
-		service.LabelPubs:           pubUsageHandler.Show,
-		service.LabelSubs:           subscriptions.Usage(clientAwk, groupId),
-		service.LabelUsagePub:       pubUsageHandler.Show,
+		service.LabelPubs: pubUsageHandler.Show,
+		service.LabelSubs: subscriptions.Usage(clientAwk, groupId),
 		service.LabelMainMenu: func(tgCtx telebot.Context) error {
 			return tgCtx.Send("Main menu reply keyboard", menuKbd)
 		},
