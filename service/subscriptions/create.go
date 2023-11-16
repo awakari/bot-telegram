@@ -24,8 +24,8 @@ const limitGroupOrCondChildrenCount = 4
 const limitTextCondTermsLength = 256
 const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
-const ReqSubCreateBasic = "sub_create_basic"
-const msgSubCreateBasic = "Creating a basic subscription with a single text matching condition. " +
+const ReqSubCreate = "sub_create"
+const msgSubCreate = "Creating a basic subscription with a single text matching condition. " +
 	"Reply a name followed by keywords to the next message. Example:\n" +
 	"<pre>Wishlist1 tesla iphone</pre>"
 const msgSubCreated = `Subscription created, next: 
@@ -39,12 +39,12 @@ var errLimitReached = errors.New("limit reached")
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 
 func CreateBasicRequest(tgCtx telebot.Context) (err error) {
-	_ = tgCtx.Send(msgSubCreateBasic, telebot.ModeHTML)
+	_ = tgCtx.Send(msgSubCreate, telebot.ModeHTML)
 	m := &telebot.ReplyMarkup{
 		ForceReply:  true,
 		Placeholder: "name keyword1 keyword2 ...",
 	}
-	err = tgCtx.Send(ReqSubCreateBasic, m)
+	err = tgCtx.Send(ReqSubCreate, m)
 	return
 }
 

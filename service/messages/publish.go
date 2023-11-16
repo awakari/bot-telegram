@@ -22,7 +22,7 @@ import (
 	"time"
 )
 
-const ReqMsgPubBasic = "msg_pub_basic"
+const ReqMsgPub = "msg_pub"
 const PurposePublish = "msg_pub"
 const attrKeyMsgId = "tgmessageid"
 const attrValSpecVersion = "1.0"
@@ -57,7 +57,7 @@ var publishBasicMarkup = &telebot.ReplyMarkup{
 
 func PublishBasicRequest(tgCtx telebot.Context) (err error) {
 	_ = tgCtx.Send("Reply with your message to publish:")
-	err = tgCtx.Send(ReqMsgPubBasic, publishBasicMarkup)
+	err = tgCtx.Send(ReqMsgPub, publishBasicMarkup)
 	return
 }
 

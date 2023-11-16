@@ -262,15 +262,15 @@ func main() {
 		},
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqDescribe:       subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		subscriptions.ReqDelete:         subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		subscriptions.ReqSubCreateBasic: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		messages.ReqMsgPubBasic:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
-		subscriptions.ReqSubExtend:      subExtHandler.HandleExtensionReply,
-		usage.ReqLimitExtend:            limitsHandler.HandleExtension,
-		usage.ReqLimitIncrease:          limitsHandler.HandleIncrease,
-		sources.CmdDeleteConfirm:        srcDeleteHandler.HandleConfirmation,
-		"support":                       supportHandler.Request,
+		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		subscriptions.ReqDelete:    subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
+		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
+		subscriptions.ReqSubExtend: subExtHandler.HandleExtensionReply,
+		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
+		usage.ReqLimitIncrease:     limitsHandler.HandleIncrease,
+		sources.CmdDeleteConfirm:   srcDeleteHandler.HandleConfirmation,
+		"support":                  supportHandler.Request,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
