@@ -144,32 +144,6 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 		case "feedimagetitle":
 		case "feedimageurl":
 		case "feedtitle":
-		case "imagetitle": // already used when handling "imageurl" attr
-		case "imageurl":
-			var imgTitle string
-			attrImgTitle, imgTitleFound := evt.Attributes["imagetitle"]
-			switch imgTitleFound {
-			case true:
-				imgTitle = attrImgTitle.GetCeString()
-			default:
-				imgTitle = "Image"
-			}
-			switch mode {
-			case FormatModeHtml:
-				switch {
-				case attrVal.GetCeString() != "":
-					txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeString())
-				case attrVal.GetCeUri() != "":
-					txt += fmt.Sprintf("<a href=\"%s\" alt=\"image\">%s</a>\n", imgTitle, attrVal.GetCeUri())
-				}
-			default:
-				switch {
-				case attrVal.GetCeString() != "":
-					txt += fmt.Sprintf("%s: %s\n", imgTitle, attrVal.GetCeString())
-				case attrVal.GetCeUri() != "":
-					txt += fmt.Sprintf("%s: %s\n", imgTitle, attrVal.GetCeUri())
-				}
-			}
 		default:
 			switch vt := attrVal.Attr.(type) {
 			case *pb.CloudEventAttributeValue_CeBoolean:
