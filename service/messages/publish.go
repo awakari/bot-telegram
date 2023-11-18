@@ -211,7 +211,6 @@ func PublishCustomHandlerFunc(
 		if err == nil {
 			evt.Source = "@AwakariBot"
 			evt.SpecVersion = attrValSpecVersion
-			evt.Type = groupId
 			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)
 		}
 		return
