@@ -132,7 +132,7 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 }
 
 func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
-	txt += fmt.Sprintf("id: %s\n", evt.Id)
+	txt += fmt.Sprintf("id: %s\ntype: %s\n", evt.Id, evt.Type)
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
 		case "summary":
