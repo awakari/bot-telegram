@@ -39,6 +39,8 @@ const attrKeyFileMediaDuration = "tgfilemediaduration"
 const attrKeyFileImgHeight = "tgfileimgheight"
 const attrKeyFileImgWidth = "tgfileimgwidth"
 const attrKeyFileType = "tgfiletype"
+const attrKeyLatitude = "latitude"
+const attrKeyLongitude = "longitude"
 
 type FileType int32
 
@@ -132,6 +134,17 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 				},
 			}
 			f = msg.Document.File
+		case msg.Location != nil:
+			evt.Attributes[attrKeyLatitude] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: fmt.Sprintf("%f", msg.Location.Lat),
+				},
+			}
+			evt.Attributes[attrKeyLongitude] = &pb.CloudEventAttributeValue{
+				Attr: &pb.CloudEventAttributeValue_CeString{
+					CeString: fmt.Sprintf("%f", msg.Location.Lng),
+				},
+			}
 		case msg.Photo != nil:
 			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
