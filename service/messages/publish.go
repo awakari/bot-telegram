@@ -109,8 +109,6 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 		evt.Data = &pb.CloudEvent_TextData{
 			TextData: msg.Caption,
 		}
-	default:
-		err = errors.New("invalid message: missing text/caption")
 	}
 	if err == nil {
 		var f telebot.File
