@@ -29,7 +29,6 @@ type Reader interface {
 const ReaderTtl = 24 * time.Hour
 const readBatchSize = 16
 const msgFmtReadOnceFailed = "unexpected failure: %s\ndon't worry, retrying in %s..."
-const msgFmtRunFatal = "⚠ %s,\nℹ please select a subscription to read again"
 const backOffInit = 1 * time.Second
 const backOffFactor = 3
 const backOffMax = 24 * time.Hour
@@ -149,8 +148,7 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 	}
 	//
 	if err != nil {
-		err = r.tgCtx.Send(fmt.Sprintf(msgFmtRunFatal, err))
-		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
+		panic(err)
 	}
 }
 
