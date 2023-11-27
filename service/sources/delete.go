@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/support"
 	"gopkg.in/telebot.v3"
-	"strconv"
 	"strings"
 )
 
@@ -51,7 +51,7 @@ func (dh DeleteHandler) HandleConfirmation(tgCtx telebot.Context, args ...string
 }
 
 func (dh DeleteHandler) delete(tgCtx telebot.Context, addr string) (err error) {
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	switch {
 	case strings.HasPrefix(addr, tgChPubLinkPrefix):
 		err = dh.SvcSrcTg.Delete(context.TODO(), addr)

@@ -9,7 +9,6 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"strconv"
 )
 
 const CmdDescription = "description"
@@ -18,8 +17,8 @@ const ReqDescribe = "sub_describe"
 func DescriptionHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var sd subscription.Data
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
@@ -42,8 +41,8 @@ func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 			err = errors.New("invalid argument count")
 		}
 		subId, descr := args[1], args[2]
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var sd subscription.Data
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {

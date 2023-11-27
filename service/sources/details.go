@@ -7,6 +7,7 @@ import (
 	"github.com/awakari/bot-telegram/api/grpc/source/sites"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -60,7 +61,7 @@ func (dh DetailsHandler) GetFeedAny(tgCtx telebot.Context, args ...string) (err 
 func (dh DetailsHandler) GetFeedOwn(tgCtx telebot.Context, args ...string) (err error) {
 	filterOwn := &feeds.Filter{
 		GroupId: dh.GroupId,
-		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+		UserId:  fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID),
 	}
 	err = dh.getFeed(tgCtx, args[0], filterOwn)
 	return
@@ -110,7 +111,7 @@ func (dh DetailsHandler) getFeed(tgCtx telebot.Context, url string, filter *feed
 			txtItemLast,
 		)
 		m := &telebot.ReplyMarkup{}
-		if feed.GroupId == dh.GroupId && feed.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
+		if feed.GroupId == dh.GroupId && feed.UserId == fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID) {
 			m.Inline(m.Row(telebot.Btn{
 				Text: "❌ Delete",
 				Data: fmt.Sprintf("%s %s", CmdDelete, feed.Url),
@@ -154,7 +155,7 @@ func (dh DetailsHandler) GetTelegramChannel(tgCtx telebot.Context, args ...strin
 	m := &telebot.ReplyMarkup{}
 	var ch *telegram.Channel
 	ch, err = dh.SvcSrcTg.Read(context.TODO(), url)
-	if err == nil && ch.GroupId == dh.GroupId && ch.UserId == strconv.FormatInt(tgCtx.Sender().ID, 10) {
+	if err == nil && ch.GroupId == dh.GroupId && ch.UserId == fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID) {
 		m.Inline(m.Row(telebot.Btn{
 			Text: "❌ Delete",
 			Data: fmt.Sprintf("%s %s", CmdDelete, url),

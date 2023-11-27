@@ -71,9 +71,9 @@ func PublishBasicReplyHandlerFunc(
 	kbd *telebot.ReplyMarkup,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		sender := tgCtx.Sender()
-		userId := strconv.FormatInt(sender.ID, 10)
+		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		evt := pb.CloudEvent{
 			Id:          uuid.NewString(),
@@ -208,9 +208,9 @@ func PublishCustomHandlerFunc(
 	cfgPayment config.PaymentConfig,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		sender := tgCtx.Sender()
-		userId := strconv.FormatInt(sender.ID, 10)
+		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
 		data := args[0]
 		var w model.Writer[*pb.CloudEvent]
 		var evt pb.CloudEvent
@@ -344,8 +344,8 @@ func PublishPaid(
 		}
 		var w model.Writer[*pb.CloudEvent]
 		if err == nil {
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-			userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+			userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 			w, err = clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		}
 		if err == nil {

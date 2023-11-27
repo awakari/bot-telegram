@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
 	clientAwkApiReader "github.com/awakari/client-sdk-go/api/grpc/reader"
@@ -157,7 +158,7 @@ func (r *reader) Run(ctx context.Context, log *slog.Logger) {
 func (r *reader) runOnce() (err error) {
 	// prepare the context with a certain timeout
 	ctx := context.Background()
-	groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", r.groupId)
+	groupIdCtx := metadata.AppendToOutgoingContext(ctx, service.KeyGroupId, r.groupId)
 	r.checkExpiration(groupIdCtx)
 	groupIdCtx, cancel := context.WithTimeout(groupIdCtx, ReaderTtl)
 	defer cancel()
