@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
-	"strconv"
 	"time"
 )
 
@@ -28,8 +27,8 @@ var protoJsonOpts = protojson.MarshalOptions{
 func DetailsHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		subId := args[0]
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var sd subscription.Data
 		sd, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {

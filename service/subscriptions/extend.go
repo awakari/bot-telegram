@@ -113,8 +113,8 @@ func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...stri
 func (eh ExtendHandler) ExtensionPreCheckout(tgCtx telebot.Context, args ...string) (err error) {
 	ctx, cancel := context.WithTimeout(context.TODO(), eh.CfgPayment.PreCheckout.Timeout)
 	defer cancel()
-	groupIdCtx := metadata.AppendToOutgoingContext(ctx, "x-awakari-group-id", eh.GroupId)
-	userId := strconv.FormatInt(tgCtx.PreCheckoutQuery().Sender.ID, 10)
+	groupIdCtx := metadata.AppendToOutgoingContext(ctx, service.KeyGroupId, eh.GroupId)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	var op ExtendOrder
 	err = json.Unmarshal([]byte(args[0]), &op)
 	if err == nil {
@@ -133,7 +133,7 @@ func (eh ExtendHandler) ExtendPaid(tgCtx telebot.Context, args ...string) (err e
 	var op ExtendOrder
 	err = json.Unmarshal([]byte(args[0]), &op)
 	if err == nil {
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		e := extendAction{
 			clientAwk: eh.ClientAwk,
 			groupId:   eh.GroupId,
@@ -165,7 +165,7 @@ type extendAction struct {
 }
 
 func (e extendAction) runOnce() (err error) {
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", e.groupId)
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, e.groupId)
 	var sd subscription.Data
 	if err == nil {
 		sd, err = e.clientAwk.ReadSubscription(groupIdCtx, e.userId, e.op.SubId)

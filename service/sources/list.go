@@ -9,7 +9,6 @@ import (
 	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"strconv"
 )
 
 type ListHandler struct {
@@ -49,7 +48,7 @@ func (lh ListHandler) TelegramChannelsOwn(tgCtx telebot.Context, args ...string)
 	}
 	filter := &telegram.Filter{
 		GroupId: lh.GroupId,
-		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+		UserId:  fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID),
 	}
 	err = lh.tgChList(tgCtx, filter, cursor)
 	return
@@ -108,7 +107,7 @@ func (lh ListHandler) FeedListAll(tgCtx telebot.Context, args ...string) (err er
 func (lh ListHandler) FeedListOwn(tgCtx telebot.Context, args ...string) (err error) {
 	filterOwn := &feeds.Filter{
 		GroupId: lh.GroupId,
-		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+		UserId:  fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID),
 	}
 	err = lh.feedList(tgCtx, filterOwn, args...)
 	return
@@ -176,7 +175,7 @@ func (lh ListHandler) SiteListAll(tgCtx telebot.Context, args ...string) (err er
 func (lh ListHandler) SiteListOwn(tgCtx telebot.Context, args ...string) (err error) {
 	filterOwn := &sites.Filter{
 		GroupId: lh.GroupId,
-		UserId:  strconv.FormatInt(tgCtx.Sender().ID, 10),
+		UserId:  fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID),
 	}
 	err = lh.siteList(tgCtx, filterOwn, args...)
 	return

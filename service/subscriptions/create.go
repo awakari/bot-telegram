@@ -15,7 +15,6 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -111,8 +110,8 @@ func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHa
 }
 
 func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subscription.Data) (id string, err error) {
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	//
 	// TODO: use the below code only when payments are connected
 	//var existingIds []string

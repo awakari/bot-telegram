@@ -9,6 +9,7 @@ import (
 	"github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	"github.com/awakari/bot-telegram/api/grpc/source/sites"
 	"github.com/awakari/bot-telegram/api/grpc/source/telegram"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/mmcdole/gofeed"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -16,7 +17,6 @@ import (
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
-	"strconv"
 	"time"
 )
 
@@ -97,7 +97,7 @@ func (ah AddHandler) HandleFormData(tgCtx telebot.Context, args ...string) (err 
 	}
 	sender := tgCtx.Sender()
 	if err == nil {
-		err = ah.registerSource(context.TODO(), tgCtx, ap, strconv.FormatInt(sender.ID, 10))
+		err = ah.registerSource(context.TODO(), tgCtx, ap, fmt.Sprintf(service.FmtUserId, sender.ID))
 	}
 	if err == nil {
 		switch ap.Src.Type {

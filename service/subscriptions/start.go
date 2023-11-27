@@ -12,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"strconv"
 )
 
 const CmdStart = "sub_start"
@@ -33,7 +32,7 @@ func Start(
 		var userId string
 		var chat chats.Chat
 		if err == nil {
-			userId = strconv.FormatInt(tgCtx.Sender().ID, 10)
+			userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 			chat.Id = tgCtx.Chat().ID
 			if chat.Id > 0 {
 				err = errors.New(fmt.Sprintf("unsupported positive chat id value: %d", chat.Id))
@@ -51,7 +50,7 @@ func Start(
 		}
 		var subData subscription.Data
 		if err == nil {
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
+			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 			subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		}
 		if err == nil {

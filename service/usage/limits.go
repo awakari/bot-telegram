@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/grpc/admin"
 	"github.com/awakari/bot-telegram/config"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/usage"
@@ -99,9 +100,9 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		subj = usage.Subject(subjCode)
 		daysAdd, err = strconv.ParseInt(args[2], 10, strconv.IntSize)
 	}
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	var l usage.Limit
-	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", lh.GroupId)
+	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, lh.GroupId)
 	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
 	// TODO: uncomment the code below only when payments are in use
 	//var countExtra int64
@@ -176,7 +177,7 @@ func (lh LimitsHandler) PreCheckout(tgCtx telebot.Context, args ...string) (err 
 }
 
 func (lh LimitsHandler) HandleLimitOrderPaid(tgCtx telebot.Context, args ...string) (err error) {
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	var ol OrderLimit
 	err = json.Unmarshal([]byte(args[0]), &ol)
 	if err == nil {
@@ -293,9 +294,9 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		subj = usage.Subject(subjCode)
 		countAdd, err = strconv.ParseInt(args[2], 10, strconv.IntSize)
 	}
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	var l usage.Limit
-	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", lh.GroupId)
+	ctxGroupId := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, lh.GroupId)
 	l, err = lh.ClientAwk.ReadUsageLimit(ctxGroupId, userId, subj)
 	//
 	var days int64

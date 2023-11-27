@@ -9,15 +9,14 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"strconv"
 )
 
 const CmdPageNext = "subs_next"
 
 func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart, "")
 		if err == nil {
@@ -29,8 +28,8 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 
 func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "x-awakari-group-id", groupId)
-		userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var cursor string
 		if len(args) > 1 {
 			cursor = args[1]

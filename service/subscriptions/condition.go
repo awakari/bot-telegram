@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
@@ -11,7 +12,6 @@ import (
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
-	"strconv"
 )
 
 type ConditionHandler struct {
@@ -40,8 +40,8 @@ func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err er
 	if err == nil {
 		newCond, err = decodeCondition(condProto)
 	}
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), "X-Awakari-Group-Id", ch.GroupId)
-	userId := strconv.FormatInt(tgCtx.Sender().ID, 10)
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, ch.GroupId)
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	subId := sp.Id
 	var sd subscription.Data
 	if err == nil {
