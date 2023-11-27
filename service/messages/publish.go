@@ -79,7 +79,7 @@ func PublishBasicReplyHandlerFunc(
 			Id:          uuid.NewString(),
 			Source:      "@AwakariBot",
 			SpecVersion: attrValSpecVersion,
-			Type:        groupId,
+			Type:        "com.github.awakari.bot-telegram.v1",
 		}
 		if err == nil {
 			defer w.Close()
