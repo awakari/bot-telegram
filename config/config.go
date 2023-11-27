@@ -10,7 +10,7 @@ type Config struct {
 		Admin struct {
 			Uri string `envconfig:"API_ADMIN_URI" default:"api:56789" required:"true"`
 		}
-		GroupId  string `envconfig:"API_GROUP_ID" default:"com.github.awakari.bot-telegram" required:"true"`
+		GroupId  string `envconfig:"API_GROUP_ID" default:"default" required:"true"`
 		Messages struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
@@ -95,8 +95,7 @@ type PriceConfig struct {
 }
 
 type FeedsConfig struct {
-	GroupId string `envconfig:"API_SOURCE_FEEDS_GROUP_ID" default:"com.github.awakari.source-feeds"`
-	Uri     string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
+	Uri string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
 }
 
 type TelegramConfig struct {
