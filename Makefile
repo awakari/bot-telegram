@@ -10,6 +10,7 @@ proto:
 	go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@v1.3.0
 	PATH=${PATH}:~/go/bin protoc --go_out=plugins=grpc:. --go_opt=paths=source_relative \
 		api/grpc/admin/*.proto \
+		api/grpc/auth/*.proto \
 		api/grpc/messages/*.proto \
 		api/grpc/source/feeds/*.proto \
 		api/grpc/source/sites/*.proto \

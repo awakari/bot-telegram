@@ -46,6 +46,8 @@ spec:
               value: {{ .path }}
             {{- end }}
             {{- end }}
+            - name: API_TELEGRAM_AUTH_PORT
+              value: "{{ .Values.service.grpc.port }}"
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
             - name: API_TELEGRAM_WEBHOOK_CONN_MAX
@@ -133,10 +135,11 @@ spec:
             - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
+            - name: grpc
+              containerPort: {{ .Values.service.grpc.port }}
           livenessProbe:
-            httpGet:
-              path: "/healthz"
-              port: {{ .Values.service.port }}
+            grpc:
+              port: {{ .Values.service.grpc.port }}
           readinessProbe:
             httpGet:
               path: "/healthz"

@@ -4,7 +4,9 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
+	grpcApiAuth "github.com/awakari/bot-telegram/api/grpc/auth"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
 	grpcApiSrcSites "github.com/awakari/bot-telegram/api/grpc/source/sites"
@@ -129,6 +131,16 @@ func main() {
 	clientSrcSites := grpcApiSrcSites.NewServiceClient(connSrcSites)
 	svcSrcSites := grpcApiSrcSites.NewService(clientSrcSites)
 	svcSrcSites = grpcApiSrcSites.NewServiceLogging(svcSrcSites, log)
+
+	// init the Telegram Login validation grpc service
+	controllerAuth := grpcApiAuth.NewController(cfg.Api.Telegram.Token)
+	go func() {
+		log.Info(fmt.Sprintf("starting to listen the API @ port #%d...", cfg.Api.Telegram.Auth.Port))
+		err = grpcApi.Serve(cfg.Api.Telegram.Auth.Port, controllerAuth)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// init chat storage
 	var chatStor chats.Storage

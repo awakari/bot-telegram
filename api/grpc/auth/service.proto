@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package awakari.tgbot;
+
+option go_package = "api/grpc/auth";
+
+service Service {
+  rpc Validate(ValidateRequest) returns (ValidateResponse);
+}
+
+message ValidateRequest {
+  // dataCheckString is the "data-check-string" from https://core.telegram.org/widgets/login#checking-authorization
+  string dataCheckString = 1;
+  string hash = 2;
+}
+
+message ValidateResponse {
+}
