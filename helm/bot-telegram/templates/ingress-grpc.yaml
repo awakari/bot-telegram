@@ -1,5 +1,5 @@
 {{- if .Values.ingress.enabled -}}
-{{- $fullName := include "source-feeds.fullname" . -}}
+{{- $fullName := include "bot-telegram.fullname" . -}}
 {{- $svcPort := .Values.service.grpc.port -}}
 {{- if and .Values.ingress.className (not (semverCompare ">=1.18-0" .Capabilities.KubeVersion.GitVersion)) }}
   {{- if not (hasKey .Values.ingress.annotations "kubernetes.io/ingress.class") }}
@@ -17,7 +17,7 @@ kind: Ingress
 metadata:
   name: {{ $fullName }}-grpc
   labels:
-    {{- include "source-feeds.labels" . | nindent 4 }}
+    {{- include "bot-telegram.labels" . | nindent 4 }}
   {{- with .Values.ingress.annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
