@@ -135,7 +135,7 @@ func main() {
 	// init the Telegram Login validation grpc service
 	controllerAuth := grpcApiAuth.NewController(cfg.Api.Telegram.Token)
 	go func() {
-		log.Info(fmt.Sprintf("starting to listen the API @ port #%d...", cfg.Api.Telegram.Auth.Port))
+		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Auth.Port))
 		err = grpcApi.Serve(cfg.Api.Telegram.Auth.Port, controllerAuth)
 		if err != nil {
 			panic(err)
