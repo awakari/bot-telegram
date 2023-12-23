@@ -10,7 +10,7 @@ kubectl create secret generic bot-telegram-tokens \
 ## Webhook Certificate
 
 ```shell
-openssl req -newkey rsa:2048 -sha256 -nodes -keyout server.key -x509 -days 365 -out server.pem -subj "/O=Awakari/CN=tgbot.awakari.com"
+openssl req -newkey rsa:2048 -sha256 -nodes -keyout server.key -x509 -days 365 -out server.pem -subj "/O=Awakari/CN=tgbot.awakari.cloud"
 ```
 
 ```shell

@@ -2,10 +2,8 @@ package auth
 
 import (
 	"context"
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
+	"encoding/json"
+	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -15,27 +13,24 @@ type Controller interface {
 }
 
 type controller struct {
-	secretKey []byte
+	secretToken []byte
 }
 
-func NewController(secretToken string) Controller {
-	s := sha256.Sum256([]byte(secretToken))
-	var secretKey []byte
-	for _, b := range s {
-		secretKey = append(secretKey, b)
-	}
+func NewController(secretToken []byte) Controller {
 	return controller{
-		secretKey: secretKey,
+		secretToken: secretToken,
 	}
 }
 
 func (c controller) Validate(ctx context.Context, req *ValidateRequest) (resp *ValidateResponse, err error) {
 	resp = &ValidateResponse{}
-	h := hmac.New(sha256.New, c.secretKey)
-	h.Write([]byte(req.DataCheckString))
-	hh := hex.EncodeToString(h.Sum(nil))
-	if req.Hash != hh {
-		err = status.Error(codes.Unauthenticated, fmt.Sprintf("hash mismatch: expected %s, calculated %s", req.Hash, hh))
+	var creds tgverifier.Credentials
+	err = json.Unmarshal(req.AuthData, &creds)
+	if err == nil {
+		err = creds.Verify(c.secretToken)
+	}
+	if err != nil {
+		err = status.Error(codes.Unauthenticated, err.Error())
 	}
 	return
 }

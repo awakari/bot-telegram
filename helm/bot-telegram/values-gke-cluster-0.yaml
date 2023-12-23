@@ -5,11 +5,11 @@ api:
     uri: "resolver:50051"
 ingress:
   hosts:
-    - host: tgbot.awakari.com
+    - host: tgbot.awakari.cloud
       paths:
         - path: /
           pathType: ImplementationSpecific
   tls:
     - secretName: secret-bot-telegram-tls-server
       hosts:
-        - tgbot.awakari.com
+        - tgbot.awakari.cloud

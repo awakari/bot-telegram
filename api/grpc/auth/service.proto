@@ -9,9 +9,8 @@ service Service {
 }
 
 message ValidateRequest {
-  // dataCheckString is the "data-check-string" from https://core.telegram.org/widgets/login#checking-authorization
-  string dataCheckString = 1;
-  string hash = 2;
+  // https://core.telegram.org/widgets/login#checking-authorization
+  bytes authData = 1;
 }
 
 message ValidateResponse {
