@@ -25,7 +25,7 @@ var log = slog.Default()
 func TestMain(m *testing.M) {
 	go func() {
 		srv := grpc.NewServer()
-		c := NewController("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb")
+		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"))
 		RegisterServiceServer(srv, c)
 		reflection.Register(srv)
 		grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
@@ -49,29 +49,45 @@ func TestController_Validate(t *testing.T) {
 	client := NewServiceClient(conn)
 	//
 	cases := map[string]struct {
-		dataCheckString string
-		hash            string
-		err             error
+		token string
+		err   error
 	}{
-		"ok": {
-			dataCheckString: "auth_date=1701244713\nfirst_name=John\nid=123456789\nlast_name=Doe\nphoto_url=https://t.me/i/userpic/210/qBxcMsnvkqf2zmUdzvQp4Zo9VLy1_4CWfgM0CzTtDSo.jpg\nusername=john_doe",
-			hash:            "a63aba9f5f6b1abce3aacb5f9e6e3acc2a5da984602ac3609ec8b41be9134e09",
-		},
 		"fail": {
-			dataCheckString: "auth_date=1701244713\nfirst_name=John\nid=123456789\nlast_name=Doe\nphoto_url=https://t.me/i/userpic/210/qBxcMsnvkqf2zmUdzvQp4Zo9VLy1_4CWfgM0CzTtDSo.jpg\nusername=john_doe",
-			hash:            "b63aba9f5f6b1abce3aacb5f9e6e3acc2a5da984602ac3609ec8b41be9134e09",
-			err:             status.Error(codes.Unauthenticated, "hash mismatch: expected b63aba9f5f6b1abce3aacb5f9e6e3acc2a5da984602ac3609ec8b41be9134e09, calculated a63aba9f5f6b1abce3aacb5f9e6e3acc2a5da984602ac3609ec8b41be9134e09"),
+			token: `{
+				"id": 123456789,
+				"first_name": "ел",
+				"last_name": "",
+				"username": "el",
+				"auth_date": 1703271842,
+				"photo_url": "https://t.me/i/userpic/321/eZwlVwBo7HPBjQVUYv91UGeeKSFoXBbnt28fwa1Htsg.png",
+				"hash": "d88c2dd8f3147bb82559fd554fc88c4c4ae49febda9f8d6c97227401aaeff7ef"
+			}`,
+			err: status.Error(codes.Unauthenticated, "invalid telegram creds"),
+		},
+		"invalid json": {
+			token: "https://t.me/i/userpic/321/eZwlVwBo7HPBjQVUYv91UGeeKSFoXBbnt28fwa1Htsg.png",
+			err:   status.Error(codes.Unauthenticated, "invalid character 'h' looking for beginning of value"),
+		},
+		"ok": {
+			token: `{
+				"id": 123456789,
+				"first_name": "ел",
+				"last_name": "",
+				"username": "el",
+				"auth_date": 1703271842,
+				"photo_url": "https://t.me/i/userpic/321/eZwlVwBo7HPBjQVUYv91UGeeKSFoXBbnt28fwa1Htsg.png",
+				"hash": "ef86665c59767a5dcecbcf4d427a9708577ea3d65d4cc5c4422abef876849170"
+			}`,
 		},
 		"empty": {
-			err: status.Error(codes.Unauthenticated, "hash mismatch: expected , calculated d63ae722ab5283f3764edfa1ee005f4e2e33ced57466b08a93738ae45994fc89"),
+			err: status.Error(codes.Unauthenticated, "unexpected end of JSON input"),
 		},
 	}
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
 			req := ValidateRequest{
-				DataCheckString: c.dataCheckString,
-				Hash:            c.hash,
+				AuthData: []byte(c.token),
 			}
 			_, err = client.Validate(context.TODO(), &req)
 			assert.ErrorIs(t, err, c.err)
