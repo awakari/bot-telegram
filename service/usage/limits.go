@@ -44,7 +44,6 @@ type LimitsHandler struct {
 	ClientAwk      api.Client
 	GroupId        string
 	Log            *slog.Logger
-	RestoreKbd     *telebot.ReplyMarkup
 	SupportHandler support.Handler
 }
 
@@ -134,7 +133,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: uid: %s, %+v", PurposeLimitSet, userId, ol))
 	}
 	if err == nil {
-		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.", lh.RestoreKbd)
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.")
 	}
 	// TODO: uncomment the code below only when payments are in use
 	//var orderPayloadData []byte
@@ -199,7 +198,7 @@ func (lh LimitsHandler) HandleLimitOrderPaid(tgCtx telebot.Context, args ...stri
 		})
 	}
 	if err == nil {
-		err = tgCtx.Send("Limit has been successfully increased", lh.RestoreKbd)
+		err = tgCtx.Send("Limit has been successfully increased")
 	}
 	return
 }
@@ -342,7 +341,7 @@ func (lh LimitsHandler) HandleIncrease(tgCtx telebot.Context, args ...string) (e
 		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: uid: %s, %+v", PurposeLimitSet, userId, ol))
 	}
 	if err == nil {
-		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.", lh.RestoreKbd)
+		_ = tgCtx.Send("Request submitted. Support will process it as soon as possible. Don't forget to donate.")
 	}
 	// TODO: uncomment the code below only when payments are in use
 	//var orderPayloadData []byte

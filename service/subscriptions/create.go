@@ -12,7 +12,6 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"regexp"
 	"strings"
@@ -47,7 +46,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	return
 }
 
-func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *telebot.ReplyMarkup) service.ArgHandlerFunc {
+func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
@@ -65,36 +64,6 @@ func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 				BuildTextCondition()
 			sd.Description = name
 			sd.Enabled = true
-			err = validateSubscriptionData(sd)
-		}
-		if err == nil {
-			_, err = create(tgCtx, clientAwk, groupId, sd)
-		}
-		if err == nil {
-			err = tgCtx.Send(msgSubCreated, kbd, telebot.ModeHTML)
-		} else {
-			err = fmt.Errorf("failed to create the subscription:\n%w", err)
-		}
-		return
-	}
-}
-
-func CreateCustomHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		data := args[0]
-		// TODO: maybe fix this double decoding/encoding of the payload with copy paste decode code
-		var req subscriptions.CreateRequest
-		err = protojson.Unmarshal([]byte(data), &req)
-		var cond condition.Condition
-		if err == nil {
-			cond, err = decodeCondition(req.Cond)
-		}
-		//
-		var sd subscription.Data
-		if err == nil {
-			sd.Condition = cond
-			sd.Description = req.Description
-			sd.Enabled = req.Enabled
 			err = validateSubscriptionData(sd)
 		}
 		if err == nil {
@@ -128,11 +97,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
 		switch {
 		case errors.Is(err, limits.ErrReached):
-			err = fmt.Errorf(
-				"%w, consider to donate and increase limit using the button \"%s\" in the main keyboard",
-				errLimitReached,
-				service.LabelSubs,
-			)
+			err = fmt.Errorf("%w, consider to donate and increase limit", errLimitReached)
 		}
 	}
 	return

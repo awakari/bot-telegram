@@ -14,11 +14,6 @@ type Config struct {
 		Messages struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
-		Source struct {
-			Feeds    FeedsConfig
-			Sites    SitesConfig
-			Telegram TelegramConfig
-		}
 		Telegram struct {
 			Auth struct {
 				Port uint16 `envconfig:"API_TELEGRAM_AUTH_PORT" default:"50051" required:"true"`

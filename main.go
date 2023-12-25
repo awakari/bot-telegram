@@ -8,14 +8,10 @@ import (
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiAuth "github.com/awakari/bot-telegram/api/grpc/auth"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
-	grpcApiSrcFeeds "github.com/awakari/bot-telegram/api/grpc/source/feeds"
-	grpcApiSrcSites "github.com/awakari/bot-telegram/api/grpc/source/sites"
-	grpcApiSrcTg "github.com/awakari/bot-telegram/api/grpc/source/telegram"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
-	"github.com/awakari/bot-telegram/service/sources"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/bot-telegram/service/usage"
@@ -97,41 +93,6 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
-	// init the source-feeds client
-	connSrcFeeds, err := grpc.Dial(cfg.Api.Source.Feeds.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		log.Info("connected the source-feeds service")
-		defer connMsgs.Close()
-	} else {
-		log.Error("failed to connect the source-feeds service", err)
-	}
-	clientSrcFeeds := grpcApiSrcFeeds.NewServiceClient(connSrcFeeds)
-	svcSrcFeeds := grpcApiSrcFeeds.NewService(clientSrcFeeds)
-
-	// init the source-telegram client
-	connSrcTg, err := grpc.Dial(cfg.Api.Source.Telegram.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		log.Info("connected the source-telegram service")
-		defer connMsgs.Close()
-	} else {
-		log.Error("failed to connect the source-telegram service", err)
-	}
-	clientSrcTg := grpcApiSrcTg.NewServiceClient(connSrcTg)
-	svcSrcTg := grpcApiSrcTg.NewService(clientSrcTg)
-	svcSrcTg = grpcApiSrcTg.NewServiceLogging(svcSrcTg, log)
-
-	// init the source-sites client
-	connSrcSites, err := grpc.Dial(cfg.Api.Source.Sites.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		log.Info("connected the source-sites service")
-		defer connMsgs.Close()
-	} else {
-		log.Error("failed to connect the source-sites service", err)
-	}
-	clientSrcSites := grpcApiSrcSites.NewServiceClient(connSrcSites)
-	svcSrcSites := grpcApiSrcSites.NewService(clientSrcSites)
-	svcSrcSites = grpcApiSrcSites.NewServiceLogging(svcSrcSites, log)
-
 	// init the Telegram Login validation grpc service
 	controllerAuth := grpcApiAuth.NewController([]byte(cfg.Api.Telegram.Token))
 	go func() {
@@ -174,42 +135,8 @@ func main() {
 
 	// init handlers
 	groupId := cfg.Api.GroupId
-	menuKbd := service.MakeMainMenu()
 	supportHandler := support.Handler{
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
-		RestoreKbd:    menuKbd,
-	}
-	srcAddHandler := sources.AddHandler{
-		SvcFeeds:       svcSrcFeeds,
-		SvcSites:       svcSrcSites,
-		SvcTg:          svcSrcTg,
-		Log:            log,
-		SupportHandler: supportHandler,
-		GroupId:        groupId,
-	}
-	srcListHandler := sources.ListHandler{
-		SvcSrcFeeds: svcSrcFeeds,
-		SvcSrcTg:    svcSrcTg,
-		SvcSrcSites: svcSrcSites,
-		Log:         log,
-		GroupId:     groupId,
-	}
-	srcDetailsHandler := sources.DetailsHandler{
-		CfgFeeds:    cfg.Api.Source.Feeds,
-		CfgTelegram: cfg.Api.Source.Telegram,
-		ClientAwk:   clientAwk,
-		SvcSrcFeeds: svcSrcFeeds,
-		SvcSrcTg:    svcSrcTg,
-		SvcSrcSites: svcSrcSites,
-		Log:         log,
-		GroupId:     groupId,
-	}
-	srcDeleteHandler := sources.DeleteHandler{
-		SvcSrcFeeds:    svcSrcFeeds,
-		SvcSrcTg:       svcSrcTg,
-		RestoreKbd:     menuKbd,
-		GroupId:        groupId,
-		SupportHandler: supportHandler,
 	}
 	limitsHandler := usage.LimitsHandler{
 		CfgPayment:     cfg.Payment,
@@ -217,7 +144,6 @@ func main() {
 		ClientAwk:      clientAwk,
 		GroupId:        groupId,
 		Log:            log,
-		RestoreKbd:     menuKbd,
 		SupportHandler: supportHandler,
 	}
 	subExtHandler := subscriptions.ExtendHandler{
@@ -225,20 +151,8 @@ func main() {
 		ClientAwk:  clientAwk,
 		GroupId:    groupId,
 		Log:        log,
-		RestoreKbd: menuKbd,
-	}
-	pubUsageHandler := messages.UsageHandler{
-		ClientAwk: clientAwk,
-		GroupId:   groupId,
-	}
-	subCondHandler := subscriptions.ConditionHandler{
-		ClientAwk:  clientAwk,
-		GroupId:    groupId,
-		RestoreKbd: menuKbd,
 	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdDelete:      subscriptions.DeleteHandlerFunc(),
-		subscriptions.CmdDetails:     subscriptions.DetailsHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
 		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
@@ -246,42 +160,18 @@ func main() {
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
 		usage.CmdExtend:              limitsHandler.RequestExtension,
 		usage.CmdIncrease:            limitsHandler.RequestIncrease,
-		sources.CmdTgChListAll:       srcListHandler.TelegramChannelsAll,
-		sources.CmdTgChListOwn:       srcListHandler.TelegramChannelsOwn,
-		sources.CmdFeedListAll:       srcListHandler.FeedListAll,
-		sources.CmdFeedListOwn:       srcListHandler.FeedListOwn,
-		sources.CmdSitesListAll:      srcListHandler.SiteListAll,
-		sources.CmdSitesListOwn:      srcListHandler.SiteListOwn,
-		sources.CmdFeedDetailsAny:    srcDetailsHandler.GetFeedAny,
-		sources.CmdFeedDetailsOwn:    srcDetailsHandler.GetFeedOwn,
-		sources.CmdSiteDetailsAny:    srcDetailsHandler.GetSiteAny,
-		sources.CmdSiteDetailsOwn:    srcDetailsHandler.GetSiteOwn,
-		sources.CmdTgChDetails:       srcDetailsHandler.GetTelegramChannel,
-		sources.CmdDelete:            srcDeleteHandler.RequestConfirmation,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
-		service.LabelPub:           messages.PublishCustomHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
-		service.LabelSub:           subscriptions.CreateCustomHandlerFunc(clientAwk, groupId),
-		usage.LabelExtend:          limitsHandler.HandleExtension,
-		messages.LabelPubAddSource: srcAddHandler.HandleFormData,
-		subscriptions.LabelCond:    subCondHandler.Update,
+		usage.LabelExtend: limitsHandler.HandleExtension,
 	}
-	txtHandlers := map[string]telebot.HandlerFunc{
-		service.LabelPubs: pubUsageHandler.Show,
-		service.LabelSubs: subscriptions.Usage(clientAwk, groupId),
-		service.LabelMainMenu: func(tgCtx telebot.Context) error {
-			return tgCtx.Send("Main menu reply keyboard", menuKbd)
-		},
-	}
+	txtHandlers := map[string]telebot.HandlerFunc{}
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		subscriptions.ReqDelete:    subscriptions.DeleteReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, menuKbd),
-		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment, menuKbd),
+		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId),
+		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId),
+		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		subscriptions.ReqSubExtend: subExtHandler.HandleExtensionReply,
 		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
 		usage.ReqLimitIncrease:     limitsHandler.HandleIncrease,
-		sources.CmdDeleteConfirm:   srcDeleteHandler.HandleConfirmation,
 		"support":                  supportHandler.Request,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
@@ -392,12 +282,12 @@ func main() {
 					err = b.Pin(msg)
 				}
 				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
-				err = tgCtx.Send("Main menu reply keyboard", menuKbd)
+				err = tgCtx.Send("Main menu reply keyboard")
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
 			return
-		}, menuKbd),
+		}),
 	)
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
@@ -405,7 +295,7 @@ func main() {
 		return tgCtx.Forward(donateMsg)
 	})
 	b.Handle("/help", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/help.html\">help link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.com/help.html\">link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/support", func(tgCtx telebot.Context) error {
 		_ = tgCtx.Send("Describe the issue in the reply to the next message")
@@ -414,21 +304,21 @@ func main() {
 		})
 	})
 	b.Handle("/terms", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/tos.html\">terms link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.com/tos.html\">terms link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/privacy", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.app/privacy.html\">privacy link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.com/privacy.html\">privacy link</a>", telebot.ModeHTML)
 	})
-	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers), menuKbd))
-	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnAudio, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnVideo, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnDocument, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnLocation, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers), menuKbd))
-	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers), menuKbd))
-	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers), menuKbd))
-	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers), menuKbd))
+	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers)))
+	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnAudio, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnVideo, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnDocument, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnLocation, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))
+	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers)))
+	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
 		chat := tgCtx.Chat()
@@ -438,9 +328,9 @@ func main() {
 			err = b.Pin(msg)
 		}
 		log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
-		return service.ErrorHandlerFunc(subListHandlerFunc, nil)(tgCtx)
+		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
-	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor), nil))
+	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor)))
 
 	go func() {
 		var count uint32

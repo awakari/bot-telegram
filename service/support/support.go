@@ -7,7 +7,6 @@ import (
 
 type Handler struct {
 	SupportChatId int64
-	RestoreKbd    *telebot.ReplyMarkup
 }
 
 func (sh Handler) Request(tgCtx telebot.Context, args ...string) (err error) {

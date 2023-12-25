@@ -15,7 +15,6 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
-	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
@@ -68,7 +67,6 @@ func PublishBasicReplyHandlerFunc(
 	groupId string,
 	svcMsgs messages.Service,
 	cfgPayment config.PaymentConfig,
-	kbd *telebot.ReplyMarkup,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
@@ -86,7 +84,7 @@ func PublishBasicReplyHandlerFunc(
 			err = toCloudEvent(tgCtx.Message(), args[1], &evt)
 		}
 		if err == nil {
-			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, kbd)
+			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment)
 		}
 		return
 	}
@@ -201,65 +199,26 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 	return
 }
 
-func PublishCustomHandlerFunc(
-	clientAwk api.Client,
-	groupId string,
-	svcMsgs messages.Service,
-	cfgPayment config.PaymentConfig,
-) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
-		sender := tgCtx.Sender()
-		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
-		data := args[0]
-		var w model.Writer[*pb.CloudEvent]
-		var evt pb.CloudEvent
-		w, err = clientAwk.OpenMessagesWriter(groupIdCtx, userId)
-		if err == nil {
-			defer w.Close()
-			err = protojson.Unmarshal([]byte(data), &evt)
-		}
-		if err == nil {
-			evt.Source = "@AwakariBot"
-			evt.SpecVersion = attrValSpecVersion
-			if evt.Type == "" {
-				evt.Type = groupId
-			}
-			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment, nil)
-		}
-		return
-	}
-}
-
 func publish(
 	tgCtx telebot.Context,
 	w model.Writer[*pb.CloudEvent],
 	evt *pb.CloudEvent,
 	svcMsgs messages.Service,
 	cfgPayment config.PaymentConfig,
-	kbd *telebot.ReplyMarkup,
 ) (err error) {
 	var ackCount uint32
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
 	switch {
 	case ackCount == 0 && errors.Is(err, limits.ErrReached):
 		// ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
-		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to donate and increase your limit using the \"%s\" button in the main menu.", service.LabelPubs))
+		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to donate and increase your limit."))
 	case ackCount == 1:
-		if kbd == nil {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
-		} else {
-			err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML, kbd)
-		}
+		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
 	}
 	if err == nil {
 		switch ackCount {
 		case 0:
-			if kbd == nil {
-				err = tgCtx.Send(msgBusy)
-			} else {
-				err = tgCtx.Send(msgBusy, kbd)
-			}
+			err = tgCtx.Send(msgBusy)
 		}
 	}
 	return

@@ -36,7 +36,6 @@ type ExtendHandler struct {
 	ClientAwk  api.Client
 	GroupId    string
 	Log        *slog.Logger
-	RestoreKbd *telebot.ReplyMarkup
 }
 
 func (eh ExtendHandler) RequestExtensionDaysCount(tgCtx telebot.Context, args ...string) (err error) {
@@ -104,7 +103,7 @@ func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...stri
 			Token: eh.CfgPayment.Provider.Token,
 			Total: price,
 		}
-		err = tgCtx.Send("To proceed, please pay the below invoice:", eh.RestoreKbd)
+		err = tgCtx.Send("To proceed, please pay the below invoice:")
 		_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
 	}
 	return
@@ -152,7 +151,7 @@ func (eh ExtendHandler) ExtendPaid(tgCtx telebot.Context, args ...string) (err e
 		})
 	}
 	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd), eh.RestoreKbd)
+		err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd))
 	}
 	return
 }

@@ -35,7 +35,7 @@ func DescriptionHandlerFunc(clientAwk api.Client, groupId string) service.ArgHan
 	}
 }
 
-func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *telebot.ReplyMarkup) service.ArgHandlerFunc {
+func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) != 3 {
 			err = errors.New("invalid argument count")
@@ -51,7 +51,7 @@ func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string, kbd *tele
 		}
 		if err == nil {
 			// force reply removes the keyboard, hence don't forget to restore it
-			err = tgCtx.Send(fmt.Sprintf("Subscription description changed to \"%s\"", descr), kbd)
+			err = tgCtx.Send(fmt.Sprintf("Subscription description changed to \"%s\"", descr))
 		}
 		return
 	}

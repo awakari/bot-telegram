@@ -61,12 +61,6 @@ spec:
                 secretKeyRef:
                   name: "{{ include "bot-telegram.fullname" . }}-tokens"
                   key: telegram
-            - name: API_SOURCE_FEEDS_URI
-              value: "{{ .Values.api.source.feeds.uri }}"
-            - name: API_SOURCE_SITES_URI
-              value: "{{ .Values.api.source.sites.uri }}"
-            - name: API_SOURCE_TELEGRAM_URI
-              value: "{{ .Values.api.source.telegram.uri }}"
             - name: CHATS_DB_URI
               value: "{{ .Values.chats.db.protocol }}://{{ .Values.chats.db.hostname }}/?retryWrites=true&w=majority"
             - name: CHATS_DB_NAME
