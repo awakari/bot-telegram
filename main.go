@@ -295,7 +295,7 @@ func main() {
 		return tgCtx.Forward(donateMsg)
 	})
 	b.Handle("/help", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.com/help.html\">link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.com\">link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/support", func(tgCtx telebot.Context) error {
 		_ = tgCtx.Send("Describe the issue in the reply to the next message")
