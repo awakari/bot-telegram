@@ -323,6 +323,10 @@ func main() {
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers)))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
+	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) error {
+		log.Info(fmt.Sprintf("Channel post: %+v", tgCtx.Message()))
+		return nil
+	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
 		chat := tgCtx.Chat()
 		var msg *telebot.Message
