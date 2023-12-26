@@ -271,6 +271,9 @@ func main() {
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			chat := tgCtx.Chat()
 			switch chat.Type {
+			case telebot.ChatChannel:
+				log.Info(fmt.Sprintf("Started in the public channel %+v", chat))
+				err = tgCtx.Send("Wow, I'm in a public channel!")
 			case telebot.ChatGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatSuperGroup:
