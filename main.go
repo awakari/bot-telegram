@@ -157,6 +157,7 @@ func main() {
 		GroupId:   groupId,
 		Log:       log,
 	}
+	defer chanPostHandler.Close()
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,

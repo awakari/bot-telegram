@@ -8,53 +8,134 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/model"
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
+	"sync"
+	"time"
 )
 
 type ChanPostHandler struct {
-	ClientAwk api.Client
-	GroupId   string
-	Log       *slog.Logger
+	ClientAwk   api.Client
+	GroupId     string
+	Log         *slog.Logger
+	writers     map[string]model.Writer[*pb.CloudEvent]
+	writersLock *sync.Mutex
 }
 
+var errNoAck = errors.New("event was not accepted")
+
 func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, cp.GroupId)
-	chanUserName := fmt.Sprintf("@%s", tgCtx.Chat().Username)
-	w, err := cp.ClientAwk.OpenMessagesWriter(groupIdCtx, chanUserName)
+	chanUserName := tgCtx.Chat().Username
+	chanUserId := fmt.Sprintf("@%s", chanUserName)
 	evt := pb.CloudEvent{
 		Id:          uuid.NewString(),
-		Source:      chanUserName,
+		Source:      fmt.Sprintf("https://t.me/%s", chanUserName),
 		SpecVersion: attrValSpecVersion,
 		Type:        "com.github.awakari.bot-telegram.v1",
 	}
+	w, err := cp.writer(chanUserId)
 	if err == nil {
-		defer w.Close()
 		err = toCloudEvent(tgCtx.Message(), tgCtx.Text(), &evt)
 	}
 	if err == nil {
-		err = cp.publish(tgCtx, w, &evt)
+		err = cp.publish(w, &evt)
+		if err != nil {
+			cp.Log.Error(fmt.Sprintf("Failed to publish message %d from channel %s, cause: %s", tgCtx.Message().ID, chanUserName, err))
+			cp.writersLock.Lock()
+			defer cp.writersLock.Unlock()
+			_ = w.Close()
+			delete(cp.writers, chanUserId)
+		}
 	}
 	return
 }
 
-func (cp ChanPostHandler) publish(tgCtx telebot.Context, w model.Writer[*pb.CloudEvent], evt *pb.CloudEvent) (err error) {
-	var ackCount uint32
-	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
-	switch {
-	case ackCount == 0 && errors.Is(err, limits.ErrReached):
-		cp.Log.Warn(fmt.Sprintf("Message daily publishing limit reached for channel: @%s", tgCtx.Chat().Username))
-	case ackCount == 1:
-		cp.Log.Debug(fmt.Sprintf("Message from channel @%s published, event id: %s", tgCtx.Chat().Username, evt.Id))
+func (cp ChanPostHandler) Close() {
+	cp.writersLock.Lock()
+	defer cp.writersLock.Unlock()
+	for _, w := range cp.writers {
+		_ = w.Close()
 	}
-	if err == nil {
-		switch ackCount {
-		case 0:
-			err = tgCtx.Send(msgBusy)
+	clear(cp.writers)
+}
+
+func (cp ChanPostHandler) writer(userId string) (w model.Writer[*pb.CloudEvent], err error) {
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, cp.GroupId)
+	cp.writersLock.Lock()
+	defer cp.writersLock.Unlock()
+	var wExists bool
+	w, wExists = cp.writers[userId]
+	if !wExists {
+		w, err = cp.ClientAwk.OpenMessagesWriter(groupIdCtx, userId)
+		if err == nil {
+			cp.writers[userId] = w
 		}
+	}
+	return
+}
+
+func (cp ChanPostHandler) publish(w model.Writer[*pb.CloudEvent], evt *pb.CloudEvent) (err error) {
+	evts := []*pb.CloudEvent{
+		evt,
+	}
+	err = cp.tryWriteEventOnce(w, evts)
+	if err != nil {
+		// retry with a backoff
+		b := backoff.NewExponentialBackOff()
+		b.InitialInterval = 100 * time.Millisecond
+		switch {
+		case errors.Is(err, limits.ErrReached):
+			// spawn a shorter backoff just in case if the ResourceExhausted status is spurious, don't block
+			b.MaxElapsedTime = 1 * time.Second
+			go func() {
+				err = backoff.RetryNotify(
+					func() error {
+						return cp.retryWriteRejectedEvent(w, evts)
+					},
+					b,
+					func(err error, d time.Duration) {
+						cp.Log.Warn(fmt.Sprintf("Failed to write event %s, cause: %s, retrying in %s...", evt.Id, err, d))
+					},
+				)
+			}()
+		default:
+			b.MaxElapsedTime = 10 * time.Second
+			err = backoff.RetryNotify(
+				func() error {
+					return cp.tryWriteEventOnce(w, evts)
+				},
+				b,
+				func(err error, d time.Duration) {
+					cp.Log.Warn(fmt.Sprintf("Failed to write event %s, cause: %s, retrying in %s...", evt.Id, err, d))
+				},
+			)
+		}
+	}
+	return
+}
+
+func (cp ChanPostHandler) retryWriteRejectedEvent(w model.Writer[*pb.CloudEvent], evts []*pb.CloudEvent) (err error) {
+	var ackCount uint32
+	ackCount, err = w.WriteBatch(evts)
+	if err == nil && ackCount < 1 {
+		err = errNoAck // it's an error to retry
+	}
+	if !errors.Is(err, limits.ErrReached) {
+		cp.Log.Debug(fmt.Sprintf("Dropping the rejected event %s from %s, cause: %s", evts[0].Id, evts[0].Source, err))
+		err = nil // stop retrying
+	}
+	return
+}
+
+func (cp ChanPostHandler) tryWriteEventOnce(w model.Writer[*pb.CloudEvent], evts []*pb.CloudEvent) (err error) {
+	var ackCount uint32
+	ackCount, err = w.WriteBatch(evts)
+	if err == nil && ackCount < 1 {
+		err = errNoAck // it's an error to retry
 	}
 	return
 }
