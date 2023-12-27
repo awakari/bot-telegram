@@ -22,8 +22,8 @@ type ChanPostHandler struct {
 	ClientAwk   api.Client
 	GroupId     string
 	Log         *slog.Logger
-	writers     map[string]model.Writer[*pb.CloudEvent]
-	writersLock *sync.Mutex
+	Writers     map[string]model.Writer[*pb.CloudEvent]
+	WritersLock *sync.Mutex
 }
 
 var errNoAck = errors.New("event was not accepted")
@@ -45,34 +45,34 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 		err = cp.publish(w, &evt)
 		if err != nil {
 			cp.Log.Error(fmt.Sprintf("Failed to publish message %d from channel %s, cause: %s", tgCtx.Message().ID, chanUserName, err))
-			cp.writersLock.Lock()
-			defer cp.writersLock.Unlock()
+			cp.WritersLock.Lock()
+			defer cp.WritersLock.Unlock()
 			_ = w.Close()
-			delete(cp.writers, chanUserId)
+			delete(cp.Writers, chanUserId)
 		}
 	}
 	return
 }
 
 func (cp ChanPostHandler) Close() {
-	cp.writersLock.Lock()
-	defer cp.writersLock.Unlock()
-	for _, w := range cp.writers {
+	cp.WritersLock.Lock()
+	defer cp.WritersLock.Unlock()
+	for _, w := range cp.Writers {
 		_ = w.Close()
 	}
-	clear(cp.writers)
+	clear(cp.Writers)
 }
 
 func (cp ChanPostHandler) writer(userId string) (w model.Writer[*pb.CloudEvent], err error) {
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, cp.GroupId)
-	cp.writersLock.Lock()
-	defer cp.writersLock.Unlock()
+	cp.WritersLock.Lock()
+	defer cp.WritersLock.Unlock()
 	var wExists bool
-	w, wExists = cp.writers[userId]
+	w, wExists = cp.Writers[userId]
 	if !wExists {
 		w, err = cp.ClientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		if err == nil {
-			cp.writers[userId] = w
+			cp.Writers[userId] = w
 		}
 	}
 	return

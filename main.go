@@ -16,6 +16,8 @@ import (
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/model"
+	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 func main() {
@@ -153,9 +156,11 @@ func main() {
 		Log:        log,
 	}
 	chanPostHandler := messages.ChanPostHandler{
-		ClientAwk: clientAwk,
-		GroupId:   groupId,
-		Log:       log,
+		ClientAwk:   clientAwk,
+		GroupId:     groupId,
+		Log:         log,
+		Writers:     map[string]model.Writer[*pb.CloudEvent]{},
+		WritersLock: &sync.Mutex{},
 	}
 	defer chanPostHandler.Close()
 	callbackHandlers := map[string]service.ArgHandlerFunc{
