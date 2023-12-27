@@ -277,9 +277,7 @@ func main() {
 			chat := tgCtx.Chat()
 			switch chat.Type {
 			case telebot.ChatChannel:
-				err = chanPostHandler.Publish(tgCtx)
 			case telebot.ChatChannelPrivate:
-				err = chanPostHandler.Publish(tgCtx)
 			case telebot.ChatGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatSuperGroup:
@@ -330,8 +328,7 @@ func main() {
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
 	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) error {
-		log.Info(fmt.Sprintf("Channel post: %+v", tgCtx.Message()))
-		return nil
+		return chanPostHandler.Publish(tgCtx)
 	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
 		chat := tgCtx.Chat()
