@@ -152,6 +152,11 @@ func main() {
 		GroupId:    groupId,
 		Log:        log,
 	}
+	chanPostHandler := messages.ChanPostHandler{
+		ClientAwk: clientAwk,
+		GroupId:   groupId,
+		Log:       log,
+	}
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
@@ -272,8 +277,9 @@ func main() {
 			chat := tgCtx.Chat()
 			switch chat.Type {
 			case telebot.ChatChannel:
-				log.Info(fmt.Sprintf("Started in the public channel %+v", chat))
-				err = tgCtx.Send("Wow, I'm in a public channel!")
+				err = chanPostHandler.Publish(tgCtx)
+			case telebot.ChatChannelPrivate:
+				err = chanPostHandler.Publish(tgCtx)
 			case telebot.ChatGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatSuperGroup:
