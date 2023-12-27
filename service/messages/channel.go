@@ -48,7 +48,7 @@ func (cp ChanPostHandler) publish(tgCtx telebot.Context, w model.Writer[*pb.Clou
 	case ackCount == 0 && errors.Is(err, limits.ErrReached):
 		cp.Log.Warn(fmt.Sprintf("Message daily publishing limit reached for channel: @%s", tgCtx.Chat().Username))
 	case ackCount == 1:
-		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
+		cp.Log.Debug(fmt.Sprintf("Message from channel @%s published, event id: %s", tgCtx.Chat().Username, evt.Id))
 	}
 	if err == nil {
 		switch ackCount {
