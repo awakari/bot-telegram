@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package awakari.tgbot;
+
+option go_package = "api/grpc/tgbot";
+
+service Service {
+  rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
+}
+
+message AuthenticateRequest {
+  // https://core.telegram.org/widgets/login#checking-authorization
+  bytes data = 1;
+}
+
+message AuthenticateResponse {
+}
