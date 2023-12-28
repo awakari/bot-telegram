@@ -28,6 +28,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 )
 
 func main() {
@@ -160,6 +161,7 @@ func main() {
 		GroupId:     groupId,
 		Log:         log,
 		Writers:     map[string]model.Writer[*pb.CloudEvent]{},
+		Channels:    map[string]time.Time{},
 		WritersLock: &sync.Mutex{},
 	}
 	defer chanPostHandler.Close()
