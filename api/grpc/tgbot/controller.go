@@ -3,7 +3,6 @@ package tgbot
 import (
 	"context"
 	"encoding/json"
-	"github.com/awakari/bot-telegram/service/messages"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -14,14 +13,12 @@ type Controller interface {
 }
 
 type controller struct {
-	secretToken     []byte
-	chanPostHandler messages.ChanPostHandler
+	secretToken []byte
 }
 
-func NewController(secretToken []byte, chanPostHandler messages.ChanPostHandler) Controller {
+func NewController(secretToken []byte) Controller {
 	return controller{
-		secretToken:     secretToken,
-		chanPostHandler: chanPostHandler,
+		secretToken: secretToken,
 	}
 }
 
@@ -35,10 +32,5 @@ func (c controller) Authenticate(ctx context.Context, req *AuthenticateRequest) 
 	if err != nil {
 		err = status.Error(codes.Unauthenticated, err.Error())
 	}
-	return
-}
-
-func (c controller) ListChannels(ctx context.Context, req *ListChannelsRequest) (resp *ListChannelsResponse, err error) {
-
 	return
 }

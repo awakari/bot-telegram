@@ -86,10 +86,10 @@ func TestController_Validate(t *testing.T) {
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			req := ValidateRequest{
-				AuthData: []byte(c.token),
+			req := AuthenticateRequest{
+				Data: []byte(c.token),
 			}
-			_, err = client.Validate(context.TODO(), &req)
+			_, err = client.Authenticate(context.TODO(), &req)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}
