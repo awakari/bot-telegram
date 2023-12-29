@@ -46,7 +46,7 @@ spec:
               value: {{ .path }}
             {{- end }}
             {{- end }}
-            - name: API_TELEGRAM_AUTH_PORT
+            - name: API_TELEGRAM_BOT_PORT
               value: "{{ .Values.service.grpc.port }}"
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"

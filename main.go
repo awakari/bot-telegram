@@ -7,7 +7,7 @@ import (
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
-	grpcApiAuth "github.com/awakari/bot-telegram/api/grpc/tgbot"
+	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -97,16 +97,6 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
-	// init the Telegram Login validation grpc service
-	controllerAuth := grpcApiAuth.NewController([]byte(cfg.Api.Telegram.Token))
-	go func() {
-		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Auth.Port))
-		err = grpcApi.Serve(cfg.Api.Telegram.Auth.Port, controllerAuth)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
 	// init chat storage
 	var chatStor chats.Storage
 	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
@@ -157,14 +147,25 @@ func main() {
 		Log:        log,
 	}
 	chanPostHandler := messages.ChanPostHandler{
-		ClientAwk:   clientAwk,
-		GroupId:     groupId,
-		Log:         log,
-		Writers:     map[string]model.Writer[*pb.CloudEvent]{},
-		Channels:    map[string]time.Time{},
-		WritersLock: &sync.Mutex{},
+		ClientAwk: clientAwk,
+		GroupId:   groupId,
+		Log:       log,
+		Writers:   map[string]model.Writer[*pb.CloudEvent]{},
+		Channels:  map[string]time.Time{},
+		ChansLock: &sync.Mutex{},
 	}
 	defer chanPostHandler.Close()
+
+	// init the Telegram Bot grpc service
+	controllerGrpc := grpcApiTgBot.NewController([]byte(cfg.Api.Telegram.Token), chanPostHandler)
+	go func() {
+		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
+		err = grpcApi.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,

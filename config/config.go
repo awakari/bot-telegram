@@ -15,8 +15,8 @@ type Config struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
 		Telegram struct {
-			Auth struct {
-				Port uint16 `envconfig:"API_TELEGRAM_AUTH_PORT" default:"50051" required:"true"`
+			Bot struct {
+				Port uint16 `envconfig:"API_TELEGRAM_BOT_PORT" default:"50051" required:"true"`
 			}
 			Webhook struct {
 				Host    string `envconfig:"API_TELEGRAM_WEBHOOK_HOST" default:"tgbot.awakari.com" required:"true"`

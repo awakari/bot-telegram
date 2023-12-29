@@ -3,6 +3,7 @@ package tgbot
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -25,7 +26,7 @@ var log = slog.Default()
 func TestMain(m *testing.M) {
 	go func() {
 		srv := grpc.NewServer()
-		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"))
+		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"), messages.ChanPostHandler{})
 		RegisterServiceServer(srv, c)
 		reflection.Register(srv)
 		grpc_health_v1.RegisterHealthServer(srv, health.NewServer())

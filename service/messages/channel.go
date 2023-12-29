@@ -17,6 +17,9 @@ import (
 	"gopkg.in/telebot.v3"
 	"io"
 	"log/slog"
+	"regexp"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -31,12 +34,12 @@ type ChanFilter struct {
 }
 
 type ChanPostHandler struct {
-	ClientAwk   api.Client
-	GroupId     string
-	Log         *slog.Logger
-	Writers     map[string]model.Writer[*pb.CloudEvent]
-	Channels    map[string]time.Time
-	WritersLock *sync.Mutex
+	ClientAwk api.Client
+	GroupId   string
+	Log       *slog.Logger
+	Writers   map[string]model.Writer[*pb.CloudEvent]
+	Channels  map[string]time.Time
+	ChansLock *sync.Mutex
 }
 
 var errNoAck = errors.New("event was not accepted")
@@ -75,9 +78,64 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 	return
 }
 
+func (cp ChanPostHandler) List(ctx context.Context, filter ChanFilter, limit uint32, cursor string, order Order) (page []Channel, err error) {
+	//
+	var count uint32
+	var p *regexp.Regexp
+	if filter.Pattern != "" {
+		p, err = regexp.Compile(filter.Pattern)
+	}
+	//
+	cp.ChansLock.Lock()
+	defer cp.ChansLock.Unlock()
+	switch order {
+	case OrderDesc:
+		for l, t := range cp.Channels {
+			if count == limit {
+				break
+			}
+			if cursor != "" && strings.Compare(l, cursor) >= 0 {
+				continue
+			}
+			if p != nil && !p.MatchString(l) {
+				continue
+			}
+			page = append(page, Channel{
+				LastUpdate: t,
+				Link:       l,
+			})
+			count++
+		}
+		sort.Slice(page, func(i, j int) bool {
+			return strings.Compare(page[i].Link, page[j].Link) > 0
+		})
+	default:
+		for l, t := range cp.Channels {
+			if count == limit {
+				break
+			}
+			if strings.Compare(l, cursor) <= 0 {
+				continue
+			}
+			if p != nil && !p.MatchString(l) {
+				continue
+			}
+			page = append(page, Channel{
+				LastUpdate: t,
+				Link:       l,
+			})
+			count++
+		}
+		sort.Slice(page, func(i, j int) bool {
+			return strings.Compare(page[i].Link, page[j].Link) < 0
+		})
+	}
+	return
+}
+
 func (cp ChanPostHandler) Close() {
-	cp.WritersLock.Lock()
-	defer cp.WritersLock.Unlock()
+	cp.ChansLock.Lock()
+	defer cp.ChansLock.Unlock()
 	for _, w := range cp.Writers {
 		_ = w.Close()
 	}
@@ -101,8 +159,8 @@ func (cp ChanPostHandler) getWriterAndPublish(chanUserId string, evt *pb.CloudEv
 			fallthrough
 		case errors.Is(err, io.EOF):
 			cp.Log.Warn(fmt.Sprintf("Closing the failing writer stream for %s before retrying, cause: %s", chanUserId, err))
-			cp.WritersLock.Lock()
-			defer cp.WritersLock.Unlock()
+			cp.ChansLock.Lock()
+			defer cp.ChansLock.Unlock()
 			_ = w.Close()
 			delete(cp.Writers, chanUserId)
 		default:
@@ -114,8 +172,8 @@ func (cp ChanPostHandler) getWriterAndPublish(chanUserId string, evt *pb.CloudEv
 
 func (cp ChanPostHandler) getWriter(userId string) (w model.Writer[*pb.CloudEvent], err error) {
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, cp.GroupId)
-	cp.WritersLock.Lock()
-	defer cp.WritersLock.Unlock()
+	cp.ChansLock.Lock()
+	defer cp.ChansLock.Unlock()
 	var wExists bool
 	w, wExists = cp.Writers[userId]
 	if !wExists {
@@ -139,6 +197,7 @@ func (cp ChanPostHandler) publish(w model.Writer[*pb.CloudEvent], evt *pb.CloudE
 		b.InitialInterval = 100 * time.Millisecond
 		switch {
 		case errors.Is(err, limits.ErrReached):
+			err = nil // avoid the outer retry
 			// spawn a shorter backoff just in case if the ResourceExhausted status is spurious, don't block
 			b.MaxElapsedTime = 1 * time.Second
 			go func() {
