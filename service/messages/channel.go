@@ -80,6 +80,7 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 
 func (cp ChanPostHandler) List(ctx context.Context, filter ChanFilter, limit uint32, cursor string, order Order) (page []Channel, err error) {
 	//
+	fmt.Printf("service.messages.List(filter=%+v, limit=%d, cursor=%s, order=%s)\n", filter, limit, cursor, order)
 	var count uint32
 	var p *regexp.Regexp
 	if filter.Pattern != "" {
@@ -88,6 +89,7 @@ func (cp ChanPostHandler) List(ctx context.Context, filter ChanFilter, limit uin
 	//
 	cp.ChansLock.Lock()
 	defer cp.ChansLock.Unlock()
+	fmt.Printf("service.messages.List(...): lock acquired\n")
 	switch order {
 	case OrderDesc:
 		for l, t := range cp.Channels {

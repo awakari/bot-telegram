@@ -3,6 +3,7 @@ package tgbot
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/awakari/bot-telegram/service/messages"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
@@ -40,6 +41,7 @@ func (c controller) Authenticate(ctx context.Context, req *AuthenticateRequest) 
 }
 
 func (c controller) ListChannels(ctx context.Context, req *ListChannelsRequest) (resp *ListChannelsResponse, err error) {
+	fmt.Printf("api.grpc.tgbot.ListChannels(%+v)\n", req)
 	resp = &ListChannelsResponse{
 		Page: []*Channel{},
 	}
@@ -68,6 +70,7 @@ func (c controller) ListChannels(ctx context.Context, req *ListChannelsRequest) 
 		}
 	}
 	err = encodeError(err)
+	fmt.Printf("api.grpc.tgbot.ListChannels(...): resp=%+v, err=%s\n", resp, err)
 	return
 }
 
