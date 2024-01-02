@@ -197,8 +197,8 @@ func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit 
 	var cur *mongo.Cursor
 	cur, err = sm.coll.Find(ctx, q, optsList)
 	if err == nil {
-		var rec Chat
 		for cur.Next(ctx) {
+			var rec Chat
 			err = errors.Join(err, cur.Decode(&rec))
 			if err == nil {
 				page = append(page, rec)
