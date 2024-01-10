@@ -34,9 +34,6 @@ func Start(
 		if err == nil {
 			userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 			chat.Id = tgCtx.Chat().ID
-			if chat.Id > 0 {
-				err = errors.New(fmt.Sprintf("unsupported positive chat id value: %d", chat.Id))
-			}
 		}
 		if err == nil {
 			chat.SubId = subId
