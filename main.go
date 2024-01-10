@@ -298,7 +298,7 @@ func main() {
 					err = b.Pin(msg)
 				}
 				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
-				err = tgCtx.Send("Use the commands menu. To receive messages, invite this bot to a group chat and select a subscription.")
+				err = subListHandlerFunc(tgCtx)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
