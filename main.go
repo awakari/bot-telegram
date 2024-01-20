@@ -211,9 +211,7 @@ func main() {
 		Poller: &telebot.Webhook{
 			Endpoint: &telebot.WebhookEndpoint{
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Telegram.Webhook.Host, cfg.Api.Telegram.Webhook.Path),
-				//Cert:      "/etc/server-cert/tls.crt",
 			},
-			//HasCustomCert:  true,
 			Listen:         fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
 			MaxConnections: int(cfg.Api.Telegram.Webhook.ConnMax),
 			SecretToken:    cfg.Api.Telegram.Webhook.Token,
