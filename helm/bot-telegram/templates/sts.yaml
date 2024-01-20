@@ -140,17 +140,17 @@ spec:
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            - name: server-cert
-              mountPath: "/etc/server-cert"
-              readOnly: true
-      volumes:
-        - name: server-cert
-          secret:
-            secretName: secret-bot-telegram-tls-server
-            items:
-              - key: tls.crt
-                path: tls.crt
+#          volumeMounts:
+#            - name: server-cert
+#              mountPath: "/etc/server-cert"
+#              readOnly: true
+#      volumes:
+#        - name: server-cert
+#          secret:
+#            secretName: secret-bot-telegram-tls-server
+#            items:
+#              - key: tls.crt
+#                path: tls.crt
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

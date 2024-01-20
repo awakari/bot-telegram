@@ -3,6 +3,14 @@ api:
     uri: "messages:50051"
   writer:
     uri: "resolver:50051"
+
+# prod
+cert:
+  acme:
+    server: "https://acme-v02.api.letsencrypt.org/directory"
+  issuer:
+    name: letsencrypt
+
 ingress:
   hosts:
     - host: tgbot.awakari.com
