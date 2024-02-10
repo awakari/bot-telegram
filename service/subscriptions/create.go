@@ -29,7 +29,7 @@ const ReqSubCreate = "sub_create"
 const msgSubCreate = "Creating a basic subscription with a single text matching condition. " +
 	"Reply a name followed by keywords to the next message. Example:\n" +
 	"<pre>Wishlist1 tesla iphone</pre>"
-const msgSubCreated = "If you want to read it in another chat: unlink it first using the <pre>/start</pre> command."
+const msgSubCreated = "If you want to read it in another chat, unlink it first using the <pre>/start</pre> command."
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
