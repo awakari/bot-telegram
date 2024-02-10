@@ -46,7 +46,7 @@ spec:
               value: {{ .path }}
             {{- end }}
             {{- end }}
-            - name: API_TELEGRAM_AUTH_PORT
+            - name: API_TELEGRAM_BOT_PORT
               value: "{{ .Values.service.grpc.port }}"
             - name: API_TELEGRAM_WEBHOOK_PORT
               value: "{{ .Values.service.port }}"
@@ -140,17 +140,6 @@ spec:
               port: {{ .Values.service.port }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          volumeMounts:
-            - name: server-cert
-              mountPath: "/etc/server-cert"
-              readOnly: true
-      volumes:
-        - name: server-cert
-          secret:
-            secretName: secret-bot-telegram-tls-server
-            items:
-              - key: tls.crt
-                path: tls.crt
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

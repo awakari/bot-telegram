@@ -6,8 +6,8 @@ import (
 	"fmt"
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
-	grpcApiAuth "github.com/awakari/bot-telegram/api/grpc/auth"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
+	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -16,6 +16,8 @@ import (
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/model"
+	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -25,6 +27,8 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 )
 
 func main() {
@@ -93,16 +97,6 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
-	// init the Telegram Login validation grpc service
-	controllerAuth := grpcApiAuth.NewController([]byte(cfg.Api.Telegram.Token))
-	go func() {
-		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Auth.Port))
-		err = grpcApi.Serve(cfg.Api.Telegram.Auth.Port, controllerAuth)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
 	// init chat storage
 	var chatStor chats.Storage
 	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
@@ -152,6 +146,26 @@ func main() {
 		GroupId:    groupId,
 		Log:        log,
 	}
+	chanPostHandler := messages.ChanPostHandler{
+		ClientAwk: clientAwk,
+		GroupId:   groupId,
+		Log:       log,
+		Writers:   map[string]model.Writer[*pb.CloudEvent]{},
+		Channels:  map[string]time.Time{},
+		ChansLock: &sync.Mutex{},
+	}
+	defer chanPostHandler.Close()
+
+	// init the Telegram Bot grpc service
+	controllerGrpc := grpcApiTgBot.NewController([]byte(cfg.Api.Telegram.Token), chanPostHandler)
+	go func() {
+		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
+		err = grpcApi.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
+		if err != nil {
+			panic(err)
+		}
+	}()
+
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
@@ -197,9 +211,7 @@ func main() {
 		Poller: &telebot.Webhook{
 			Endpoint: &telebot.WebhookEndpoint{
 				PublicURL: fmt.Sprintf("https://%s%s", cfg.Api.Telegram.Webhook.Host, cfg.Api.Telegram.Webhook.Path),
-				Cert:      "/etc/server-cert/tls.crt",
 			},
-			HasCustomCert:  true,
 			Listen:         fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
 			MaxConnections: int(cfg.Api.Telegram.Webhook.ConnMax),
 			SecretToken:    cfg.Api.Telegram.Webhook.Token,
@@ -272,8 +284,7 @@ func main() {
 			chat := tgCtx.Chat()
 			switch chat.Type {
 			case telebot.ChatChannel:
-				log.Info(fmt.Sprintf("Started in the public channel %+v", chat))
-				err = tgCtx.Send("Wow, I'm in a public channel!")
+			case telebot.ChatChannelPrivate:
 			case telebot.ChatGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatSuperGroup:
@@ -285,7 +296,7 @@ func main() {
 					err = b.Pin(msg)
 				}
 				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
-				err = tgCtx.Send("Use the commands menu. To receive messages, invite this bot to a group chat and select a subscription.")
+				err = subListHandlerFunc(tgCtx)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
 			}
@@ -324,8 +335,7 @@ func main() {
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
 	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) error {
-		log.Info(fmt.Sprintf("Channel post: %+v", tgCtx.Message()))
-		return nil
+		return chanPostHandler.Publish(tgCtx)
 	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
 		chat := tgCtx.Chat()

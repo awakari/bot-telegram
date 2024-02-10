@@ -102,6 +102,12 @@ api:
       connections:
         max: 100
       token: "xxxxxxxxxx"
+cert:
+  acme:
+    email: "awakari@awakari.com"
+    server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+  issuer:
+    name: letsencrypt-staging
 chats:
   # Database related configuration.
   db:

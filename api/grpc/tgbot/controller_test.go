@@ -1,8 +1,9 @@
-package auth
+package tgbot
 
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
@@ -25,7 +26,7 @@ var log = slog.Default()
 func TestMain(m *testing.M) {
 	go func() {
 		srv := grpc.NewServer()
-		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"))
+		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"), messages.ChanPostHandler{})
 		RegisterServiceServer(srv, c)
 		reflection.Register(srv)
 		grpc_health_v1.RegisterHealthServer(srv, health.NewServer())
@@ -86,10 +87,10 @@ func TestController_Validate(t *testing.T) {
 	//
 	for k, c := range cases {
 		t.Run(k, func(t *testing.T) {
-			req := ValidateRequest{
-				AuthData: []byte(c.token),
+			req := AuthenticateRequest{
+				Data: []byte(c.token),
 			}
-			_, err = client.Validate(context.TODO(), &req)
+			_, err = client.Authenticate(context.TODO(), &req)
 			assert.ErrorIs(t, err, c.err)
 		})
 	}

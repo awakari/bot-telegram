@@ -98,6 +98,10 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 			txt += fmt.Sprintf("%s\n\n", txtData)
 		}
 	}
+	attrName, attrNameFound := evt.Attributes["name"]
+	if txt == "" && attrNameFound {
+		txt = fmt.Sprintf("%s\n\n", attrName.GetCeString())
+	}
 	txt += fmt.Sprintf("Subscription: %s\n\nsource: %s\n", subDescr, evt.Source)
 	var attrsTxt string
 	if attrs {

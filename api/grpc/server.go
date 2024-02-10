@@ -2,7 +2,7 @@ package grpc
 
 import (
 	"fmt"
-	grpcAuth "github.com/awakari/bot-telegram/api/grpc/auth"
+	grpcAuth "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
