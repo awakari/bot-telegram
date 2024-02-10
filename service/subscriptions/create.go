@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/service/chats"
+	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
@@ -13,6 +15,7 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"log/slog"
 	"regexp"
 	"strings"
 	"time"
@@ -26,10 +29,9 @@ const ReqSubCreate = "sub_create"
 const msgSubCreate = "Creating a basic subscription with a single text matching condition. " +
 	"Reply a name followed by keywords to the next message. Example:\n" +
 	"<pre>Wishlist1 tesla iphone</pre>"
-const msgSubCreated = `Subscription created, next: 
-1. Create a target group chat to receive the matching messages. 
-2. Invite @AwakariBot to the group.
-3. Select the subscription in the group from the list.`
+const msgSubCreated = "Subscription created and linked to this chat. " +
+	"New matching messages will appear here. " +
+	"If you want to read it in another chat: unlink it first using the <pre>/start</pre> command."
 
 var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
 var errInvalidCondition = errors.New("invalid subscription condition")
@@ -46,7 +48,13 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	return
 }
 
-func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
+func CreateBasicReplyHandlerFunc(
+	clientAwk api.Client,
+	groupId string,
+	log *slog.Logger,
+	chatStor chats.Storage,
+	msgFmt messages.Format,
+) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
@@ -66,13 +74,19 @@ func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string) service.A
 			sd.Enabled = true
 			err = validateSubscriptionData(sd)
 		}
+		var subId string
 		if err == nil {
-			_, err = create(tgCtx, clientAwk, groupId, sd)
+			subId, err = create(tgCtx, clientAwk, groupId, sd)
+		}
+		if err == nil {
+			err = start(tgCtx, log, clientAwk, chatStor, subId, groupId, msgFmt)
+		} else {
+			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}
 		if err == nil {
 			err = tgCtx.Send(msgSubCreated, telebot.ModeHTML)
 		} else {
-			err = fmt.Errorf("failed to create the subscription:\n%w", err)
+			err = fmt.Errorf("failed to link the created subscription to this chat:\n%w", err)
 		}
 		return
 	}

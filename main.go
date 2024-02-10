@@ -167,7 +167,7 @@ func main() {
 	txtHandlers := map[string]telebot.HandlerFunc{}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId),
-		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId),
+		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, log, chatStor, msgFmt),
 		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
 		subscriptions.ReqSubExtend: subExtHandler.HandleExtensionReply,
 		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
