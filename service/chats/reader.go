@@ -252,7 +252,7 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 			switch err.(type) {
 			case telebot.FloodError:
 			default:
-				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s\n", tgMsg, err)
+				fmt.Printf("Failed to send message %+v to chat %d in HTML mode, cause: %s\n", tgMsg, r.tgCtx.Chat().ID, err)
 				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModePlain)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
