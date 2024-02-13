@@ -19,6 +19,7 @@ import (
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"math"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -252,7 +253,15 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 			switch err.(type) {
 			case telebot.FloodError:
 			default:
-				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s\n", tgMsg, err)
+				errTb := &telebot.Error{}
+				if errors.As(err, &errTb) {
+					if errTb.Code == 403 {
+						_, _ = r.chatStor.Delete(context.TODO(), r.tgCtx.Chat().ID)
+						r.stop = true
+						return
+					}
+				}
+				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s (%s)\n", tgMsg, err, reflect.TypeOf(err))
 				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModePlain)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
