@@ -1,13 +1,13 @@
 module github.com/awakari/bot-telegram
 
-go 1.21
+go 1.22
 
 require (
 	github.com/awakari/client-sdk-go v1.0.9
 	github.com/cenkalti/backoff/v4 v4.2.1
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.14.0
 	github.com/electrofocus/telegram-auth-verifier v1.1.1
-	github.com/google/uuid v1.3.0
+	github.com/google/uuid v1.6.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/microcosm-cc/bluemonday v1.0.26
 	github.com/stretchr/testify v1.8.4

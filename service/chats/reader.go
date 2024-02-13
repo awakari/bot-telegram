@@ -254,14 +254,13 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 			case telebot.FloodError:
 			default:
 				errTb := &telebot.Error{}
-				if errors.As(err, &errTb) {
-					if errTb.Code == 403 {
-						_, _ = r.chatStor.Delete(context.TODO(), r.tgCtx.Chat().ID)
-						r.stop = true
-						return
-					}
+				if errors.As(err, &errTb) && errTb.Code == 403 {
+					fmt.Printf("Bot blocked: %s, removing the chat from the storage", err)
+					_, _ = r.chatStor.Delete(context.TODO(), r.tgCtx.Chat().ID)
+					r.stop = true
+					return
 				}
-				fmt.Printf("Failed to send message %+v in HTML mode, cause: %s (%s)\n", tgMsg, err, reflect.TypeOf(err))
+				fmt.Printf("Failed to send message %+v to chat %d in HTML mode, cause: %s (%s)\n", tgMsg, r.tgCtx.Chat().ID, err, reflect.TypeOf(err))
 				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModePlain)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}

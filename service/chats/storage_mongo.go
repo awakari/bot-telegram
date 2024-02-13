@@ -180,11 +180,31 @@ func (sm storageMongo) Delete(ctx context.Context, id int64) (count int64, err e
 
 func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit uint32, cursor int64) (page []Chat, err error) {
 	q := bson.M{
-		attrId: bson.M{
-			"$gt": cursor,
-			"$mod": bson.A{
-				idDiv,
-				-int32(idRem),
+		"$and": []bson.M{
+			{
+				attrId: bson.M{
+					"$gt": cursor,
+				},
+			},
+			{
+				"$or": []bson.M{
+					{
+						attrId: bson.M{
+							"$mod": bson.A{
+								idDiv,
+								idRem,
+							},
+						},
+					},
+					{
+						attrId: bson.M{
+							"$mod": bson.A{
+								idDiv,
+								-int32(idRem),
+							},
+						},
+					},
+				},
 			},
 		},
 	}

@@ -230,12 +230,16 @@ func main() {
 			Description: "Start",
 		},
 		{
+			Text:        "app",
+			Description: "Manage Subscriptions and Publishing in Application",
+		},
+		{
 			Text:        "pub",
-			Description: "Publish a basic message",
+			Description: "Publish a basic Message",
 		},
 		{
 			Text:        "sub",
-			Description: "Subscribe for keywords",
+			Description: "Subscribe for Keywords",
 		},
 		{
 			Text:        "donate",
@@ -243,19 +247,19 @@ func main() {
 		},
 		{
 			Text:        "help",
-			Description: "User guide",
+			Description: "User Guide",
 		},
 		{
 			Text:        "support",
-			Description: "Request support",
+			Description: "Request Support",
 		},
 		{
 			Text:        "terms",
-			Description: "Terms of service",
+			Description: "Terms of Service",
 		},
 		{
 			Text:        "privacy",
-			Description: "Privacy policy",
+			Description: "Privacy Policy",
 		},
 	})
 	if err != nil {
@@ -303,6 +307,9 @@ func main() {
 			return
 		}),
 	)
+	b.Handle("/app", func(tgCtx telebot.Context) error {
+		return tgCtx.Send("<a href=\"https://awakari.com/login.html\">Link to App</a>", telebot.ModeHTML)
+	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
 	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
