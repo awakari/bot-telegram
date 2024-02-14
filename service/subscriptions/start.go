@@ -15,7 +15,9 @@ import (
 )
 
 const CmdStart = "sub_start"
-const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. New matching messages will appear here."
+const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
+	"New matching messages will appear here. " +
+	"Use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a> to manage own subscriptions."
 
 func Start(
 	log *slog.Logger,
