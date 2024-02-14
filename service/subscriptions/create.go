@@ -168,10 +168,11 @@ func validateCondition(cond condition.Condition) (err error) {
 		lenTerms := len(tc.GetTerm())
 		if lenTerms < minTextCondTermsLength || lenTerms > maxTextCondTermsLength {
 			err = fmt.Errorf(
-				"%w:\ntext condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
+				"%w:\ntext condition terms length is %d, should be [%d, %d]",
 				errInvalidCondition,
 				lenTerms,
-				limitGroupOrCondChildrenCount,
+				minTextCondTermsLength,
+				maxTextCondTermsLength,
 			)
 		}
 	}

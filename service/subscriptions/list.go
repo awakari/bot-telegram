@@ -22,7 +22,7 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 		if err == nil {
 			err = tgCtx.Send(
 				"Own subscriptions list. "+
-					"Use <a href=\"https://awakari.com/login.html\" target=\"_blank\">app</a> to manage. "+
+					"Use the <a href=\"https://awakari.com/login.html\" target=\"_blank\">app</a> to manage. "+
 					"Select one or more to read in this chat:",
 				m, telebot.ModeHTML,
 			)
