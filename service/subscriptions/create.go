@@ -78,7 +78,7 @@ func CreateBasicReplyHandlerFunc(
 			subId, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
-			err = start(tgCtx, log, clientAwk, chatStor, subId, groupId, msgFmt)
+			err = requestDeliveryInterval(tgCtx, subId)
 		} else {
 			err = fmt.Errorf("failed to create the subscription:\n%w", err)
 		}

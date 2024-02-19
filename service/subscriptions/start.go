@@ -12,12 +12,22 @@ import (
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
+	"time"
 )
 
 const CmdStart = "sub_start"
 const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
-	"New matching messages will appear here. " +
+	"New matching messages will appear here with a minimum interval of %s. " +
 	"Use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a> to manage own subscriptions."
+
+var deliveryIntervalRows = [][]string{
+	{
+		"1s", "1m", "5m", "15m",
+	},
+	{
+		"1h", "6h", "12h", "1d",
+	},
+}
 
 func Start(
 	log *slog.Logger,
@@ -27,13 +37,46 @@ func Start(
 	msgFmt messages.Format,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		subId := args[0]
-		if subId == "" {
-			err = errors.New("subscription id argument is missing")
+		switch len(args) {
+		case 1: // ask for min delivery interval
+			subId := args[0]
+			err = requestDeliveryInterval(tgCtx, subId)
+		case 2:
+			subId := args[0]
+			minIntervalStr := args[1]
+			var minInterval time.Duration
+			minInterval, err = time.ParseDuration(minIntervalStr)
+			switch err {
+			case nil:
+				err = start(tgCtx, log, clientAwk, chatStor, subId, groupId, msgFmt, minInterval)
+			default:
+				err = errors.New(fmt.Sprintf("failed to parse min delivery interval: %s", err))
+			}
+		default:
+			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 2 arguments, got %d", len(args)))
 		}
-		err = start(tgCtx, log, clientAwk, chatStor, subId, groupId, msgFmt)
 		return
 	}
+}
+
+func requestDeliveryInterval(tgCtx telebot.Context, subId string) (err error) {
+	m := &telebot.ReplyMarkup{}
+	var rows []telebot.Row
+	for _, diRow := range deliveryIntervalRows {
+		var rowBtns []telebot.Btn
+		for _, di := range diRow {
+			btn := telebot.Btn{
+				Text: di,
+				Data: fmt.Sprintf("%s %s %s", CmdStart, subId, di),
+			}
+			rowBtns = append(rowBtns, btn)
+		}
+		row := m.Row(rowBtns...)
+		rows = append(rows, row)
+	}
+	m.Inline(rows...)
+	err = tgCtx.Send("Choose the minimum interval for the message delivery for this subscription:", m)
+	return
 }
 
 func start(
@@ -43,6 +86,7 @@ func start(
 	chatStor chats.Storage,
 	subId, groupId string,
 	msgFmt messages.Format,
+	minInterval time.Duration,
 ) (err error) {
 	var userId string
 	var chat chats.Chat
@@ -54,6 +98,7 @@ func start(
 		chat.SubId = subId
 		chat.GroupId = groupId
 		chat.UserId = userId
+		chat.MinInterval = minInterval
 		err = chatStor.LinkSubscription(context.TODO(), chat)
 		switch {
 		case errors.Is(err, chats.ErrAlreadyExists):
@@ -66,10 +111,10 @@ func start(
 		subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 	}
 	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf(msgFmtChatLinked, subData.Description), telebot.ModeHTML)
+		err = tgCtx.Send(fmt.Sprintf(msgFmtChatLinked, subData.Description, minInterval), telebot.ModeHTML)
 	}
 	if err == nil {
-		r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Id, chat.SubId, groupId, userId, msgFmt)
+		r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Id, chat.SubId, groupId, userId, msgFmt, minInterval)
 		go r.Run(context.Background(), log)
 	}
 	return
