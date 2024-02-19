@@ -22,7 +22,8 @@ import (
 )
 
 const limitGroupOrCondChildrenCount = 4
-const limitTextCondTermsLength = 256
+const minTextCondTermsLength = 3
+const maxTextCondTermsLength = 256
 const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
 const ReqSubCreate = "sub_create"
@@ -165,12 +166,13 @@ func validateCondition(cond condition.Condition) (err error) {
 		}
 	case condition.TextCondition:
 		lenTerms := len(tc.GetTerm())
-		if lenTerms > limitTextCondTermsLength {
+		if lenTerms < minTextCondTermsLength || lenTerms > maxTextCondTermsLength {
 			err = fmt.Errorf(
-				"%w:\ntext condition terms length is %d, limit is %d,\nconsider to use an additional subscription",
+				"%w:\ntext condition terms length is %d, should be [%d, %d]",
 				errInvalidCondition,
 				lenTerms,
-				limitGroupOrCondChildrenCount,
+				minTextCondTermsLength,
+				maxTextCondTermsLength,
 			)
 		}
 	}
