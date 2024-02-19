@@ -18,10 +18,11 @@ type storageMongo struct {
 }
 
 type Chat struct {
-	Id      int64  `bson:"id"`
-	SubId   string `bson:"subId"`
-	GroupId string `bson:"groupId"`
-	UserId  string `bson:"userId"`
+	Id          int64  `bson:"id"`
+	SubId       string `bson:"subId"`
+	GroupId     string `bson:"groupId"`
+	UserId      string `bson:"userId"`
+	MinInterval int32  `bson:"minInterval"`
 }
 
 const attrId = "id"
