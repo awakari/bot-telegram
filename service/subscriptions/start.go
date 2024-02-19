@@ -18,15 +18,13 @@ import (
 const CmdStart = "sub_start"
 const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. New matching messages will appear here with a minimum interval of %s"
 
-var deliveryIntervals = []time.Duration{
-	1 * time.Second,
-	1 * time.Minute,
-	5 * time.Minute,
-	15 * time.Minute,
-	1 * time.Hour,
-	6 * time.Hour,
-	12 * time.Hour,
-	24 * time.Hour,
+var deliveryIntervalRows = [][]string{
+	{
+		"1s", "1m", "5m", "15m",
+	},
+	{
+		"1h", "6h", "12h", "1d",
+	},
 }
 
 func Start(
@@ -62,12 +60,16 @@ func Start(
 func requestDeliveryInterval(tgCtx telebot.Context, subId string) (err error) {
 	m := &telebot.ReplyMarkup{}
 	var rows []telebot.Row
-	for _, di := range deliveryIntervals {
-		btn := telebot.Btn{
-			Text: di.String(),
-			Data: fmt.Sprintf("%s %s %s", CmdStart, subId, di),
+	for _, diRow := range deliveryIntervalRows {
+		var rowBtns []telebot.Btn
+		for _, di := range diRow {
+			btn := telebot.Btn{
+				Text: di,
+				Data: fmt.Sprintf("%s %s %s", CmdStart, subId, di),
+			}
+			rowBtns = append(rowBtns, btn)
 		}
-		row := m.Row(btn)
+		row := m.Row(rowBtns...)
 		rows = append(rows, row)
 	}
 	m.Inline(rows...)
