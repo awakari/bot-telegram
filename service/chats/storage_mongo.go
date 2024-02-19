@@ -9,6 +9,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"time"
 )
 
 type storageMongo struct {
@@ -18,11 +19,11 @@ type storageMongo struct {
 }
 
 type Chat struct {
-	Id          int64  `bson:"id"`
-	SubId       string `bson:"subId"`
-	GroupId     string `bson:"groupId"`
-	UserId      string `bson:"userId"`
-	MinInterval int32  `bson:"minInterval"`
+	Id          int64         `bson:"id"`
+	SubId       string        `bson:"subId"`
+	GroupId     string        `bson:"groupId"`
+	UserId      string        `bson:"userId"`
+	MinInterval time.Duration `bson:"minInterval"`
 }
 
 const attrId = "id"

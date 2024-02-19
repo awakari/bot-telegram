@@ -41,10 +41,10 @@ const msgFmtExtendSteps = ` Please consider the following steps to extend it:
 2. Tap the "Subscriptions" reply keyboard button.
 3. Select the subscription "%s".
 4. Tap the "▲ Extend" button.`
-const rateLimit = 20
 const resumeBatchSize = 16
+const minIntervalLimit = 1 * time.Second
+const day = 24 * time.Hour
 
-var optRateLimitPer = ratelimit.Per(time.Minute)
 var runtimeReaders = make(map[string]*reader)
 var runtimeReadersLock = &sync.Mutex{}
 
@@ -74,7 +74,7 @@ func ResumeAllReaders(
 					},
 				},
 			}
-			r := NewReader(tgBot.NewContext(u), clientAwk, chatStor, c.Id, c.SubId, c.GroupId, c.UserId, format)
+			r := NewReader(tgBot.NewContext(u), clientAwk, chatStor, c.Id, c.SubId, c.GroupId, c.UserId, format, c.MinInterval)
 			go r.Run(context.Background(), log)
 			count++
 		}
@@ -103,7 +103,20 @@ func StopChatReader(subId string) (found bool) {
 	return
 }
 
-func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, chatId int64, subId, groupId, userId string, format messages.Format) Reader {
+func NewReader(
+	tgCtx telebot.Context,
+	clientAwk api.Client,
+	chatStor Storage,
+	chatId int64,
+	subId, groupId, userId string,
+	format messages.Format,
+	minInterval time.Duration,
+) Reader {
+	if minInterval < minIntervalLimit {
+		minInterval = minIntervalLimit
+	}
+	maxRate := int(day / minInterval)
+	rl := ratelimit.New(maxRate, ratelimit.Per(day))
 	return &reader{
 		tgCtx:     tgCtx,
 		clientAwk: clientAwk,
@@ -113,7 +126,7 @@ func NewReader(tgCtx telebot.Context, clientAwk api.Client, chatStor Storage, ch
 		groupId:   groupId,
 		userId:    userId,
 		format:    format,
-		rl:        ratelimit.New(rateLimit, optRateLimitPer),
+		rl:        rl,
 	}
 }
 
