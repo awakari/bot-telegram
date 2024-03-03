@@ -41,7 +41,6 @@ const attrKeyFileImgWidth = "tgfileimgwidth"
 const attrKeyFileType = "tgfiletype"
 const attrKeyLatitude = "latitude"
 const attrKeyLongitude = "longitude"
-const attrKeySubject = "subject"
 const attrKeyTime = "time"
 
 type FileType int32
@@ -78,7 +77,7 @@ func PublishBasicReplyHandlerFunc(
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		evt := pb.CloudEvent{
 			Id:          uuid.NewString(),
-			Source:      "@AwakariBot",
+			Source:      "https://t.me/" + tgCtx.Chat().Username,
 			SpecVersion: attrValSpecVersion,
 			Type:        "com.github.awakari.bot-telegram.v1",
 		}
@@ -103,11 +102,6 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 		attrKeyTime: {
 			Attr: &pb.CloudEventAttributeValue_CeTimestamp{
 				CeTimestamp: timestamppb.New(msg.Time()),
-			},
-		},
-		attrKeySubject: {
-			Attr: &pb.CloudEventAttributeValue_CeString{
-				CeString: "https://t.me/" + msg.Chat.Username,
 			},
 		},
 	}
