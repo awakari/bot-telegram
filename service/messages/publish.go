@@ -15,6 +15,7 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
@@ -40,6 +41,8 @@ const attrKeyFileImgWidth = "tgfileimgwidth"
 const attrKeyFileType = "tgfiletype"
 const attrKeyLatitude = "latitude"
 const attrKeyLongitude = "longitude"
+const attrKeySubject = "subject"
+const attrKeyTime = "time"
 
 type FileType int32
 
@@ -95,6 +98,16 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 		attrKeyMsgId: {
 			Attr: &pb.CloudEventAttributeValue_CeString{
 				CeString: strconv.Itoa(msg.ID),
+			},
+		},
+		attrKeyTime: {
+			Attr: &pb.CloudEventAttributeValue_CeTimestamp{
+				CeTimestamp: timestamppb.New(msg.Time()),
+			},
+		},
+		attrKeySubject: {
+			Attr: &pb.CloudEventAttributeValue_CeString{
+				CeString: "https://t.me/" + msg.Chat.Username,
 			},
 		},
 	}
