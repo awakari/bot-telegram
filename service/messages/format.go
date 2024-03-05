@@ -143,6 +143,7 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 		case "title":
 		case "awakarimatchfound": // internal
 		case "awakariuserid": // do not expose
+		case "awkhash": // internal, useless
 		case "feedcategories":
 		case "feeddescription":
 		case "feedimagetitle":
@@ -160,7 +161,7 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 			case *pb.CloudEventAttributeValue_CeInteger:
 				txt += fmt.Sprintf("%s: %d\n", attrName, vt.CeInteger)
 			case *pb.CloudEventAttributeValue_CeString:
-				if vt.CeString != evt.Source { // "subject" sometimes has the same value as the source
+				if vt.CeString != evt.Source { // "object"/"objecturl" might the same value as the source
 					v := f.HtmlPolicy.Sanitize(vt.CeString)
 					if trunc {
 						v = truncateStringUtf8(v, fmtLenMaxAttrVal)
