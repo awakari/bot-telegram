@@ -20,10 +20,12 @@ type Format struct {
 type FormatMode int
 
 const (
-	FormatModeHtml FormatMode = iota
-	FormatModePlain
-	FormatModeRaw
+	FormatModeHtml  FormatMode = iota
+	FormatModePlain            // no html markup, but keep the telegram attachments
+	FormatModeRaw              // no html and no attachments
 )
+
+var htmlStripTags = bluemonday.StrictPolicy()
 
 func (f Format) Convert(evt *pb.CloudEvent, subDescr string, mode FormatMode) (tgMsg any) {
 	fileTypeAttr, fileTypeFound := evt.Attributes[attrKeyFileType]
@@ -82,7 +84,13 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	attrSummary, attrSummaryFound := evt.Attributes["summary"]
 	switch attrSummaryFound {
 	case true:
-		v := f.HtmlPolicy.Sanitize(attrSummary.GetCeString())
+		v := attrSummary.GetCeString()
+		switch mode {
+		case FormatModeHtml:
+			v = f.HtmlPolicy.Sanitize(v)
+		default:
+			v = htmlStripTags.Sanitize(v)
+		}
 		if trunc {
 			v = truncateStringUtf8(v, fmtLenMaxBodyTxt)
 		}
@@ -91,7 +99,12 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 		txtData := evt.GetTextData()
 		switch {
 		case txtData != "":
-			txtData = f.HtmlPolicy.Sanitize(txtData)
+			switch mode {
+			case FormatModeHtml:
+				txtData = f.HtmlPolicy.Sanitize(txtData)
+			default:
+				txtData = htmlStripTags.Sanitize(txtData)
+			}
 			if trunc {
 				txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
 			}
