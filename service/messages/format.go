@@ -157,6 +157,7 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 		case "awakarimatchfound": // internal
 		case "awakariuserid": // do not expose
 		case "awkhash": // internal, useless
+		case "awkinternal": // internal
 		case "feedcategories":
 		case "feeddescription":
 		case "feedimagetitle":
