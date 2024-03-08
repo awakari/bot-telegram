@@ -8,6 +8,7 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
 	clientAwkApiReader "github.com/awakari/client-sdk-go/api/grpc/reader"
+	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/cenkalti/backoff/v4"
@@ -189,8 +190,12 @@ func (r *reader) runOnce() (err error) {
 		err = r.deliverEventsReadLoop(ctx, readerAwk, subDescr)
 	}
 	switch {
+	case errors.Is(err, subscriptions.ErrNotFound):
+		fallthrough
+	case errors.Is(err, api.ErrApiDisabled):
+		fallthrough
 	case errors.Is(err, clientAwkApiReader.ErrNotFound):
-		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.subId))
+		_ = r.tgCtx.Send(fmt.Sprintf("failed to read by subscription: %s, cause: %s, stopping", err, r.subId))
 		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 		r.stop = true
 		err = nil
