@@ -133,6 +133,8 @@ spec:
               protocol: TCP
             - name: grpc
               containerPort: {{ .Values.service.grpc.port }}
+            - name: metrics
+              containerPort: {{ .Values.service.metrics.port }}
           livenessProbe:
             grpc:
               port: {{ .Values.service.grpc.port }}
