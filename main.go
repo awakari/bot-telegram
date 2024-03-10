@@ -110,8 +110,8 @@ func main() {
 	prometheus.MustRegister(
 		prometheus.NewGaugeFunc(
 			prometheus.GaugeOpts{
-				Name: "awk_subscriptions_count_total",
-				Help: "Awakari subscriptions total count",
+				Name: "awk_bot_telegram_chats_total",
+				Help: "Awakari Telegram Bot: total active chat count",
 			},
 			func() (v float64) {
 				count, err := chatStor.Count(context.TODO())
