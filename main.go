@@ -19,6 +19,8 @@ import (
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
@@ -104,6 +106,22 @@ func main() {
 		panic(err)
 	}
 	defer chatStor.Close()
+	//
+	prometheus.MustRegister(
+		prometheus.NewGaugeFunc(
+			prometheus.GaugeOpts{
+				Name: "awk_subscriptions_count_total",
+				Help: "Awakari subscriptions total count",
+			},
+			func() (v float64) {
+				count, err := chatStor.Count(context.TODO())
+				if err != nil {
+					log.Error(fmt.Sprintf("Chat storage Count(): err=%s", err))
+				}
+				return float64(count)
+			},
+		),
+	)
 
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
@@ -360,6 +378,11 @@ func main() {
 		var count uint32
 		count, err = chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
 		log.Info(fmt.Sprintf("Resumed %d readers, errors: %s", count, err))
+	}()
+
+	go func() {
+		http.Handle("/metrics", promhttp.Handler())
+		http.ListenAndServe(fmt.Sprintf(":%d", cfg.Api.Metrics.Port), nil)
 	}()
 
 	b.Start()

@@ -40,6 +40,8 @@ service:
   port: 8080
   grpc:
     port: 50051
+  metrics:
+    port: 9090
 
 ingress:
   enabled: true

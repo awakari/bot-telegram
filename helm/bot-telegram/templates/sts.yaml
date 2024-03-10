@@ -36,6 +36,8 @@ spec:
               value: "{{ .Values.api.admin.uri }}"
             - name: API_MESSAGES_URI
               value: "{{ .Values.api.messages.uri }}"
+            - name: API_METRICS_PORT
+              value: "{{ .Values.service.metrics.port }}"
             - name: API_WRITER_URI
               value: "{{ .Values.api.writer.uri }}"
             {{- range .Values.ingress.hosts }}

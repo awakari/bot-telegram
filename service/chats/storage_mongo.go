@@ -231,6 +231,10 @@ func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit 
 	return
 }
 
+func (sm storageMongo) Count(ctx context.Context) (count int64, err error) {
+	return sm.coll.EstimatedDocumentCount(ctx)
+}
+
 func decodeMongoError(src error) (dst error) {
 	switch {
 	case src == nil:

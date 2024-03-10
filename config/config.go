@@ -14,6 +14,9 @@ type Config struct {
 		Messages struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
+		Metrics struct {
+			Port uint16 `envconfig:"API_METRICS_PORT" default:"9090" required:"true"`
+		}
 		Telegram struct {
 			Bot struct {
 				Port uint16 `envconfig:"API_TELEGRAM_BOT_PORT" default:"50051" required:"true"`
