@@ -52,7 +52,7 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 		Id:          uuid.NewString(),
 		Source:      fmt.Sprintf("https://t.me/%s", chanUserName),
 		SpecVersion: attrValSpecVersion,
-		Type:        "com.github.awakari.bot-telegram.v1",
+		Type:        "com.awakari.bot-telegram.v1",
 	}
 	if err == nil {
 		err = toCloudEvent(tgCtx.Message(), tgCtx.Text(), &evt)

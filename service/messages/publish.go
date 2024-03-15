@@ -79,7 +79,7 @@ func PublishBasicReplyHandlerFunc(
 			Id:          uuid.NewString(),
 			Source:      "https://t.me/" + tgCtx.Chat().Username,
 			SpecVersion: attrValSpecVersion,
-			Type:        "com.github.awakari.bot-telegram.v1",
+			Type:        "com.awakari.bot-telegram.v1",
 		}
 		if err == nil {
 			defer w.Close()
