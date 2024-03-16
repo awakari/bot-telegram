@@ -158,11 +158,11 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 		case "awakariuserid": // do not expose
 		case "awkhash": // internal, useless
 		case "awkinternal": // internal
-		case "feedcategories":
-		case "feeddescription":
-		case "feedimagetitle":
-		case "feedimageurl":
-		case "feedtitle":
+		case "srccategories":
+		case "srcdescription":
+		case "srcimagetitle":
+		case "srcimageurl":
+		case "srctitle":
 		default:
 			switch vt := attrVal.Attr.(type) {
 			case *pb.CloudEventAttributeValue_CeBoolean:
