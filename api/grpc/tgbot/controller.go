@@ -8,8 +8,10 @@ import (
 	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/awakari/client-sdk-go/model/subscription"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
@@ -109,7 +111,7 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 	}
 	var chatId int64
 	if err == nil {
-		chatId, err = strconv.ParseInt(userId[:len(service.PrefixUserId)], 10, 64)
+		chatId, err = strconv.ParseInt(userId[len(service.PrefixUserId):], 10, 64)
 		if err != nil {
 			err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
 		}
@@ -133,8 +135,15 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 				},
 			},
 		}
-		r := chats.NewReader(c.tgBot.NewContext(u), c.clientAwk, c.chatStor, chatId, subId, groupId, userId, c.msgFmt, intervalDefault)
+		tgCtx := c.tgBot.NewContext(u)
+		r := chats.NewReader(tgCtx, c.clientAwk, c.chatStor, chatId, subId, groupId, userId, c.msgFmt, intervalDefault)
 		go r.Run(context.Background(), c.log)
+		groupIdCtx := metadata.AppendToOutgoingContext(ctx, service.KeyGroupId, groupId)
+		var d subscription.Data
+		d, err = c.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
+		if err == nil {
+			_ = tgCtx.Send(fmt.Sprintf("New subscription \"%s\" is linked to this chat", d.Description))
+		}
 	}
 	return
 }
