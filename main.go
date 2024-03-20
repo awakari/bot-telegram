@@ -174,16 +174,6 @@ func main() {
 	}
 	defer chanPostHandler.Close()
 
-	// init the Telegram Bot grpc service
-	controllerGrpc := grpcApiTgBot.NewController([]byte(cfg.Api.Telegram.Token), chanPostHandler)
-	go func() {
-		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
-		err = grpcApi.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
-		if err != nil {
-			panic(err)
-		}
-	}()
-
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
@@ -283,6 +273,24 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	// init the Telegram Bot grpc service
+	controllerGrpc := grpcApiTgBot.NewController(
+		[]byte(cfg.Api.Telegram.Token),
+		chanPostHandler,
+		chatStor,
+		log,
+		clientAwk,
+		b,
+		msgFmt,
+	)
+	go func() {
+		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
+		err = grpcApi.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// resolve the donation invoice - should be pinned in the dedicated private channel
 	var dCh *telebot.Chat
