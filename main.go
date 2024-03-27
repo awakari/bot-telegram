@@ -249,7 +249,7 @@ func main() {
 		},
 		{
 			Text:        "app",
-			Description: "Manage Subscriptions and Publishing in Application",
+			Description: "Manage Queries and Publishing in Application",
 		},
 		{
 			Text:        "pub",
@@ -257,7 +257,7 @@ func main() {
 		},
 		{
 			Text:        "sub",
-			Description: "Subscribe for Keywords",
+			Description: "Query for Keywords",
 		},
 		{
 			Text:        "donate",

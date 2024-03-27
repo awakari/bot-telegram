@@ -115,7 +115,7 @@ func (f Format) convert(evt *pb.CloudEvent, subDescr string, mode FormatMode, tr
 	if txt == "" && attrNameFound {
 		txt = fmt.Sprintf("%s\n\n", attrName.GetCeString())
 	}
-	txt += fmt.Sprintf("Subscription: %s\n\nsource: %s\n", subDescr, evt.Source)
+	txt += fmt.Sprintf("Query: %s\n\nsource: %s\n", subDescr, evt.Source)
 	var attrsTxt string
 	if attrs {
 		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
