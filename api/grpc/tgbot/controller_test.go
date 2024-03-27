@@ -26,7 +26,15 @@ var log = slog.Default()
 func TestMain(m *testing.M) {
 	go func() {
 		srv := grpc.NewServer()
-		c := NewController([]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"), messages.ChanPostHandler{})
+		c := NewController(
+			[]byte("6668123457:ZAJALGCBOGw8q9k2yBidb6kepmrBVGOrBLb"),
+			messages.ChanPostHandler{},
+			nil,
+			slog.Default(),
+			nil,
+			nil,
+			messages.Format{},
+		)
 		RegisterServiceServer(srv, c)
 		reflection.Register(srv)
 		grpc_health_v1.RegisterHealthServer(srv, health.NewServer())

@@ -99,11 +99,6 @@ type FeedsConfig struct {
 	Uri string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
 }
 
-type TelegramConfig struct {
-	GroupId string `envconfig:"API_SOURCE_TELEGRAM_GROUP_ID" default:"com.github.awakari.source-telegram"`
-	Uri     string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
-}
-
 type SitesConfig struct {
 	Uri string `envconfig:"API_SOURCE_SITES_URI" default:"source-sites:50051" required:"true"`
 }
