@@ -25,7 +25,9 @@ const (
 	FormatModeRaw              // no html and no attachments
 )
 
-var htmlStripTags = bluemonday.StrictPolicy()
+var htmlStripTags = bluemonday.
+	StrictPolicy().
+	AddSpaceWhenStrippingTag(true)
 
 func (f Format) Convert(evt *pb.CloudEvent, subDescr string, mode FormatMode) (tgMsg any) {
 	fileTypeAttr, fileTypeFound := evt.Attributes[attrKeyFileType]
