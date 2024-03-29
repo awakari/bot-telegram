@@ -29,7 +29,7 @@ const CmdExtend = "extend"
 const ReqSubExtend = "sub_extend"
 const daysMin = 10
 const daysMax = 365
-const msgFmtRunOnceFailed = "failed to extend subscription, id: %s, user id: %s, cause: %s, retrying in: %s"
+const msgFmtRunOnceFailed = "failed to extend the query, id: %s, user id: %s, cause: %s, retrying in: %s"
 
 type ExtendHandler struct {
 	CfgPayment config.PaymentConfig
@@ -90,8 +90,8 @@ func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...stri
 		price := int(float64(countDays) * eh.CfgPayment.Price.Subscription.Extension * eh.CfgPayment.Currency.SubFactor)
 		invoice := telebot.Invoice{
 			Start:       uuid.NewString(),
-			Title:       "Subscription Extension",
-			Description: fmt.Sprintf("Subscription %s: extend by %d days", subId, countDays),
+			Title:       "Query Extension",
+			Description: fmt.Sprintf("Query %s: extend by %d days", subId, countDays),
 			Payload:     string(orderData),
 			Currency:    eh.CfgPayment.Currency.Code,
 			Prices: []telebot.Price{
@@ -146,12 +146,12 @@ func (eh ExtendHandler) ExtendPaid(tgCtx telebot.Context, args ...string) (err e
 		err = backoff.RetryNotify(e.runOnce, b, func(err error, d time.Duration) {
 			eh.Log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, op.SubId, userId, err, d))
 			if d > 1*time.Second {
-				_ = tgCtx.Send("Extending the subscription, please wait...")
+				_ = tgCtx.Send("Extending the query, please wait...")
 			}
 		})
 	}
 	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf("Subscription has been successfully extended by %d days", op.DaysAdd))
+		err = tgCtx.Send(fmt.Sprintf("Query has been successfully extended by %d days", op.DaysAdd))
 	}
 	return
 }

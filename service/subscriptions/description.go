@@ -51,7 +51,7 @@ func DescriptionReplyHandlerFunc(clientAwk api.Client, groupId string) service.A
 		}
 		if err == nil {
 			// force reply removes the keyboard, hence don't forget to restore it
-			err = tgCtx.Send(fmt.Sprintf("Subscription description changed to \"%s\"", descr))
+			err = tgCtx.Send(fmt.Sprintf("Query description changed to \"%s\"", descr))
 		}
 		return
 	}

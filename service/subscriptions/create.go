@@ -27,13 +27,13 @@ const maxTextCondTermsLength = 256
 const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
 const ReqSubCreate = "sub_create"
-const msgSubCreate = "Creating a basic subscription with a single text matching condition. " +
+const msgSubCreate = "Creating a simple text query. " +
 	"Reply a name followed by keywords to the next message. Example:\n" +
 	"<pre>Wishlist1 tesla iphone</pre>"
 const msgSubCreated = "If you want to read it in another chat, unlink it first using the <pre>/start</pre> command."
 
-var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text subscription")
-var errInvalidCondition = errors.New("invalid subscription condition")
+var errCreateSubNotEnoughArgs = errors.New("not enough arguments to create a text query")
+var errInvalidCondition = errors.New("invalid query condition")
 var errLimitReached = errors.New("limit reached")
 var whiteSpaceRegex = regexp.MustCompile(`\p{Zs}+`)
 
@@ -80,12 +80,12 @@ func CreateBasicReplyHandlerFunc(
 		if err == nil {
 			err = requestDeliveryInterval(tgCtx, subId)
 		} else {
-			err = fmt.Errorf("failed to create the subscription:\n%w", err)
+			err = fmt.Errorf("failed to create the query:\n%w", err)
 		}
 		if err == nil {
 			err = tgCtx.Send(msgSubCreated, telebot.ModeHTML)
 		} else {
-			err = fmt.Errorf("failed to link the created subscription to this chat:\n%w", err)
+			err = fmt.Errorf("failed to link the created query to this chat:\n%w", err)
 		}
 		return
 	}
@@ -136,7 +136,7 @@ func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
 
 func validateSubscriptionData(sd subscription.Data) (err error) {
 	if sd.Description == "" {
-		err = errors.New("invalid subscription:\nempty description")
+		err = errors.New("invalid query:\nempty description")
 	}
 	if err == nil {
 		err = validateCondition(sd.Condition)
@@ -151,7 +151,7 @@ func validateCondition(cond condition.Condition) (err error) {
 		countChildren := len(children)
 		if tc.GetLogic() == condition.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
 			err = fmt.Errorf(
-				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to use an additional subscription instead",
+				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to use an additional query instead",
 				errInvalidCondition,
 				countChildren,
 				limitGroupOrCondChildrenCount,
