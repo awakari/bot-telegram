@@ -10,8 +10,8 @@ import (
 	"unicode/utf8"
 )
 
-const fmtLenMaxAttrVal = 128
-const fmtLenMaxBodyTxt = 512
+const fmtLenMaxAttrVal = 256
+const fmtLenMaxBodyTxt = 1024
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
