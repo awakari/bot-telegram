@@ -102,7 +102,11 @@ func start(
 		err = chatStor.LinkSubscription(context.TODO(), chat)
 		switch {
 		case errors.Is(err, chats.ErrAlreadyExists):
-			err = errors.New("the chat is already linked to a query, try to use another group chat")
+			// might be not an error, so try to re-link the subscription
+			err = chatStor.UnlinkSubscription(context.TODO(), subId)
+			if err == nil {
+				err = chatStor.LinkSubscription(context.TODO(), chat)
+			}
 		}
 	}
 	var subData subscription.Data
