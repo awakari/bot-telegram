@@ -142,7 +142,7 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 		var d subscription.Data
 		d, err = c.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			_ = tgCtx.Send(fmt.Sprintf("New subscription \"%s\" is linked to this chat", d.Description))
+			_ = tgCtx.Send(fmt.Sprintf("New query \"%s\" is linked to this chat", d.Description))
 		}
 	}
 	return

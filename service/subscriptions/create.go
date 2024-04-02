@@ -5,8 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/bot-telegram/service/chats"
-	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
@@ -15,7 +13,6 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"log/slog"
 	"regexp"
 	"strings"
 	"time"
@@ -47,13 +44,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	return
 }
 
-func CreateBasicReplyHandlerFunc(
-	clientAwk api.Client,
-	groupId string,
-	log *slog.Logger,
-	chatStor chats.Storage,
-	msgFmt messages.Format,
-) service.ArgHandlerFunc {
+func CreateBasicReplyHandlerFunc(clientAwk api.Client, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
