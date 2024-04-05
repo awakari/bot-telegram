@@ -16,9 +16,9 @@ func Stop(chatStor chats.Storage) service.ArgHandlerFunc {
 		err = chatStor.UnlinkSubscription(context.Background(), subId)
 		if err == nil {
 			if chats.StopChatReader(subId) {
-				_ = tgCtx.Send("Unlinked the query from this chat")
+				_ = tgCtx.Send("Unlinked the subscription from this chat")
 			} else {
-				_ = tgCtx.Send(fmt.Sprintf("Unlinked the query from this chat. Note: don't delete this group for the next %s. Some new messages may appear here.", chats.ReaderTtl))
+				_ = tgCtx.Send(fmt.Sprintf("Unlinked the subscription from this chat. Note: don't delete this group for the next %s. Some new messages may appear here.", chats.ReaderTtl))
 			}
 		}
 		return

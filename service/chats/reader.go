@@ -35,8 +35,8 @@ const msgFmtReadOnceFailed = "unexpected failure: %s\ndon't worry, retrying in %
 const backOffInit = 1 * time.Second
 const backOffFactor = 3
 const backOffMax = 24 * time.Hour
-const msgExpired = "⚠ The query has been expired."
-const msgExpiresSoon = "⏳ The query expires in %s."
+const msgExpired = "⚠ The subscription has been expired."
+const msgExpiresSoon = "⏳ The subscription expires in %s."
 const msgFmtExtendSteps = " Please extend it."
 const resumeBatchSize = 16
 const minIntervalLimit = 1 * time.Second
@@ -191,7 +191,7 @@ func (r *reader) runOnce() (err error) {
 	case errors.Is(err, api.ErrApiDisabled):
 		fallthrough
 	case errors.Is(err, clientAwkApiReader.ErrNotFound):
-		_ = r.tgCtx.Send(fmt.Sprintf("failed to read by query: %s, cause: %s, stopping", err, r.subId))
+		_ = r.tgCtx.Send(fmt.Sprintf("failed to read by subscription: %s, cause: %s, stopping", err, r.subId))
 		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 		r.stop = true
 		err = nil
@@ -250,7 +250,7 @@ func (r *reader) deliverEventsRead(
 			}
 		}
 	case codes.NotFound:
-		_ = r.tgCtx.Send(fmt.Sprintf("query %s doesn't exist, stopping", r.subId))
+		_ = r.tgCtx.Send(fmt.Sprintf("subscription %s doesn't exist, stopping", r.subId))
 		_ = r.chatStor.UnlinkSubscription(ctx, r.subId)
 		r.stop = true
 		err = nil

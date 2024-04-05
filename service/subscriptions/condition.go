@@ -51,7 +51,7 @@ func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err er
 		err = ch.ClientAwk.UpdateSubscription(groupIdCtx, userId, subId, sd)
 	}
 	if err == nil {
-		_ = tgCtx.Send("Query updated.")
+		_ = tgCtx.Send("Subscription updated.")
 	}
 	return
 }

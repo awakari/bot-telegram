@@ -21,7 +21,7 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart, "")
 		if err == nil {
 			err = tgCtx.Send(
-				"Own queries list. "+
+				"Own subscriptions list. "+
 					"Use the <a href=\"https://awakari.com/login.html\" target=\"_blank\">app</a> to manage. "+
 					"Select one or more to read in this chat:",
 				m, telebot.ModeHTML,
@@ -42,7 +42,7 @@ func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) serv
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], cursor)
 		if err == nil {
-			err = tgCtx.Send("Own queries list page:", m, telebot.ModeHTML)
+			err = tgCtx.Send("Own subscriptions list page:", m, telebot.ModeHTML)
 		}
 		return
 	}

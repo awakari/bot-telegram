@@ -16,9 +16,9 @@ import (
 )
 
 const CmdStart = "sub_start"
-const msgFmtChatLinked = "Linked the query \"%s\" to this chat. " +
+const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
 	"New matching messages will appear here with a minimum interval of %s. " +
-	"Use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a> to manage own queries."
+	"Use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a> to manage own subscriptions."
 
 var deliveryIntervalRows = [][]string{
 	{
@@ -75,7 +75,7 @@ func requestDeliveryInterval(tgCtx telebot.Context, subId string) (err error) {
 		rows = append(rows, row)
 	}
 	m.Inline(rows...)
-	err = tgCtx.Send("Choose the minimum interval for the message delivery for this query:", m)
+	err = tgCtx.Send("Choose the minimum interval for the message delivery for this subscription:", m)
 	return
 }
 
