@@ -7,6 +7,7 @@ import (
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
+	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
@@ -142,7 +143,7 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 		var d subscription.Data
 		d, err = c.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 		if err == nil {
-			_ = tgCtx.Send(fmt.Sprintf("New subscription \"%s\" is linked to this chat", d.Description))
+			_ = tgCtx.Send(fmt.Sprintf(subscriptions.MsgFmtChatLinked, d.Description, intervalDefault), telebot.ModeHTML, telebot.NoPreview)
 		}
 	}
 	return

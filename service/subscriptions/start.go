@@ -16,9 +16,9 @@ import (
 )
 
 const CmdStart = "sub_start"
-const msgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
-	"New matching messages will appear here with a minimum interval of %s. " +
-	"Use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a> to manage own subscriptions."
+const MsgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
+	"New results will appear here. Min interval: %s. " +
+	"To manage own subscriptions use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
 var deliveryIntervalRows = [][]string{
 	{
@@ -115,7 +115,7 @@ func start(
 		subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 	}
 	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf(msgFmtChatLinked, subData.Description, minInterval), telebot.ModeHTML)
+		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subData.Description, minInterval), telebot.ModeHTML, telebot.NoPreview)
 	}
 	if err == nil {
 		r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Id, chat.SubId, groupId, userId, msgFmt, minInterval)

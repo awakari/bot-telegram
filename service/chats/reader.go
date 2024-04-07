@@ -205,9 +205,9 @@ func (r *reader) checkExpiration(groupIdCtx context.Context) {
 		switch {
 		case sd.Expires.IsZero(): // never expires
 		case sd.Expires.Before(time.Now().UTC()):
-			_ = r.tgCtx.Send(msgExpired + fmt.Sprintf(msgFmtExtendSteps, sd.Description))
+			_ = r.tgCtx.Send(msgExpired + msgFmtExtendSteps)
 		case sd.Expires.Sub(time.Now().UTC()) < 168*time.Hour: // expires earlier than in 1 week
-			_ = r.tgCtx.Send(fmt.Sprintf(msgExpiresSoon, sd.Expires.Sub(time.Now().UTC()).Round(time.Minute)) + fmt.Sprintf(msgFmtExtendSteps, sd.Description))
+			_ = r.tgCtx.Send(fmt.Sprintf(msgExpiresSoon, sd.Expires.Sub(time.Now().UTC()).Round(time.Minute)) + msgFmtExtendSteps)
 		}
 	}
 }
