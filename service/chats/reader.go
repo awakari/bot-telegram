@@ -183,7 +183,7 @@ func (r *reader) runOnce() (err error) {
 	}
 	if err == nil {
 		defer readerAwk.Close()
-		err = r.deliverEventsReadLoop(ctx, readerAwk, subDescr)
+		err = r.deliverEventsReadLoop(ctx, readerAwk, r.subId, subDescr)
 	}
 	switch {
 	case errors.Is(err, subscriptions.ErrNotFound):
@@ -215,10 +215,10 @@ func (r *reader) checkExpiration(groupIdCtx context.Context) {
 func (r *reader) deliverEventsReadLoop(
 	ctx context.Context,
 	readerAwk model.AckReader[[]*pb.CloudEvent],
-	subDescr string,
+	subId, subDescr string,
 ) (err error) {
 	for !r.stop {
-		err = r.deliverEventsRead(ctx, readerAwk, subDescr)
+		err = r.deliverEventsRead(ctx, readerAwk, subId, subDescr)
 		if err != nil {
 			break
 		}
@@ -229,7 +229,7 @@ func (r *reader) deliverEventsReadLoop(
 func (r *reader) deliverEventsRead(
 	ctx context.Context,
 	readerAwk model.AckReader[[]*pb.CloudEvent],
-	subDescr string,
+	subId, subDescr string,
 ) (err error) {
 	var evts []*pb.CloudEvent
 	evts, err = readerAwk.Read()
@@ -237,7 +237,7 @@ func (r *reader) deliverEventsRead(
 	case codes.OK:
 		var countAck uint32
 		if len(evts) > 0 {
-			countAck, err = r.deliverEvents(evts, subDescr)
+			countAck, err = r.deliverEvents(evts, subId, subDescr)
 		}
 		_ = readerAwk.Ack(countAck)
 		if err != nil {
@@ -258,10 +258,10 @@ func (r *reader) deliverEventsRead(
 	return err
 }
 
-func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck uint32, err error) {
+func (r *reader) deliverEvents(evts []*pb.CloudEvent, subId, subDescr string) (countAck uint32, err error) {
 	for _, evt := range evts {
 		r.rl.Take()
-		tgMsg := r.format.Convert(evt, subDescr, messages.FormatModeHtml)
+		tgMsg := r.format.Convert(evt, subId, subDescr, messages.FormatModeHtml)
 		err = r.tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
@@ -275,7 +275,7 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 					return
 				}
 				fmt.Printf("Failed to send message %+v to chat %d in HTML mode, cause: %s (%s)\n", tgMsg, r.tgCtx.Chat().ID, err, reflect.TypeOf(err))
-				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModePlain)
+				tgMsg = r.format.Convert(evt, subId, subDescr, messages.FormatModePlain)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
 		}
@@ -284,7 +284,7 @@ func (r *reader) deliverEvents(evts []*pb.CloudEvent, subDescr string) (countAck
 			case telebot.FloodError:
 			default:
 				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
-				tgMsg = r.format.Convert(evt, subDescr, messages.FormatModeRaw)
+				tgMsg = r.format.Convert(evt, subId, subDescr, messages.FormatModeRaw)
 				err = r.tgCtx.Send(tgMsg) // fallback: try to re-send as a raw text w/o file attachments
 			}
 		}
