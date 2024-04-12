@@ -6,6 +6,7 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
+	"strings"
 	"time"
 	"unicode/utf8"
 )
@@ -117,11 +118,38 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	if txt == "" && attrNameFound {
 		txt = fmt.Sprintf("%s\n\n", attrName.GetCeString())
 	}
+	//
+	objAttr, objAttrFound := evt.Attributes["object"]
+	var obj string
+	if objAttrFound {
+		switch objAttr.Attr.(type) {
+		case *pb.CloudEventAttributeValue_CeString:
+			obj = objAttr.GetCeString()
+		case *pb.CloudEventAttributeValue_CeUri:
+			obj = objAttr.GetCeUri()
+		}
+	}
+	if obj == "" || (!strings.HasPrefix(obj, "https://") && !strings.HasPrefix(obj, "http://")) {
+		objAttr, objAttrFound = evt.Attributes["objecturl"]
+		if objAttrFound {
+			switch objAttr.Attr.(type) {
+			case *pb.CloudEventAttributeValue_CeString:
+				obj = objAttr.GetCeString()
+			case *pb.CloudEventAttributeValue_CeUri:
+				obj = objAttr.GetCeUri()
+			}
+		}
+	}
+	if obj != "" {
+		txt += obj + "\n\n"
+	}
+	//
 	subDetailsLink := "https://awakari.com/sub-details.html?id=" + subId
 	if mode == FormatModeHtml {
 		subDetailsLink = "<a href=\"" + subDetailsLink + "\">" + subDescr + "</a>"
 	}
-	txt += fmt.Sprintf("Subscription: %s\n\nsource: %s\n", subDetailsLink, evt.Source)
+	txt += "Subscription: " + subDetailsLink + "\n\n"
+	//
 	var attrsTxt string
 	if attrs {
 		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
@@ -155,7 +183,7 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 }
 
 func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
-	txt += fmt.Sprintf("id: %s\ntype: %s\n", evt.Id, evt.Type)
+	txt += fmt.Sprintf("id: %s\nsource: %s\ntype: %s\n", evt.Id, evt.Source, evt.Type)
 	for attrName, attrVal := range evt.Attributes {
 		switch attrName {
 		case "summary":
