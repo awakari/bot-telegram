@@ -30,7 +30,7 @@ type Reader interface {
 
 const ReaderTtl = 24 * time.Hour
 const readBatchSize = 16
-const msgFmtReadOnceFailed = "unexpected failure: %s\ndon't worry, retrying in %s..."
+const msgFmtReadOnceFailed = "unexpected failure: %s, retrying in %s..."
 const backOffInit = 1 * time.Second
 const backOffFactor = 3
 const backOffMax = 24 * time.Hour
