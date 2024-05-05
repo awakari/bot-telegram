@@ -6,7 +6,6 @@ import (
 	"github.com/awakari/bot-telegram/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"math"
 	"os"
 	"testing"
 	"time"
@@ -209,7 +208,7 @@ func TestStorageMongo_GetBatch(t *testing.T) {
 				require.Nil(t, err)
 			}
 			var selected []Chat
-			selected, err = s.GetBatch(ctx, c.idIndex, c.idRange, 10, math.MinInt64)
+			selected, err = s.GetBatch(ctx, c.idIndex, c.idRange, 10, "")
 			assert.Equal(t, c.selected, selected)
 			assert.Nil(t, err)
 		})

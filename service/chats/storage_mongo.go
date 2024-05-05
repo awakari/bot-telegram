@@ -76,7 +76,7 @@ var optsGet = options.
 	SetProjection(projGet)
 var sortGetBatch = bson.D{
 	{
-		Key:   attrId,
+		Key:   attrSubId,
 		Value: 1,
 	},
 }
@@ -180,11 +180,11 @@ func (sm storageMongo) Delete(ctx context.Context, id int64) (count int64, err e
 	return
 }
 
-func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit uint32, cursor int64) (page []Chat, err error) {
+func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit uint32, cursor string) (page []Chat, err error) {
 	q := bson.M{
 		"$and": []bson.M{
 			{
-				attrId: bson.M{
+				attrSubId: bson.M{
 					"$gt": cursor,
 				},
 			},

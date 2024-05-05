@@ -19,7 +19,6 @@ import (
 	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"math"
 	"reflect"
 	"sync"
 	"time"
@@ -55,14 +54,15 @@ func ResumeAllReaders(
 	replicaIndex uint32,
 	replicaRange uint32,
 ) (count uint32, err error) {
-	cursor := int64(math.MinInt64)
+	cursor := ""
 	var page []Chat
 	for {
 		page, err = chatStor.GetBatch(ctx, replicaIndex, replicaRange, resumeBatchSize, cursor)
+		log.Debug(fmt.Sprintf("service.chats.GetBatch(%d, %d, %d, %s): %d, %s", replicaIndex, replicaRange, resumeBatchSize, cursor, len(page), err))
 		if err != nil || len(page) == 0 {
 			break
 		}
-		cursor = page[len(page)-1].Id
+		cursor = page[len(page)-1].SubId
 		for _, c := range page {
 			u := telebot.Update{
 				Message: &telebot.Message{
