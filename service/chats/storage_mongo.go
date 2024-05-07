@@ -31,6 +31,8 @@ const attrSubId = "subId"
 const attrGroupId = "groupId"
 const attrUserId = "userId"
 
+const keyCountUsers = "countUsers"
+
 var optsSrvApi = options.ServerAPI(options.ServerAPIVersion1)
 var indices = []mongo.IndexModel{
 	{
@@ -97,6 +99,20 @@ var projGetBatch = bson.D{
 		Key:   attrUserId,
 		Value: 1,
 	},
+}
+
+var pipelineCountUsers = mongo.Pipeline{
+	bson.D{{
+		"$group",
+		bson.D{{
+			"_id",
+			"$" + attrUserId,
+		}},
+	}},
+	bson.D{{
+		"$count",
+		keyCountUsers,
+	}},
 }
 
 func NewStorage(ctx context.Context, cfgDb config.ChatsDbConfig) (s Storage, err error) {
@@ -233,6 +249,27 @@ func (sm storageMongo) GetBatch(ctx context.Context, idRem, idDiv uint32, limit 
 
 func (sm storageMongo) Count(ctx context.Context) (count int64, err error) {
 	return sm.coll.EstimatedDocumentCount(ctx)
+}
+
+func (s storageMongo) CountUsers(ctx context.Context) (count int64, err error) {
+	var cursor *mongo.Cursor
+	cursor, err = s.coll.Aggregate(ctx, pipelineCountUsers)
+	var result bson.M
+	if err == nil && cursor.Next(ctx) {
+		err = cursor.Decode(&result)
+	}
+	if err == nil {
+		rawCount := result[keyCountUsers]
+		switch rawCount.(type) {
+		case int32:
+			count = int64(rawCount.(int32))
+		case int64:
+			count = rawCount.(int64)
+		default:
+			err = fmt.Errorf("%w: failed to convert result to int: %+v", ErrInternal, rawCount)
+		}
+	}
+	return
 }
 
 func decodeMongoError(src error) (dst error) {

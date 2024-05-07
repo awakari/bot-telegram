@@ -121,8 +121,20 @@ func main() {
 				return float64(count)
 			},
 		),
+		prometheus.NewGaugeFunc(
+			prometheus.GaugeOpts{
+				Name: "awk_bot_telegram_subscribers_total",
+				Help: "Awakari Telegram Bot: total subscribers count",
+			},
+			func() (v float64) {
+				count, err := chatStor.CountUsers(context.TODO())
+				if err != nil {
+					log.Error(fmt.Sprintf("Chat storage CountUsers(): err=%s", err))
+				}
+				return float64(count)
+			},
+		),
 	)
-
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
 	htmlPolicy.AllowStandardURLs()

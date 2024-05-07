@@ -13,4 +13,5 @@ type Storage interface {
 	Delete(ctx context.Context, id int64) (count int64, err error)
 	GetBatch(ctx context.Context, idRem, idDiv uint32, limit uint32, cursor string) (page []Chat, err error)
 	Count(ctx context.Context) (count int64, err error)
+	CountUsers(ctx context.Context) (count int64, err error)
 }

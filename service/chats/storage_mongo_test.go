@@ -273,3 +273,62 @@ func TestStorageMongo_Count(t *testing.T) {
 		})
 	}
 }
+
+func TestStorageMongo_CountUsers(t *testing.T) {
+	//
+	collName := fmt.Sprintf("chats-test-%d", time.Now().UnixMicro())
+	dbCfg := config.ChatsDbConfig{
+		Uri:  dbUri,
+		Name: "bot-telegram",
+	}
+	dbCfg.Table.Name = collName
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Minute)
+	defer cancel()
+	s, err := NewStorage(ctx, dbCfg)
+	require.NotNil(t, s)
+	require.Nil(t, err)
+	sm := s.(storageMongo)
+	defer clear(ctx, t, sm)
+	//
+	cases := map[string]struct {
+		stored []Chat
+		out    int64
+		err    error
+	}{
+		"ok": {
+			stored: []Chat{
+				{
+					Id:      -1001875128866,
+					SubId:   "sub1",
+					GroupId: "group1",
+					UserId:  "user1",
+				},
+				{
+					Id:      -1001778619305,
+					SubId:   "sub2",
+					GroupId: "group1",
+					UserId:  "user2",
+				},
+				{
+					Id:      -1001733378662,
+					SubId:   "sub3",
+					GroupId: "group2",
+					UserId:  "user2",
+				},
+			},
+			out: 2,
+		},
+	}
+	//
+	for k, c := range cases {
+		t.Run(k, func(t *testing.T) {
+			for _, chat := range c.stored {
+				err = s.LinkSubscription(ctx, chat)
+				require.Nil(t, err)
+			}
+			count, err := s.CountUsers(ctx)
+			assert.Equal(t, c.out, count)
+			assert.Nil(t, err)
+		})
+	}
+}
