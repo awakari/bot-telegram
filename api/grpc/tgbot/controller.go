@@ -4,22 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/bot-telegram/service/messages"
-	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/model/subscription"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type Controller interface {
@@ -27,34 +23,35 @@ type Controller interface {
 }
 
 type controller struct {
-	secretToken []byte
-	cp          messages.ChanPostHandler
-	chatStor    chats.Storage
-	log         *slog.Logger
-	clientAwk   api.Client
-	tgBot       *telebot.Bot
-	msgFmt      messages.Format
+	secretToken     []byte
+	cp              messages.ChanPostHandler
+	svcReader       reader.Service
+	urlCallbackBase string
+	log             *slog.Logger
+	clientAwk       api.Client
+	tgBot           *telebot.Bot
+	msgFmt          messages.Format
 }
-
-const intervalDefault = 1 * time.Minute
 
 func NewController(
 	secretToken []byte,
 	cp messages.ChanPostHandler,
-	chatStor chats.Storage,
+	svcReader reader.Service,
+	urlCallbackBase string,
 	log *slog.Logger,
 	clientAwk api.Client,
 	tgBot *telebot.Bot,
 	msgFmt messages.Format,
 ) Controller {
 	return controller{
-		secretToken: secretToken,
-		cp:          cp,
-		chatStor:    chatStor,
-		log:         log,
-		clientAwk:   clientAwk,
-		tgBot:       tgBot,
-		msgFmt:      msgFmt,
+		secretToken:     secretToken,
+		cp:              cp,
+		svcReader:       svcReader,
+		urlCallbackBase: urlCallbackBase,
+		log:             log,
+		clientAwk:       clientAwk,
+		tgBot:           tgBot,
+		msgFmt:          msgFmt,
 	}
 }
 
@@ -105,7 +102,6 @@ func (c controller) ListChannels(ctx context.Context, req *ListChannelsRequest) 
 
 func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp *SubscribeResponse, err error) {
 	subId := req.SubId
-	groupId := req.GroupId
 	userId := req.UserId
 	if !strings.HasPrefix(userId, service.PrefixUserId) {
 		err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should have prefix: %s, got: %s", service.PrefixUserId, userId))
@@ -118,40 +114,18 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 		}
 	}
 	if err == nil {
-		chat := chats.Chat{
-			Id:          chatId,
-			SubId:       subId,
-			GroupId:     groupId,
-			UserId:      userId,
-			MinInterval: intervalDefault,
-		}
-		err = c.chatStor.LinkSubscription(ctx, chat)
+		err = c.svcReader.CreateCallback(ctx, subId, reader.MakeCallbackUrl(c.urlCallbackBase, chatId))
 		err = encodeError(err)
-	}
-	if err == nil {
-		u := telebot.Update{
-			Message: &telebot.Message{
-				Chat: &telebot.Chat{
-					ID: chatId,
-				},
-			},
-		}
-		tgCtx := c.tgBot.NewContext(u)
-		r := chats.NewReader(tgCtx, c.clientAwk, c.chatStor, chatId, subId, groupId, userId, c.msgFmt, intervalDefault)
-		go r.Run(context.Background(), c.log)
-		groupIdCtx := metadata.AppendToOutgoingContext(ctx, service.KeyGroupId, groupId)
-		var d subscription.Data
-		d, err = c.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
-		if err == nil {
-			_ = tgCtx.Send(fmt.Sprintf(subscriptions.MsgFmtChatLinked, d.Description, intervalDefault), telebot.ModeHTML, telebot.NoPreview)
-		}
 	}
 	return
 }
 
 func (c controller) Unsubscribe(ctx context.Context, req *UnsubscribeRequest) (resp *UnsubscribeResponse, err error) {
-	chats.StopChatReader(req.SubId)
-	err = c.chatStor.UnlinkSubscription(ctx, req.SubId)
+	var cb reader.Callback
+	cb, err = c.svcReader.GetCallback(ctx, req.SubId)
+	if err == nil {
+		err = c.svcReader.DeleteCallback(ctx, req.SubId, cb.Url)
+	}
 	err = encodeError(err)
 	return
 }

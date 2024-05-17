@@ -1,13 +1,13 @@
 package main
 
 import (
-	"context"
 	"crypto/tls"
 	"fmt"
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
+	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -18,24 +18,19 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
+	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
 func main() {
-
-	ctx := context.TODO()
 
 	// init config and logger
 	slog.Info("starting...")
@@ -47,19 +42,6 @@ func main() {
 		Level: slog.Level(cfg.Log.Level),
 	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &opts))
-
-	// determine the replica index
-	replicaNameParts := strings.Split(cfg.Replica.Name, "-")
-	if len(replicaNameParts) < 2 {
-		panic("unable to parse the replica name: " + cfg.Replica.Name)
-	}
-	var replicaIndexTmp uint64
-	replicaIndexTmp, err = strconv.ParseUint(replicaNameParts[len(replicaNameParts)-1], 10, 16)
-	if err != nil {
-		panic(err)
-	}
-	replicaIndex := uint32(replicaIndexTmp)
-	log.Info(fmt.Sprintf("Replica: %d/%d", replicaIndex, cfg.Replica.Range))
 
 	// init Awakari client
 	clientAwk, err := api.
@@ -99,42 +81,18 @@ func main() {
 		Build()
 	defer clientAwkInternal.Close()
 
-	// init chat storage
-	var chatStor chats.Storage
-	chatStor, err = chats.NewStorage(ctx, cfg.Chats.Db)
-	if err != nil {
-		panic(err)
-	}
-	defer chatStor.Close()
-	//
-	prometheus.MustRegister(
-		prometheus.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name: "awk_bot_telegram_chats_total",
-				Help: "Awakari Telegram Bot: total active chat count",
-			},
-			func() (v float64) {
-				count, err := chatStor.Count(context.TODO())
-				if err != nil {
-					log.Error(fmt.Sprintf("Chat storage Count(): err=%s", err))
-				}
-				return float64(count)
-			},
-		),
-		prometheus.NewGaugeFunc(
-			prometheus.GaugeOpts{
-				Name: "awk_bot_telegram_subscribers_total",
-				Help: "Awakari Telegram Bot: total subscribers count",
-			},
-			func() (v float64) {
-				count, err := chatStor.CountUsers(context.TODO())
-				if err != nil {
-					log.Error(fmt.Sprintf("Chat storage CountUsers(): err=%s", err))
-				}
-				return float64(count)
-			},
-		),
+	// init websub reader
+	clientHttp := http.Client{}
+	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri)
+	svcReader = reader.NewServiceLogging(svcReader, log)
+	urlCallbackBase := fmt.Sprintf(
+		"%s://%s:%d/%s",
+		cfg.Api.Reader.CallBack.Protocol,
+		cfg.Api.Reader.CallBack.Host,
+		cfg.Api.Reader.CallBack.Port,
+		cfg.Api.Reader.CallBack.Path,
 	)
+
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
 	htmlPolicy.AllowStandardURLs()
@@ -153,7 +111,7 @@ func main() {
 		AllowAttrs("class").
 		OnElements("code")
 	htmlPolicy.AllowDataURIImages()
-	msgFmt := messages.Format{
+	fmtMsg := messages.Format{
 		HtmlPolicy: htmlPolicy,
 	}
 
@@ -189,9 +147,9 @@ func main() {
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
-		subscriptions.CmdStart:       subscriptions.Start(log, clientAwk, chatStor, groupId, msgFmt),
-		subscriptions.CmdStop:        subscriptions.Stop(chatStor),
-		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, chatStor, groupId),
+		subscriptions.CmdStart:       subscriptions.Start(clientAwk, svcReader, urlCallbackBase, groupId),
+		subscriptions.CmdStop:        subscriptions.Stop(svcReader),
+		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, svcReader, groupId),
 		usage.CmdExtend:              limitsHandler.RequestExtension,
 		usage.CmdIncrease:            limitsHandler.RequestIncrease,
 	}
@@ -290,11 +248,12 @@ func main() {
 	controllerGrpc := grpcApiTgBot.NewController(
 		[]byte(cfg.Api.Telegram.Token),
 		chanPostHandler,
-		chatStor,
+		svcReader,
+		urlCallbackBase,
 		log,
 		clientAwk,
 		b,
-		msgFmt,
+		fmtMsg,
 	)
 	go func() {
 		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
@@ -319,7 +278,7 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, chatStor, groupId)
+	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, svcReader, groupId)
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
@@ -392,18 +351,18 @@ func main() {
 		log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
-	b.Handle(telebot.OnUserLeft, service.ErrorHandlerFunc(chats.UserLeftHandlerFunc(chatStor)))
+	//
+	go b.Start()
 
-	go func() {
-		var count uint32
-		count, err = chats.ResumeAllReaders(ctx, log, chatStor, b, clientAwk, msgFmt, replicaIndex, cfg.Replica.Range)
-		log.Info(fmt.Sprintf("Resumed %d readers, errors: %s", count, err))
-	}()
-
-	go func() {
-		http.Handle("/metrics", promhttp.Handler())
-		http.ListenAndServe(fmt.Sprintf(":%d", cfg.Api.Metrics.Port), nil)
-	}()
-
-	b.Start()
+	// chats websub handler (subscriber)
+	hChats := chats.NewHandler(cfg.Api.Reader.Uri, fmtMsg, urlCallbackBase, svcReader, b)
+	r := gin.Default()
+	r.
+		Group(cfg.Api.Reader.CallBack.Path).
+		GET("/:chatId", hChats.Confirm).
+		POST("/:chatId", hChats.DeliverMessages)
+	err = r.Run(fmt.Sprintf(":%d", cfg.Api.Reader.CallBack.Port))
+	if err != nil {
+		panic(err)
+	}
 }

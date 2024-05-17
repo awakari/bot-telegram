@@ -30,7 +30,7 @@ var htmlStripTags = bluemonday.
 	StrictPolicy().
 	AddSpaceWhenStrippingTag(true)
 
-func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatMode) (tgMsg any) {
+func (f Format) Convert(evt *pb.CloudEvent, subId string, mode FormatMode) (tgMsg any) {
 	fileTypeAttr, fileTypeFound := evt.Attributes[attrKeyFileType]
 	if fileTypeFound && mode != FormatModeRaw {
 		ft := FileType(fileTypeAttr.GetCeInteger())
@@ -43,19 +43,19 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 			tgMsg = &telebot.Audio{
 				File:     file,
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
+				Caption:  f.convert(evt, subId, mode, false, false),
 			}
 		case FileTypeDocument:
 			tgMsg = &telebot.Document{
 				File:    file,
-				Caption: f.convert(evt, subId, subDescr, mode, false, false),
+				Caption: f.convert(evt, subId, mode, false, false),
 			}
 		case FileTypeImage:
 			tgMsg = &telebot.Photo{
 				File:    file,
 				Width:   int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:  int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
-				Caption: f.convert(evt, subId, subDescr, mode, false, false),
+				Caption: f.convert(evt, subId, mode, false, false),
 			}
 		case FileTypeVideo:
 			tgMsg = &telebot.Video{
@@ -63,7 +63,7 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 				Width:    int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
 				Height:   int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
 				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
-				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
+				Caption:  f.convert(evt, subId, mode, false, false),
 			}
 		}
 	} else {
@@ -72,15 +72,15 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		case true:
 			// no need to truncate for telegram when message is from telegram
 			// no need to convert any other attributes except text and footer
-			tgMsg = f.convert(evt, subId, subDescr, mode, false, true)
+			tgMsg = f.convert(evt, subId, mode, false, true)
 		default:
-			tgMsg = f.convert(evt, subId, subDescr, mode, true, true)
+			tgMsg = f.convert(evt, subId, mode, true, true)
 		}
 	}
 	return
 }
 
-func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatMode, trunc, attrs bool) (txt string) {
+func (f Format) convert(evt *pb.CloudEvent, subId string, mode FormatMode, trunc, attrs bool) (txt string) {
 	if attrs {
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
 	}
@@ -145,10 +145,12 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	}
 	//
 	subDetailsLink := "https://awakari.com/sub-details.html?id=" + subId
-	if mode == FormatModeHtml {
-		subDetailsLink = "<a href=\"" + subDetailsLink + "\">" + subDescr + "</a>"
+	switch mode {
+	case FormatModeHtml:
+		txt += "<a href=\"" + subDetailsLink + "\">Subscription</a>\n\n"
+	default:
+		txt += "Subscription: " + subDetailsLink + "\n\n"
 	}
-	txt += "Subscription: " + subDetailsLink + "\n\n"
 	//
 	var attrsTxt string
 	if attrs {
