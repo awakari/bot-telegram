@@ -7,6 +7,7 @@ import (
 	"fmt"
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service/messages"
+	"github.com/bytedance/sonic/utf8"
 	ceProto "github.com/cloudevents/sdk-go/binding/format/protobuf/v2"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	ce "github.com/cloudevents/sdk-go/v2/event"
@@ -133,6 +134,12 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 	for _, evt := range evts {
 		var evtProto *pb.CloudEvent
 		evtProto, err = ceProto.ToProto(evt)
+		dataTxt := string(evt.Data())
+		if utf8.ValidateString(dataTxt) {
+			evtProto.Data = &pb.CloudEvent_TextData{
+				TextData: dataTxt,
+			}
+		}
 		if err != nil {
 			break
 		}
