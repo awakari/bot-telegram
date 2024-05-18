@@ -2,24 +2,24 @@ package subscriptions
 
 import (
 	"context"
-	"fmt"
+	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/bot-telegram/service/chats"
 	"gopkg.in/telebot.v3"
 )
 
 const CmdStop = "sub_stop"
 
-func Stop(chatStor chats.Storage) service.ArgHandlerFunc {
+func Stop(svcReader reader.Service) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
+		ctx := context.TODO()
 		subId := args[0]
-		err = chatStor.UnlinkSubscription(context.Background(), subId)
+		var cb reader.Callback
+		cb, err = svcReader.GetCallback(ctx, subId)
 		if err == nil {
-			if chats.StopChatReader(subId) {
-				_ = tgCtx.Send("Unlinked the subscription from this chat")
-			} else {
-				_ = tgCtx.Send(fmt.Sprintf("Unlinked the subscription from this chat. Note: don't delete this group for the next %s. Some new messages may appear here.", chats.ReaderTtl))
-			}
+			err = svcReader.DeleteCallback(ctx, subId, cb.Url)
+		}
+		if err == nil {
+			_ = tgCtx.Send("Unlinked the subscription from this chat")
 		}
 		return
 	}

@@ -2,7 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-replicaCount: 2
+replicaCount: 1
 
 image:
   repository: ghcr.io/awakari/bot-telegram
@@ -40,8 +40,8 @@ service:
   port: 8080
   grpc:
     port: 50051
-  metrics:
-    port: 9090
+  callback:
+    port: 8081
 
 ingress:
   enabled: true
@@ -91,6 +91,11 @@ api:
     uri: "api:56789"
   messages:
     uri: "messages:50051"
+  reader:
+    uri: "http://reader:8080/v1"
+    callback:
+      protocol: "http"
+      path: "/v1/chat"
   writer:
     uri: "resolver:50051"
   uri: "api:50051"
@@ -110,26 +115,6 @@ cert:
     server: "https://acme-staging-v02.api.letsencrypt.org/directory"
   issuer:
     name: letsencrypt-staging
-chats:
-  # Database related configuration.
-  db:
-    protocol: mongodb
-    hostname: "mongodb:27017"
-    # Database name to use.
-    name: bot-telegram
-    username: "root"
-    password:
-      raw: "" # used if limits.db.password.secret.enabled is false
-      secret:
-        enabled: true
-        name: "mongodb"
-        key: "mongodb-root-password"
-    table:
-      # Database table name to use.
-      name: chats
-    tls:
-      enabled: false
-      insecure: false
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4

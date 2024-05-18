@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
-	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"log/slog"
 	"time"
 )
 
@@ -30,11 +29,10 @@ var deliveryIntervalRows = [][]string{
 }
 
 func Start(
-	log *slog.Logger,
 	clientAwk api.Client,
-	chatStor chats.Storage,
+	svcReader reader.Service,
+	urlCallbackBase string,
 	groupId string,
-	msgFmt messages.Format,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		switch len(args) {
@@ -48,7 +46,7 @@ func Start(
 			minInterval, err = time.ParseDuration(minIntervalStr)
 			switch err {
 			case nil:
-				err = start(tgCtx, log, clientAwk, chatStor, subId, groupId, msgFmt, minInterval)
+				err = start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId, minInterval)
 			default:
 				err = errors.New(fmt.Sprintf("failed to parse min delivery interval: %s", err))
 			}
@@ -81,31 +79,24 @@ func requestDeliveryInterval(tgCtx telebot.Context, subId string) (err error) {
 
 func start(
 	tgCtx telebot.Context,
-	log *slog.Logger,
 	clientAwk api.Client,
-	chatStor chats.Storage,
-	subId, groupId string,
-	msgFmt messages.Format,
+	svcReader reader.Service,
+	urlCallbackBase string,
+	subId string,
+	groupId string,
 	minInterval time.Duration,
 ) (err error) {
-	var userId string
-	var chat chats.Chat
+	ctx := context.TODO()
+	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID)
 	if err == nil {
-		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-		chat.Id = tgCtx.Chat().ID
-	}
-	if err == nil {
-		chat.SubId = subId
-		chat.GroupId = groupId
-		chat.UserId = userId
-		chat.MinInterval = minInterval
-		err = chatStor.LinkSubscription(context.TODO(), chat)
+		err = svcReader.CreateCallback(ctx, subId, urlCallback)
 		switch {
 		case errors.Is(err, chats.ErrAlreadyExists):
 			// might be not an error, so try to re-link the subscription
-			err = chatStor.UnlinkSubscription(context.TODO(), subId)
+			err = svcReader.DeleteCallback(ctx, subId, urlCallback)
 			if err == nil {
-				err = chatStor.LinkSubscription(context.TODO(), chat)
+				err = svcReader.CreateCallback(ctx, subId, urlCallback)
 			}
 		}
 	}
@@ -116,10 +107,6 @@ func start(
 	}
 	if err == nil {
 		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subData.Description, minInterval), telebot.ModeHTML, telebot.NoPreview)
-	}
-	if err == nil {
-		r := chats.NewReader(tgCtx, clientAwk, chatStor, chat.Id, chat.SubId, groupId, userId, msgFmt, minInterval)
-		go r.Run(context.Background(), log)
 	}
 	return
 }

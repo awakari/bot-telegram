@@ -4,10 +4,7 @@ metadata:
   name: {{ include "bot-telegram.fullname" . }}
   labels:
     {{- include "bot-telegram.labels" . | nindent 4 }}
-  annotations:
-    prometheus.io/scrape: "true"
-    prometheus.io/path: "/metrics"
-    prometheus.io/port: "{{ .Values.service.metrics.port }}"
+  annotations: {}
 spec:
   type: {{ .Values.service.type }}
   ports:
@@ -19,9 +16,9 @@ spec:
       targetPort: grpc
       protocol: TCP
       name: grpc
-    - port: {{ .Values.service.metrics.port }}
-      targetPort: metrics
+    - port: {{ .Values.service.callback.port }}
+      targetPort: callback
       protocol: TCP
-      name: metrics
+      name: callback
   selector:
     {{- include "bot-telegram.selectorLabels" . | nindent 4 }}

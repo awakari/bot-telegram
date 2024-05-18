@@ -3,8 +3,8 @@ package subscriptions
 import (
 	"context"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/bot-telegram/service/chats"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
@@ -13,12 +13,12 @@ import (
 
 const CmdPageNext = "subs_next"
 
-func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, groupId string) telebot.HandlerFunc {
+func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service, groupId string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, CmdStart, "")
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, "")
 		if err == nil {
 			err = tgCtx.Send(
 				"Own subscriptions list. "+
@@ -31,7 +31,7 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, chatStor chats.Storage, g
 	}
 }
 
-func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) service.ArgHandlerFunc {
+func PageNext(clientAwk api.Client, svcReader reader.Service, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
@@ -40,7 +40,7 @@ func PageNext(clientAwk api.Client, chatStor chats.Storage, groupId string) serv
 			cursor = args[1]
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, chatStor, tgCtx.Chat().ID, args[0], cursor)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, args[0], cursor)
 		if err == nil {
 			err = tgCtx.Send("Own subscriptions list page:", m, telebot.ModeHTML)
 		}
@@ -52,7 +52,7 @@ func listButtons(
 	groupIdCtx context.Context,
 	userId string,
 	clientAwk api.Client,
-	chatStor chats.Storage,
+	svcReader reader.Service,
 	chatId int64,
 	btnCmd string,
 	cursor string,
@@ -68,11 +68,13 @@ func listButtons(
 			var subLinked bool
 			var subLinkedHere bool
 			if err == nil {
-				var c chats.Chat
-				c, err = chatStor.GetSubscriptionLink(groupIdCtx, subId)
+				var cb reader.Callback
+				cb, err = svcReader.GetCallback(groupIdCtx, subId)
 				if err == nil {
 					subLinked = true
-					if c.Id == chatId {
+					var cbChatId int64
+					cbChatId, err = reader.GetCallbackUrlChatId(cb.Url)
+					if err == nil && cbChatId == chatId {
 						subLinkedHere = true
 					}
 				}

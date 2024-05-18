@@ -14,9 +14,6 @@ type Config struct {
 		Messages struct {
 			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 		}
-		Metrics struct {
-			Port uint16 `envconfig:"API_METRICS_PORT" default:"9090" required:"true"`
-		}
 		Telegram struct {
 			Bot struct {
 				Port uint16 `envconfig:"API_TELEGRAM_BOT_PORT" default:"50051" required:"true"`
@@ -32,33 +29,14 @@ type Config struct {
 			Token         string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 		}
 		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
+		Reader ReaderConfig
 		Writer struct {
 			Uri string `envconfig:"API_WRITER_URI" default:"resolver:50051" required:"true"`
 		}
 	}
-	Chats   ChatsConfig
 	Payment PaymentConfig
 	Log     struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`
-	}
-	Replica ReplicaConfig
-}
-
-type ChatsConfig struct {
-	Db ChatsDbConfig
-}
-
-type ChatsDbConfig struct {
-	Uri      string `envconfig:"CHATS_DB_URI" default:"mongodb://localhost:27017/?retryWrites=true&w=majority" required:"true"`
-	Name     string `envconfig:"CHATS_DB_NAME" default:"bot-telegram" required:"true"`
-	UserName string `envconfig:"CHATS_DB_USERNAME" default:""`
-	Password string `envconfig:"CHATS_DB_PASSWORD" default:""`
-	Table    struct {
-		Name string `envconfig:"CHATS_DB_TABLE_NAME" default:"chats" required:"true"`
-	}
-	Tls struct {
-		Enabled  bool `envconfig:"CHATS_DB_TLS_ENABLED" default:"false" required:"true"`
-		Insecure bool `envconfig:"CHATS_DB_TLS_INSECURE" default:"false" required:"true"`
 	}
 }
 
@@ -103,9 +81,14 @@ type SitesConfig struct {
 	Uri string `envconfig:"API_SOURCE_SITES_URI" default:"source-sites:50051" required:"true"`
 }
 
-type ReplicaConfig struct {
-	Range uint32 `envconfig:"REPLICA_RANGE" required:"true"`
-	Name  string `envconfig:"REPLICA_NAME" required:"true"`
+type ReaderConfig struct {
+	Uri      string `envconfig:"API_READER_URI" default:"http://reader:8080/v1" required:"true"`
+	CallBack struct {
+		Protocol string `envconfig:"API_READER_CALLBACK_PROTOCOL" default:"http" required:"true"`
+		Host     string `envconfig:"API_READER_CALLBACK_HOST" default:"bot-telegram" required:"true"`
+		Port     uint16 `envconfig:"API_READER_CALLBACK_PORT" default:"8081" required:"true"`
+		Path     string `envconfig:"API_READER_CALLBACK_PATH" default:"/v1/chat" required:"true"`
+	}
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {
