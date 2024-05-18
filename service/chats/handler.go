@@ -66,10 +66,13 @@ func (h handler) Confirm(ctx *gin.Context) {
 func (h handler) DeliverMessages(ctx *gin.Context) {
 
 	var topic string
-	links := ctx.Request.Header["link"]
-	for _, l := range links {
-		if strings.HasSuffix(l, linkSelfSuffix) && len(l) > len(linkSelfSuffix) {
-			topic = l[1 : len(l)-len(linkSelfSuffix)]
+	for k, vals := range ctx.Request.Header {
+		if strings.ToLower(k) == "link" {
+			for _, l := range vals {
+				if strings.HasSuffix(l, linkSelfSuffix) && len(l) > len(linkSelfSuffix) {
+					topic = l[1 : len(l)-len(linkSelfSuffix)]
+				}
+			}
 		}
 	}
 	if topic == "" {
