@@ -136,6 +136,12 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 		evtProto, err = ceProto.ToProto(evt)
 		dataTxt := string(evt.Data())
 		if utf8.ValidateString(dataTxt) {
+			if strings.HasPrefix(dataTxt, "\"") {
+				dataTxt = dataTxt[1:]
+			}
+			if strings.HasSuffix(dataTxt, "\"") {
+				dataTxt = dataTxt[:len(dataTxt)-1]
+			}
 			evtProto.Data = &pb.CloudEvent_TextData{
 				TextData: dataTxt,
 			}
