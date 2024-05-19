@@ -11,22 +11,12 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
-	"time"
 )
 
 const CmdStart = "sub_start"
 const MsgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
-	"New results will appear here. Min interval: %s. " +
+	"New results will appear here. " +
 	"To manage own subscriptions use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
-
-var deliveryIntervalRows = [][]string{
-	{
-		"1s", "1m", "5m", "15m",
-	},
-	{
-		"1h", "6h", "12h", "1d",
-	},
-}
 
 func Start(
 	clientAwk api.Client,
@@ -38,43 +28,12 @@ func Start(
 		switch len(args) {
 		case 1: // ask for min delivery interval
 			subId := args[0]
-			err = requestDeliveryInterval(tgCtx, subId)
-		case 2:
-			subId := args[0]
-			minIntervalStr := args[1]
-			var minInterval time.Duration
-			minInterval, err = time.ParseDuration(minIntervalStr)
-			switch err {
-			case nil:
-				err = start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId, minInterval)
-			default:
-				err = errors.New(fmt.Sprintf("failed to parse min delivery interval: %s", err))
-			}
+			err = start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
 		default:
 			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 2 arguments, got %d", len(args)))
 		}
 		return
 	}
-}
-
-func requestDeliveryInterval(tgCtx telebot.Context, subId string) (err error) {
-	m := &telebot.ReplyMarkup{}
-	var rows []telebot.Row
-	for _, diRow := range deliveryIntervalRows {
-		var rowBtns []telebot.Btn
-		for _, di := range diRow {
-			btn := telebot.Btn{
-				Text: di,
-				Data: fmt.Sprintf("%s %s %s", CmdStart, subId, di),
-			}
-			rowBtns = append(rowBtns, btn)
-		}
-		row := m.Row(rowBtns...)
-		rows = append(rows, row)
-	}
-	m.Inline(rows...)
-	err = tgCtx.Send("Choose the minimum interval for the message delivery for this subscription:", m)
-	return
 }
 
 func start(
@@ -84,7 +43,6 @@ func start(
 	urlCallbackBase string,
 	subId string,
 	groupId string,
-	minInterval time.Duration,
 ) (err error) {
 	ctx := context.TODO()
 	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
@@ -106,7 +64,7 @@ func start(
 		subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 	}
 	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subData.Description, minInterval), telebot.ModeHTML, telebot.NoPreview)
+		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subData.Description), telebot.ModeHTML, telebot.NoPreview)
 	}
 	return
 }

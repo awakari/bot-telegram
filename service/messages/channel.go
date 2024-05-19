@@ -88,47 +88,43 @@ func (cp ChanPostHandler) List(ctx context.Context, filter ChanFilter, limit uin
 	//
 	cp.ChansLock.Lock()
 	defer cp.ChansLock.Unlock()
+	var chansSorted []string
+	for l, _ := range cp.Channels {
+		chansSorted = append(chansSorted, l)
+	}
 	switch order {
 	case OrderDesc:
-		for l, t := range cp.Channels {
-			if count == limit {
-				break
-			}
-			if cursor != "" && strings.Compare(l, cursor) >= 0 {
-				continue
-			}
-			if p != nil && !p.MatchString(l) {
-				continue
-			}
-			page = append(page, Channel{
-				LastUpdate: t,
-				Link:       l,
-			})
-			count++
-		}
-		sort.Slice(page, func(i, j int) bool {
-			return strings.Compare(page[i].Link, page[j].Link) > 0
+		sort.Slice(chansSorted, func(i, j int) bool {
+			return chansSorted[i] > chansSorted[j]
 		})
 	default:
-		for l, t := range cp.Channels {
-			if count == limit {
-				break
-			}
-			if strings.Compare(l, cursor) <= 0 {
-				continue
-			}
-			if p != nil && !p.MatchString(l) {
-				continue
-			}
-			page = append(page, Channel{
-				LastUpdate: t,
-				Link:       l,
-			})
-			count++
+		sort.Strings(chansSorted)
+	}
+	for _, l := range chansSorted {
+		t := cp.Channels[l]
+		if count == limit {
+			break
 		}
-		sort.Slice(page, func(i, j int) bool {
-			return strings.Compare(page[i].Link, page[j].Link) < 0
+		if cursor != "" {
+			switch order {
+			case OrderDesc:
+				if strings.Compare(l, cursor) >= 0 {
+					continue
+				}
+			default:
+				if strings.Compare(l, cursor) <= 0 {
+					continue
+				}
+			}
+		}
+		if p != nil && !p.MatchString(l) {
+			continue
+		}
+		page = append(page, Channel{
+			LastUpdate: t,
+			Link:       l,
 		})
+		count++
 	}
 	return
 }
