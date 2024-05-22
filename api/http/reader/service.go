@@ -45,8 +45,12 @@ func (svc service) CreateCallback(ctx context.Context, subId, callbackUrl string
 }
 
 func (svc service) GetCallback(ctx context.Context, subId string) (cb Callback, err error) {
+	var req *http.Request
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/callbacks/%s", svc.uriBase, subId), http.NoBody)
 	var resp *http.Response
-	resp, err = svc.clientHttp.Get(fmt.Sprintf("%s/callbacks/%s", svc.uriBase, subId))
+	if err == nil {
+		resp, err = svc.clientHttp.Do(req)
+	}
 	switch err {
 	case nil:
 		defer resp.Body.Close()
