@@ -208,11 +208,13 @@ func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, su
 	b.MaxInterval = time.Duration(backoff.DefaultMultiplier * float64(retryDuration))
 	_ = backoff.Retry(func() error {
 		return tgCtx.Send(
-			"High message rate detected. " +
-				"The <a href=\"https://awakari.com/sub-details.html?id=" + subId +
-				"\">subscription</a> is unlinked from this chat to prevent a further flood. " +
-				"Please review the matching conditions and make it more strict." +
-				"After this, the subscription may be linked back using the /start command of the bot.",
+			"⚠ High message rate detected. "+
+				"Results streaming stopped to prevent a further flood. "+
+				"Typical cause: subscription's conditions are too vague. "+
+				"Review the <a href=\"https://awakari.com/sub-details.html?id="+subId+
+				"\">subscription</a> and make it more specific. "+
+				"Link it back to a chat later using the /start command of the bot.",
+			telebot.ModeHTML,
 		)
 	}, b)
 
