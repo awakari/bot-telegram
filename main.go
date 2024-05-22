@@ -86,7 +86,7 @@ func main() {
 	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri)
 	svcReader = reader.NewServiceLogging(svcReader, log)
 	urlCallbackBase := fmt.Sprintf(
-		"%s://%s:%d/%s",
+		"%s://%s:%d%s",
 		cfg.Api.Reader.CallBack.Protocol,
 		cfg.Api.Reader.CallBack.Host,
 		cfg.Api.Reader.CallBack.Port,

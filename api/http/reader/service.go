@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 )
 
@@ -45,7 +46,7 @@ func (svc service) CreateCallback(ctx context.Context, subId, callbackUrl string
 
 func (svc service) GetCallback(ctx context.Context, subId string) (cb Callback, err error) {
 	var resp *http.Response
-	resp, err = svc.clientHttp.Get(fmt.Sprintf("/callbacks/%s/%s", svc.uriBase, subId))
+	resp, err = svc.clientHttp.Get(fmt.Sprintf("%s/callbacks/%s", svc.uriBase, subId))
 	switch err {
 	case nil:
 		defer resp.Body.Close()
@@ -60,7 +61,6 @@ func (svc service) GetCallback(ctx context.Context, subId string) (cb Callback, 
 		default:
 			err = fmt.Errorf("%w: response status %d", ErrInternal, resp.StatusCode)
 		}
-		err = json.NewDecoder(resp.Body).Decode(&cb)
 	default:
 		err = fmt.Errorf("%w: %s", ErrInternal, err)
 	}
@@ -96,7 +96,9 @@ func (svc service) updateCallback(_ context.Context, subId, url, mode string) (e
 		case http.StatusConflict:
 			err = fmt.Errorf("%w: callback already registered for the subscription %s", ErrConflict, subId)
 		default:
-			err = fmt.Errorf("%w: unexpected create callback response %d", ErrInternal, resp.StatusCode)
+			defer resp.Body.Close()
+			respBody, _ := io.ReadAll(resp.Body)
+			err = fmt.Errorf("%w: unexpected create callback response %d, %s", ErrInternal, resp.StatusCode, string(respBody))
 		}
 	default:
 		err = fmt.Errorf("%w: %s", ErrInternal, err)

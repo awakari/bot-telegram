@@ -8,6 +8,7 @@ import (
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/bytedance/sonic/utf8"
+	"github.com/cenkalti/backoff/v4"
 	ceProto "github.com/cloudevents/sdk-go/binding/format/protobuf/v2"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	ce "github.com/cloudevents/sdk-go/v2/event"
@@ -17,6 +18,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Handler interface {
@@ -56,7 +58,7 @@ func NewHandler(
 func (h handler) Confirm(ctx *gin.Context) {
 	topic := ctx.Query(keyHubTopic)
 	challenge := ctx.Query(keyHubChallenge)
-	if strings.HasSuffix(topic, h.topicPrefixBase+"/"+apiHttpReader.FmtJson) {
+	if strings.HasPrefix(topic, h.topicPrefixBase+"/sub/"+apiHttpReader.FmtJson) {
 		ctx.String(http.StatusOK, challenge)
 	} else {
 		ctx.String(http.StatusBadRequest, fmt.Sprintf("invalid topic: %s", topic))
@@ -154,6 +156,7 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
+				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				errTb := &telebot.Error{}
 				if errors.As(err, &errTb) && errTb.Code == 403 {
@@ -170,6 +173,7 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
+				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
 				tgMsg = h.format.Convert(evtProto, subId, messages.FormatModeRaw)
@@ -183,6 +187,7 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
+				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				fmt.Printf("FATAL: failed to send message %+v in raw text mode, cause: %s\n", tgMsg, err)
 				countAck++ // to skip
@@ -191,4 +196,24 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 		}
 	}
 	return
+}
+
+func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, subId string, chatId int64, retryAfter int) {
+	urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId)
+	_ = h.svcReader.DeleteCallback(ctx, subId, urlCallback)
+	retryDuration := time.Duration(retryAfter) * time.Second
+	time.Sleep(retryDuration)
+	b := backoff.NewExponentialBackOff()
+	b.InitialInterval = retryDuration
+	b.MaxInterval = time.Duration(backoff.DefaultMultiplier * float64(retryDuration))
+	_ = backoff.Retry(func() error {
+		return tgCtx.Send(
+			"High message rate detected. " +
+				"The <a href=\"https://awakari.com/sub-details.html?id=" + subId +
+				"\">subscription</a> is unlinked from this chat to prevent a further flood. " +
+				"Please review the matching conditions and make it more strict." +
+				"After this, the subscription may be linked back using the /start command of the bot.",
+		)
+	}, b)
+
 }

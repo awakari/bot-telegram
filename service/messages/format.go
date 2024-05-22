@@ -6,13 +6,14 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
+	"sort"
 	"strings"
 	"time"
 	"unicode/utf8"
 )
 
 const fmtLenMaxAttrVal = 256
-const fmtLenMaxBodyTxt = 1024
+const fmtLenMaxBodyTxt = 256
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
@@ -154,7 +155,7 @@ func (f Format) convert(evt *pb.CloudEvent, subId string, mode FormatMode, trunc
 	//
 	var attrsTxt string
 	if attrs {
-		attrsTxt = f.convertExtraAttrs(evt, mode, trunc)
+		attrsTxt = f.convertExtraAttrs(evt, trunc)
 	}
 	if attrsTxt != "" {
 		switch mode {
@@ -184,9 +185,14 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 	return
 }
 
-func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
+func (f Format) convertExtraAttrs(evt *pb.CloudEvent, trunc bool) (txt string) {
 	txt += fmt.Sprintf("id: %s\nsource: %s\ntype: %s\n", evt.Id, evt.Source, evt.Type)
-	for attrName, attrVal := range evt.Attributes {
+	var attrNames []string
+	for attrName, _ := range evt.Attributes {
+		attrNames = append(attrNames, attrName)
+	}
+	sort.Strings(attrNames)
+	for _, attrName := range attrNames {
 		switch attrName {
 		case "summary":
 		case "title":
@@ -199,6 +205,7 @@ func (f Format) convertExtraAttrs(evt *pb.CloudEvent, mode FormatMode, trunc boo
 		case "srcimageurl":
 		case "srctitle":
 		default:
+			attrVal := evt.Attributes[attrName]
 			switch vt := attrVal.Attr.(type) {
 			case *pb.CloudEventAttributeValue_CeBoolean:
 				switch vt.CeBoolean {
