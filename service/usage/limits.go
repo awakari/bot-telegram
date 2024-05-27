@@ -133,7 +133,7 @@ func (lh LimitsHandler) HandleExtension(tgCtx telebot.Context, args ...string) (
 		err = lh.SupportHandler.Request(tgCtx, fmt.Sprintf("%s: uid: %s, %+v", PurposeLimitSet, userId, ol))
 	}
 	if err == nil {
-		_ = tgCtx.Send("Request submitted and will be processed it as soon as possible.")
+		_, _ = service.DonationMessage(tgCtx, "Request submitted and will be processed it as soon as possible.")
 	}
 	// TODO: uncomment the code below only when payments are in use
 	//var orderPayloadData []byte
