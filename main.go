@@ -263,17 +263,6 @@ func main() {
 		}
 	}()
 
-	// resolve the donation invoice - should be pinned in the dedicated private channel
-	var dCh *telebot.Chat
-	dCh, err = b.ChatByID(cfg.Payment.DonationChatId)
-	if err != nil {
-		panic(err)
-	}
-	donateMsg := dCh.PinnedMessage
-	if donateMsg == nil {
-		panic(fmt.Sprintf("Failed to resolve the pinned donation invoice message in the chat: %+v", dCh))
-	}
-
 	// assign handlers
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
@@ -291,12 +280,6 @@ func main() {
 			case telebot.ChatSuperGroup:
 				err = subListHandlerFunc(tgCtx)
 			case telebot.ChatPrivate:
-				var msg *telebot.Message
-				msg, err = b.Forward(chat, donateMsg)
-				if err == nil {
-					err = b.Pin(msg)
-				}
-				log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 				err = subListHandlerFunc(tgCtx)
 			default:
 				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
@@ -309,9 +292,7 @@ func main() {
 	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
-	b.Handle("/donate", func(tgCtx telebot.Context) (err error) {
-		return tgCtx.Forward(donateMsg)
-	})
+	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.com\">link</a>", telebot.ModeHTML)
 	})
@@ -342,13 +323,6 @@ func main() {
 		return chanPostHandler.Publish(tgCtx)
 	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
-		chat := tgCtx.Chat()
-		var msg *telebot.Message
-		msg, err = b.Forward(chat, donateMsg)
-		if err == nil {
-			err = b.Pin(msg)
-		}
-		log.Warn(fmt.Sprintf("Failed to forward or pin the donation invoice in the chat %+v, cause: %s", chat, err))
 		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
 	//

@@ -218,7 +218,7 @@ func publish(
 	switch {
 	case ackCount == 0 && errors.Is(err, limits.ErrReached):
 		// ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
-		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to donate and increase your limit."))
+		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to request to increase your limit."))
 	case ackCount == 1:
 		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
 	}

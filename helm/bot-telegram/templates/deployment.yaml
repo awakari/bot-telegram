@@ -83,11 +83,6 @@ spec:
               value: "{{ .Values.payment.currency.code }}"
             - name: PAYMENT_CURRENCY_SUB_FACTOR
               value: "{{ .Values.payment.currency.subFactor }}"
-            - name: PAYMENT_DONATION_CHAT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: bot-telegram-tokens
-                  key: donation
             - name: PAYMENT_PRE_CHECKOUT_TIMEOUT
               value: "{{ .Values.payment.preCheckout.timeout }}"
             - name: PAYMENT_PRICE_MESSAGE_PUBLISHING_DAILY_LIMIT

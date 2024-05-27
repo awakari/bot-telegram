@@ -12,7 +12,6 @@ func TestConfig(t *testing.T) {
 	os.Setenv("LOG_LEVEL", "4")
 	os.Setenv("API_TELEGRAM_WEBHOOK_PORT", "56789")
 	os.Setenv("API_TELEGRAM_TOKEN", "yohoho")
-	os.Setenv("PAYMENT_DONATION_CHAT_ID", "-1000000000000")
 	os.Setenv("PAYMENT_PROVIDER_TOKEN", "yohoho")
 	os.Setenv("REPLICA_RANGE", "2")
 	os.Setenv("REPLICA_NAME", "replica-0")

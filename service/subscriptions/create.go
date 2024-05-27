@@ -107,7 +107,7 @@ func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subs
 		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
 		switch {
 		case errors.Is(err, limits.ErrReached):
-			err = fmt.Errorf("%w, consider to donate and increase limit", errLimitReached)
+			err = fmt.Errorf("%w, consider to request to increase your limit", errLimitReached)
 		}
 	}
 	return
