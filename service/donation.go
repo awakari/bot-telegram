@@ -13,7 +13,7 @@ func DonationHandler(ctx telebot.Context) (err error) {
 }
 
 func DonationMessage(ctx telebot.Context, msgTxt string) (msg *telebot.Message, err error) {
-	customerId := "tg___user_id=" + strconv.FormatInt(ctx.Sender().ID, 10) + "%40awakari.com"
+	customerId := "tg___user_id_" + strconv.FormatInt(ctx.Sender().ID, 10) + "%40awakari.com"
 	link := "https://donate.stripe.com/14k7uCaYq5befN65kk?prefilled_email=" + customerId
 	msg, err = ctx.Bot().Send(ctx.Chat(), msgTxt, &telebot.ReplyMarkup{
 		InlineKeyboard: [][]telebot.InlineButton{
