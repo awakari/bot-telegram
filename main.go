@@ -331,7 +331,7 @@ func main() {
 	go b.Start()
 
 	// chats websub handler (subscriber)
-	hChats := chats.NewHandler(cfg.Api.Reader.Uri, fmtMsg, urlCallbackBase, svcReader, b)
+	hChats := chats.NewHandler(cfg.Api.Reader.Uri, fmtMsg, urlCallbackBase, svcReader, b, clientAwk, groupId)
 	r := gin.Default()
 	r.
 		Group(cfg.Api.Reader.CallBack.Path).

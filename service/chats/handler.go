@@ -6,13 +6,16 @@ import (
 	"errors"
 	"fmt"
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
+	"github.com/awakari/client-sdk-go/api"
 	"github.com/bytedance/sonic/utf8"
 	"github.com/cenkalti/backoff/v4"
 	ceProto "github.com/cloudevents/sdk-go/binding/format/protobuf/v2"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	ce "github.com/cloudevents/sdk-go/v2/event"
 	"github.com/gin-gonic/gin"
+	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"net/http"
 	"reflect"
@@ -32,6 +35,8 @@ type handler struct {
 	urlCallbackBase string
 	svcReader       apiHttpReader.Service
 	tgBot           *telebot.Bot
+	clientAwk       api.Client
+	groupId         string
 }
 
 const keyHubChallenge = "hub.challenge"
@@ -45,6 +50,8 @@ func NewHandler(
 	urlCallbackBase string,
 	svcReader apiHttpReader.Service,
 	tgBot *telebot.Bot,
+	clientAwk api.Client,
+	groupId string,
 ) Handler {
 	return handler{
 		topicPrefixBase: topicPrefixBase,
@@ -52,6 +59,8 @@ func NewHandler(
 		urlCallbackBase: urlCallbackBase,
 		svcReader:       svcReader,
 		tgBot:           tgBot,
+		clientAwk:       clientAwk,
+		groupId:         groupId,
 	}
 }
 
@@ -105,6 +114,12 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 		return
 	}
 
+	var subDescr string
+	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, h.groupId)
+	userId := service.PrefixUserId + chatIdRaw
+	sub, _ := h.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
+	subDescr = sub.Description
+
 	defer ctx.Request.Body.Close()
 	var evts []*ce.Event
 	err = json.NewDecoder(ctx.Request.Body).Decode(&evts)
@@ -114,7 +129,7 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	}
 
 	var countAck uint32
-	countAck, err = h.deliver(ctx, evts, subId, chatId)
+	countAck, err = h.deliver(ctx, evts, subId, subDescr, chatId)
 	if err == nil || countAck > 0 {
 		ctx.Writer.Header().Add(keyAckCount, strconv.FormatUint(uint64(countAck), 10))
 		ctx.Status(http.StatusOK)
@@ -125,7 +140,16 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	return
 }
 
-func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, chatId int64) (countAck uint32, err error) {
+func (h handler) deliver(
+	ctx context.Context,
+	evts []*ce.Event,
+	subId string,
+	subDescr string,
+	chatId int64,
+) (
+	countAck uint32,
+	err error,
+) {
 	tgCtx := h.tgBot.NewContext(telebot.Update{
 		Message: &telebot.Message{
 			Chat: &telebot.Chat{
@@ -136,22 +160,19 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 	for _, evt := range evts {
 		var evtProto *pb.CloudEvent
 		evtProto, err = ceProto.ToProto(evt)
-		dataTxt := string(evt.Data())
-		if utf8.ValidateString(dataTxt) {
-			if strings.HasPrefix(dataTxt, "\"") {
-				dataTxt = dataTxt[1:]
-			}
-			if strings.HasSuffix(dataTxt, "\"") {
-				dataTxt = dataTxt[:len(dataTxt)-1]
-			}
-			evtProto.Data = &pb.CloudEvent_TextData{
-				TextData: dataTxt,
-			}
+		var dataTxt string
+		if err == nil {
+			err = evt.DataAs(&dataTxt)
 		}
 		if err != nil {
 			break
 		}
-		tgMsg := h.format.Convert(evtProto, subId, messages.FormatModeHtml)
+		if err == nil && utf8.ValidateString(dataTxt) {
+			evtProto.Data = &pb.CloudEvent_TextData{
+				TextData: dataTxt,
+			}
+		}
+		tgMsg := h.format.Convert(evtProto, subId, subDescr, messages.FormatModeHtml)
 		err = tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
@@ -166,7 +187,7 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 					return
 				}
 				fmt.Printf("Failed to send message %+v to chat %d in HTML mode, cause: %s (%s)\n", tgMsg, chatId, err, reflect.TypeOf(err))
-				tgMsg = h.format.Convert(evtProto, subId, messages.FormatModePlain)
+				tgMsg = h.format.Convert(evtProto, subId, subDescr, messages.FormatModePlain)
 				err = tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
 		}
@@ -176,7 +197,7 @@ func (h handler) deliver(ctx context.Context, evts []*ce.Event, subId string, ch
 				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
-				tgMsg = h.format.Convert(evtProto, subId, messages.FormatModeRaw)
+				tgMsg = h.format.Convert(evtProto, subId, subDescr, messages.FormatModeRaw)
 				err = tgCtx.Send(tgMsg) // fallback: try to re-send as a raw text w/o file attachments
 			}
 		}
