@@ -147,9 +147,9 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	//
 	switch mode {
 	case FormatModeHtml:
-		txt += "Subscription: <a href=\"https://awakari.com/sub-details.html?id=" + subId + "\">" + subDescr + "</a>\n\n"
+		txt += "Interest: <a href=\"https://awakari.com/sub-details.html?id=" + subId + "\">" + subDescr + "</a>\n\n"
 	default:
-		txt += "Subscription: " + subDescr + "\n\n"
+		txt += "Interest: " + subDescr + "\n\n"
 	}
 	//
 	var attrsTxt string

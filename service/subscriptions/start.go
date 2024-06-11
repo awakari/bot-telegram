@@ -14,9 +14,9 @@ import (
 )
 
 const CmdStart = "sub_start"
-const MsgFmtChatLinked = "Linked the subscription \"%s\" to this chat. " +
+const MsgFmtChatLinked = "Following the interest \"%s\" in this chat. " +
 	"New results will appear here. " +
-	"To manage own subscriptions use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
+	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
 func Start(
 	clientAwk api.Client,

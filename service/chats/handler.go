@@ -231,9 +231,9 @@ func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, su
 		return tgCtx.Send(
 			"⚠ High message rate detected. "+
 				"Results streaming stopped to prevent a further flood. "+
-				"Typical cause: subscription's conditions are too vague. "+
+				"Typical cause: interest conditions are too vague. "+
 				"Review the <a href=\"https://awakari.com/sub-details.html?id="+subId+
-				"\">subscription</a> and make it more specific. "+
+				"\">interest</a> and make it more specific. "+
 				"Link it back to a chat later using the /start command of the bot.",
 			telebot.ModeHTML,
 		)

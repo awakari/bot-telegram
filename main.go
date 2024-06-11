@@ -209,7 +209,7 @@ func main() {
 		},
 		{
 			Text:        "app",
-			Description: "Manage Subscriptions and Publishing in Application",
+			Description: "Manage Interests and Publishing in the Application",
 		},
 		{
 			Text:        "pub",
@@ -217,7 +217,7 @@ func main() {
 		},
 		{
 			Text:        "sub",
-			Description: "Subscribe for Keywords",
+			Description: "Follow a new basic interest",
 		},
 		{
 			Text:        "donate",

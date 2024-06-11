@@ -57,7 +57,7 @@ func (lh LimitsHandler) RequestExtension(tgCtx telebot.Context, args ...string) 
 		//case usage.SubjectSubscriptions:
 		//    err = tgCtx.Send(
 		//        fmt.Sprintf(
-		//            "The limit extension price is %s %.2f per day per subscription starting from 2nd. "+
+		//            "The limit extension price is %s %.2f per day per interest starting from 2nd. "+
 		//                "Reply with the count of days to add:",
 		//            lh.CfgPayment.Currency.Code,
 		//            lh.CfgPayment.Price.Subscription.CountLimit,
@@ -220,7 +220,7 @@ func formatUsageSubject(subj usage.Subject) (s string) {
 	case usage.SubjectPublishEvents:
 		s = "Message Daily Publications"
 	case usage.SubjectSubscriptions:
-		s = "Subscriptions Count"
+		s = "Interests Count"
 	default:
 		s = "undefined"
 	}

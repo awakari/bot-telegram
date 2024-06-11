@@ -62,7 +62,7 @@ Increase your daily publication limit or nominate own sources for the dedicated 
 
 If you did not publish messages, <a href="https://awakari.com/pub.html?own=true" rel="nofollow">check own publication sources</a...
 
-Subscription: <a href="https://awakari.com/sub-details.html?id=sub1">sub1 description</a>
+Interest: <a href="https://awakari.com/sub-details.html?id=sub1">sub1 description</a>
 
 <span class="tg-spoiler">id: 82f39262-5eb4-4f7f-9142-7c489d670907
 source: https://bbs.archlinux.org/extern.php?action=feed&fid=32&type=atom

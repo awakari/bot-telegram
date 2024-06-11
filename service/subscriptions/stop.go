@@ -19,7 +19,7 @@ func Stop(svcReader reader.Service) service.ArgHandlerFunc {
 			err = svcReader.DeleteCallback(ctx, subId, cb.Url)
 		}
 		if err == nil {
-			_ = tgCtx.Send("Unlinked the subscription from this chat")
+			_ = tgCtx.Send("Stopped following the interest in this chat")
 		}
 		return
 	}
