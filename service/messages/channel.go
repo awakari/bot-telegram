@@ -42,11 +42,30 @@ type ChanPostHandler struct {
 	ChansLock *sync.Mutex
 }
 
+const tagNoBot = "#nobot"
+
 var errNoAck = errors.New("event was not accepted")
 
 func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
+
+	tgMsg := tgCtx.Message()
 	ch := tgCtx.Chat()
 	chanUserName := ch.Username
+
+	var txt string
+	switch {
+	case tgMsg.Text != "":
+		txt = tgMsg.Text
+	case tgMsg.Caption != "":
+		txt = tgMsg.Caption
+	}
+	for _, w := range strings.Split(txt, " ") {
+		if w == tagNoBot {
+			cp.Log.Warn(fmt.Sprintf("Channel %s (%d) post %d contains the %s tag, skipping", chanUserName, ch.ID, tgMsg.ID, tagNoBot))
+			return
+		}
+	}
+
 	chanUserId := fmt.Sprintf("@%s", chanUserName)
 	evt := pb.CloudEvent{
 		Id:          uuid.NewString(),
@@ -54,9 +73,7 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 		SpecVersion: attrValSpecVersion,
 		Type:        "com.awakari.bot-telegram.v1",
 	}
-	if err == nil {
-		err = toCloudEvent(tgCtx.Message(), tgCtx.Text(), &evt)
-	}
+	err = toCloudEvent(tgMsg, tgCtx.Text(), &evt)
 	if err == nil {
 		err = cp.getWriterAndPublish(chanUserId, &evt)
 		if err != nil {
