@@ -14,7 +14,7 @@ func Stop(svcReader reader.Service) service.ArgHandlerFunc {
 		ctx := context.TODO()
 		subId := args[0]
 		var cb reader.Callback
-		cb, err = svcReader.GetCallback(ctx, subId)
+		cb, err = svcReader.GetCallback(ctx, subId, cb.Url)
 		if err == nil {
 			err = svcReader.DeleteCallback(ctx, subId, cb.Url)
 		}

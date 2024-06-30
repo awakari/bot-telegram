@@ -13,25 +13,20 @@ import (
 
 const CmdPageNext = "subs_next"
 
-func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service, groupId string) telebot.HandlerFunc {
+func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, "")
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, "", urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send(
-				"Own interests list. "+
-					"Use the <a href=\"https://awakari.com/login.html\" target=\"_blank\">app</a> to manage. "+
-					"Select one or more to read in this chat:",
-				m, telebot.ModeHTML,
-			)
+			err = tgCtx.Send("Own interests list. Select one or more to follow/unfollow in this chat:", m)
 		}
 		return
 	}
 }
 
-func PageNext(clientAwk api.Client, svcReader reader.Service, groupId string) service.ArgHandlerFunc {
+func PageNext(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
@@ -40,7 +35,7 @@ func PageNext(clientAwk api.Client, svcReader reader.Service, groupId string) se
 			cursor = args[1]
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, args[0], cursor)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, args[0], cursor, urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("Own interests list page:", m, telebot.ModeHTML)
 		}
@@ -56,6 +51,7 @@ func listButtons(
 	chatId int64,
 	btnCmd string,
 	cursor string,
+	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
 	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, service.PageLimit, cursor)
@@ -65,18 +61,11 @@ func listButtons(
 		var rows []telebot.Row
 		for _, subId := range subIds {
 			sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
-			var subLinked bool
 			var subLinkedHere bool
 			if err == nil {
-				var cb reader.Callback
-				cb, err = svcReader.GetCallback(groupIdCtx, subId)
+				_, err = svcReader.GetCallback(groupIdCtx, subId, reader.MakeCallbackUrl(urlCallBackBase, chatId))
 				if err == nil {
-					subLinked = true
-					var cbChatId int64
-					cbChatId, err = reader.GetCallbackUrlChatId(cb.Url)
-					if err == nil && cbChatId == chatId {
-						subLinkedHere = true
-					}
+					subLinkedHere = true
 				}
 				err = nil
 			}
@@ -84,8 +73,6 @@ func listButtons(
 				descr := sub.Description
 				if subLinkedHere {
 					descr += " ✓"
-				} else if subLinked {
-					descr += " 🔗"
 				}
 				// TODO: uncomment the code below when payments are in use
 				//now := time.Now().UTC()

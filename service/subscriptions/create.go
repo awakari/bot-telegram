@@ -75,7 +75,7 @@ func CreateBasicReplyHandlerFunc(
 			subId, err = create(tgCtx, clientAwk, groupId, sd)
 		}
 		if err == nil {
-			err = start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
+			err = Start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
 		} else {
 			err = fmt.Errorf("failed to register the interest:\n%w", err)
 		}

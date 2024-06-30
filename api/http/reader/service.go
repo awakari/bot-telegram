@@ -2,6 +2,7 @@ package reader
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,7 +12,7 @@ import (
 
 type Service interface {
 	CreateCallback(ctx context.Context, subId, url string) (err error)
-	GetCallback(ctx context.Context, subId string) (cb Callback, err error)
+	GetCallback(ctx context.Context, subId, url string) (cb Callback, err error)
 	DeleteCallback(ctx context.Context, subId, url string) (err error)
 }
 
@@ -44,9 +45,9 @@ func (svc service) CreateCallback(ctx context.Context, subId, callbackUrl string
 	return
 }
 
-func (svc service) GetCallback(ctx context.Context, subId string) (cb Callback, err error) {
+func (svc service) GetCallback(ctx context.Context, subId, url string) (cb Callback, err error) {
 	var req *http.Request
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/callbacks/%s", svc.uriBase, subId), http.NoBody)
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/callbacks/%s/%s", svc.uriBase, subId, base64.URLEncoding.EncodeToString([]byte(url))), http.NoBody)
 	var resp *http.Response
 	if err == nil {
 		resp, err = svc.clientHttp.Do(req)

@@ -25,10 +25,10 @@ func (sl serviceLogging) CreateCallback(ctx context.Context, subId, url string) 
 	return
 }
 
-func (sl serviceLogging) GetCallback(ctx context.Context, subId string) (cb Callback, err error) {
-	cb, err = sl.svc.GetCallback(ctx, subId)
+func (sl serviceLogging) GetCallback(ctx context.Context, subId, url string) (cb Callback, err error) {
+	cb, err = sl.svc.GetCallback(ctx, subId, url)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.GetCallback(%s): %+v, err=%s", subId, cb, err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.GetCallback(%s, %s): %+v, err=%s", subId, url, cb, err))
 	return
 }
 

@@ -122,7 +122,7 @@ func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp 
 
 func (c controller) Unsubscribe(ctx context.Context, req *UnsubscribeRequest) (resp *UnsubscribeResponse, err error) {
 	var cb reader.Callback
-	cb, err = c.svcReader.GetCallback(ctx, req.SubId)
+	cb, err = c.svcReader.GetCallback(ctx, req.SubId, cb.Url)
 	if err == nil {
 		err = c.svcReader.DeleteCallback(ctx, req.SubId, cb.Url)
 	}

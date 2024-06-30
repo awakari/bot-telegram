@@ -147,9 +147,9 @@ func main() {
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
-		subscriptions.CmdStart:       subscriptions.Start(clientAwk, svcReader, urlCallbackBase, groupId),
+		subscriptions.CmdStart:       subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
 		subscriptions.CmdStop:        subscriptions.Stop(svcReader),
-		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, svcReader, groupId),
+		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
 		usage.CmdExtend:              limitsHandler.RequestExtension,
 		usage.CmdIncrease:            limitsHandler.RequestIncrease,
 	}
@@ -267,23 +267,29 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, svcReader, groupId)
+	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, svcReader, groupId, urlCallbackBase)
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
-			chat := tgCtx.Chat()
-			switch chat.Type {
-			case telebot.ChatChannel:
-			case telebot.ChatChannelPrivate:
-			case telebot.ChatGroup:
-				err = subListHandlerFunc(tgCtx)
-			case telebot.ChatSuperGroup:
-				err = subListHandlerFunc(tgCtx)
-			case telebot.ChatPrivate:
-				err = service.DonationMessagePin(tgCtx)
-				err = subListHandlerFunc(tgCtx)
-			default:
-				err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
+			cmdTxt := tgCtx.Text()
+			if len(cmdTxt) > len("/start ") {
+				arg := cmdTxt[len("/start "):]
+				err = subscriptions.Start(tgCtx, clientAwk, svcReader, urlCallbackBase, arg, groupId)
+			} else {
+				chat := tgCtx.Chat()
+				switch chat.Type {
+				case telebot.ChatChannel:
+				case telebot.ChatChannelPrivate:
+				case telebot.ChatGroup:
+					err = subListHandlerFunc(tgCtx)
+				case telebot.ChatSuperGroup:
+					err = subListHandlerFunc(tgCtx)
+				case telebot.ChatPrivate:
+					err = service.DonationMessagePin(tgCtx)
+					err = subListHandlerFunc(tgCtx)
+				default:
+					err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
+				}
 			}
 			return
 		}),

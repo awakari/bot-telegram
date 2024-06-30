@@ -18,7 +18,7 @@ const MsgFmtChatLinked = "Following the interest \"%s\" in this chat. " +
 	"New results will appear here. " +
 	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
-func Start(
+func StartHandler(
 	clientAwk api.Client,
 	svcReader reader.Service,
 	urlCallbackBase string,
@@ -28,7 +28,7 @@ func Start(
 		switch len(args) {
 		case 1: // ask for min delivery interval
 			subId := args[0]
-			err = start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
+			err = Start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
 		default:
 			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 2 arguments, got %d", len(args)))
 		}
@@ -36,7 +36,7 @@ func Start(
 	}
 }
 
-func start(
+func Start(
 	tgCtx telebot.Context,
 	clientAwk api.Client,
 	svcReader reader.Service,
