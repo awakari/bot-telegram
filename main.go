@@ -26,6 +26,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 	"sync"
 	"time"
 )
@@ -272,7 +273,7 @@ func main() {
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			cmdTxt := tgCtx.Text()
-			if len(cmdTxt) > len("/start ") {
+			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
 				arg := cmdTxt[len("/start "):]
 				err = subscriptions.Start(tgCtx, clientAwk, svcReader, urlCallbackBase, arg, groupId)
 			} else {
