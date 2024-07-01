@@ -148,7 +148,7 @@ func main() {
 		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
 		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
 		subscriptions.CmdStart:       subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
-		subscriptions.CmdStop:        subscriptions.Stop(svcReader),
+		subscriptions.CmdStop:        subscriptions.Stop(svcReader, urlCallbackBase),
 		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
 		usage.CmdExtend:              limitsHandler.RequestExtension,
 		usage.CmdIncrease:            limitsHandler.RequestIncrease,

@@ -9,6 +9,8 @@ import (
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
+	"math"
+	"strconv"
 )
 
 const CmdPageNext = "subs_next"
@@ -17,10 +19,14 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service,
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		cursor := subscription.Cursor{
+			Id:        "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
+			Followers: math.MaxInt64,
+		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, "", urlCallBackBase)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, cursor, true, urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send("Own interests list. Select one or more to follow/unfollow in this chat:", m)
+			err = tgCtx.Send("Available interests list. Select one or more to follow in this chat:", m)
 		}
 		return
 	}
@@ -30,14 +36,19 @@ func PageNext(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBa
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-		var cursor string
-		if len(args) > 1 {
-			cursor = args[1]
+		var cursor subscription.Cursor
+		var public bool
+		if len(args) > 2 {
+			cursor.Id = args[1]
+			cursor.Followers, _ = strconv.ParseInt(args[2], 10, 64)
+		}
+		if len(args) > 3 {
+			public = true
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, args[0], cursor, urlCallBackBase)
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, args[0], cursor, public, urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send("Own interests list page:", m, telebot.ModeHTML)
+			err = tgCtx.Send("Interests list page:", m, telebot.ModeHTML)
 		}
 		return
 	}
@@ -50,28 +61,30 @@ func listButtons(
 	svcReader reader.Service,
 	chatId int64,
 	btnCmd string,
-	cursor string,
+	cursor subscription.Cursor,
+	public bool,
 	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
-	subIds, err = clientAwk.SearchSubscriptions(
-		groupIdCtx,
-		userId,
-		subscription.Query{
-			Limit: service.PageLimit,
-		},
-		subscription.Cursor{
-			Id: cursor,
-		},
-	)
+	q := subscription.Query{
+		Limit: service.PageLimit,
+	}
+	if public {
+		q.Order = subscription.OrderDesc
+		q.Public = true
+		q.Sort = subscription.SortFollowers
+	}
+	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, q, cursor)
 	if err == nil {
 		m = &telebot.ReplyMarkup{}
 		var sub subscription.Data
 		var rows []telebot.Row
+		var lastFollowers int64
 		for _, subId := range subIds {
 			sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 			var subLinkedHere bool
 			if err == nil {
+				lastFollowers = sub.Followers
 				_, err = svcReader.GetCallback(groupIdCtx, subId, reader.MakeCallbackUrl(urlCallBackBase, chatId))
 				if err == nil {
 					subLinkedHere = true
@@ -96,6 +109,9 @@ func listButtons(
 				btn := telebot.Btn{
 					Text: descr,
 				}
+				if sub.Public {
+					btn.Text = "👁 " + btn.Text
+				}
 				if btnCmd == CmdStart && subLinkedHere {
 					btn.Data = fmt.Sprintf("%s %s", CmdStop, subId)
 				} else {
@@ -109,7 +125,10 @@ func listButtons(
 			}
 		}
 		if len(subIds) == service.PageLimit {
-			cmdData := fmt.Sprintf("%s %s %s", CmdPageNext, btnCmd, subIds[len(subIds)-1])
+			cmdData := fmt.Sprintf("%s %s %s %d", CmdPageNext, btnCmd, subIds[len(subIds)-1], lastFollowers)
+			if public {
+				cmdData += " public"
+			}
 			if len(cmdData) > service.CmdLimit {
 				cmdData = cmdData[:service.CmdLimit]
 			}

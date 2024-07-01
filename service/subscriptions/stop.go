@@ -9,14 +9,14 @@ import (
 
 const CmdStop = "sub_stop"
 
-func Stop(svcReader reader.Service) service.ArgHandlerFunc {
+func Stop(svcReader reader.Service, urlCallbackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		ctx := context.TODO()
 		subId := args[0]
-		var cb reader.Callback
-		cb, err = svcReader.GetCallback(ctx, subId, cb.Url)
+		urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID)
+		_, err = svcReader.GetCallback(ctx, subId, urlCallback)
 		if err == nil {
-			err = svcReader.DeleteCallback(ctx, subId, cb.Url)
+			err = svcReader.DeleteCallback(ctx, subId, urlCallback)
 		}
 		if err == nil {
 			_ = tgCtx.Send("Stopped following the interest in this chat")

@@ -47,15 +47,13 @@ func Start(
 	ctx := context.TODO()
 	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID)
-	if err == nil {
-		err = svcReader.CreateCallback(ctx, subId, urlCallback)
-		switch {
-		case errors.Is(err, chats.ErrAlreadyExists):
-			// might be not an error, so try to re-link the subscription
-			err = svcReader.DeleteCallback(ctx, subId, urlCallback)
-			if err == nil {
-				err = svcReader.CreateCallback(ctx, subId, urlCallback)
-			}
+	err = svcReader.CreateCallback(ctx, subId, urlCallback)
+	switch {
+	case errors.Is(err, chats.ErrAlreadyExists):
+		// might be not an error, so try to re-link the subscription
+		err = svcReader.DeleteCallback(ctx, subId, urlCallback)
+		if err == nil {
+			err = svcReader.CreateCallback(ctx, subId, urlCallback)
 		}
 	}
 	var subData subscription.Data
