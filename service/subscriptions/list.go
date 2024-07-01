@@ -54,7 +54,16 @@ func listButtons(
 	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
 	var subIds []string
-	subIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, service.PageLimit, cursor)
+	subIds, err = clientAwk.SearchSubscriptions(
+		groupIdCtx,
+		userId,
+		subscription.Query{
+			Limit: service.PageLimit,
+		},
+		subscription.Cursor{
+			Id: cursor,
+		},
+	)
 	if err == nil {
 		m = &telebot.ReplyMarkup{}
 		var sub subscription.Data

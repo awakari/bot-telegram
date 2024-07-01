@@ -71,6 +71,8 @@ github.com/armon/go-radix v0.0.0-20180808171621-7fddfc383310/go.mod h1:ufUuZ+zHj
 github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgIH9cCH8=
 github.com/awakari/client-sdk-go v1.0.9 h1:BC9UnTNuBL+Hgfi5l4fwdCMWnpSfBlPJL+krMOeBFJY=
 github.com/awakari/client-sdk-go v1.0.9/go.mod h1:I83Qlnyr/GM/5nVFNX3MIakUC01W21b/YdaK+064rZQ=
+github.com/awakari/client-sdk-go v1.1.0 h1:+8rwTyrAweW3kV69D76yob7zVdrxvaw6iuYgLZqLmic=
+github.com/awakari/client-sdk-go v1.1.0/go.mod h1:uuczJC0Doyc5lVaWaciG2eVDiSkIbpi4RCadEocYlAo=
 github.com/aymerick/douceur v0.2.0 h1:Mv+mAeH1Q+n9Fr+oyamOlAkUNPWPlA8PPGR0QAaYuPk=
 github.com/aymerick/douceur v0.2.0/go.mod h1:wlT5vV2O3h55X9m7iVYN0TBM0NH/MmbLnd30/FjWUq4=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
