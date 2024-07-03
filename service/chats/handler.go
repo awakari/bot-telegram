@@ -222,6 +222,7 @@ func (h handler) deliver(
 func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, subId string, chatId int64, retryAfter int) {
 	urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId)
 	_ = h.svcReader.DeleteCallback(ctx, subId, urlCallback)
+	fmt.Printf("High message rate detected for the interest %s\n", subId)
 	retryDuration := time.Duration(retryAfter) * time.Second
 	time.Sleep(retryDuration)
 	b := backoff.NewExponentialBackOff()
