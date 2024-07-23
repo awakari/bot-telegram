@@ -75,13 +75,6 @@ func main() {
 	svcMsgs := grpcApiMsgs.NewService(clientMsgs)
 	svcMsgs = grpcApiMsgs.NewServiceLogging(svcMsgs, log)
 
-	// init the internal Awakari messages writer client that bypasses the limits
-	clientAwkInternal, err := api.
-		NewClientBuilder().
-		WriterUri(cfg.Api.Writer.Uri).
-		Build()
-	defer clientAwkInternal.Close()
-
 	// init websub reader
 	clientHttp := http.Client{}
 	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri)
@@ -170,12 +163,12 @@ func main() {
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
 		subscriptions.PurposeExtend: subExtHandler.ExtensionPreCheckout,
-		messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
+		//messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
 	}
 	paymentHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.HandleLimitOrderPaid,
 		subscriptions.PurposeExtend: subExtHandler.ExtendPaid,
-		messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
+		//messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}
 
 	// init Telegram bot

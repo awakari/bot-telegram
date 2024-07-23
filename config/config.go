@@ -30,9 +30,6 @@ type Config struct {
 		}
 		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
 		Reader ReaderConfig
-		Writer struct {
-			Uri string `envconfig:"API_WRITER_URI" default:"resolver:50051" required:"true"`
-		}
 	}
 	Payment PaymentConfig
 	Log     struct {

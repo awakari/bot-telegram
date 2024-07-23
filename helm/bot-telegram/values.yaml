@@ -96,8 +96,6 @@ api:
     callback:
       protocol: "http"
       path: "/v1/chat"
-  writer:
-    uri: "resolver:50051"
   uri: "api:50051"
   cert: server-cert
   telegram:

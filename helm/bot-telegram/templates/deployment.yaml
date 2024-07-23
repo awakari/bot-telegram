@@ -36,8 +36,6 @@ spec:
               value: "{{ .Values.api.admin.uri }}"
             - name: API_MESSAGES_URI
               value: "{{ .Values.api.messages.uri }}"
-            - name: API_WRITER_URI
-              value: "{{ .Values.api.writer.uri }}"
             - name: API_READER_URI
               value: "{{ .Values.api.reader.uri }}"
             - name: API_READER_CALLBACK_PROTOCOL

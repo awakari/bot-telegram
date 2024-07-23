@@ -1,8 +1,6 @@
 api:
   messages:
     uri: "messages:50051"
-  writer:
-    uri: "resolver:50051"
 
 # prod
 cert:
