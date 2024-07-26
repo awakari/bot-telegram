@@ -12,7 +12,7 @@ import (
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
-	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"io"
@@ -68,7 +68,7 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 
 	chanUserId := fmt.Sprintf("@%s", chanUserName)
 	evt := pb.CloudEvent{
-		Id:          uuid.NewString(),
+		Id:          ksuid.New().String(),
 		Source:      fmt.Sprintf("https://t.me/%s", chanUserName),
 		SpecVersion: attrValSpecVersion,
 		Type:        "com.awakari.bot-telegram.v1",

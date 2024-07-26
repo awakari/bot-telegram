@@ -11,7 +11,7 @@ import (
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/cenkalti/backoff/v4"
-	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"log/slog"
@@ -89,7 +89,7 @@ func (eh ExtendHandler) HandleExtensionReply(tgCtx telebot.Context, args ...stri
 	if err == nil {
 		price := int(float64(countDays) * eh.CfgPayment.Price.Subscription.Extension * eh.CfgPayment.Currency.SubFactor)
 		invoice := telebot.Invoice{
-			Start:       uuid.NewString(),
+			Start:       ksuid.New().String(),
 			Title:       "Interest Following Extension",
 			Description: fmt.Sprintf("Interest %s: extend following by %d days", subId, countDays),
 			Payload:     string(orderData),

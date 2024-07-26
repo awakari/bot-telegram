@@ -13,7 +13,7 @@ import (
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
-	"github.com/google/uuid"
+	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
@@ -76,7 +76,7 @@ func PublishBasicReplyHandlerFunc(
 		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
 		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		evt := pb.CloudEvent{
-			Id:          uuid.NewString(),
+			Id:          ksuid.New().String(),
 			Source:      "https://t.me/" + tgCtx.Chat().Username,
 			SpecVersion: attrValSpecVersion,
 			Type:        "com.awakari.bot-telegram.v1",
