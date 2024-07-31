@@ -12,8 +12,8 @@ import (
 	"unicode/utf8"
 )
 
-const fmtLenMaxAttrVal = 256
-const fmtLenMaxBodyTxt = 256
+const fmtLenMaxAttrVal = 200
+const fmtLenMaxBodyTxt = 200
 
 type Format struct {
 	HtmlPolicy *bluemonday.Policy
@@ -86,8 +86,7 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
 	}
 	attrSummary, attrSummaryFound := evt.Attributes["summary"]
-	switch attrSummaryFound {
-	case true:
+	if attrSummaryFound {
 		v := attrSummary.GetCeString()
 		switch mode {
 		case FormatModeHtml:
@@ -99,21 +98,19 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 			v = truncateStringUtf8(v, fmtLenMaxBodyTxt)
 		}
 		txt += fmt.Sprintf("%s\n\n", v)
-	default:
-		txtData := evt.GetTextData()
-		switch {
-		case txtData != "":
-			switch mode {
-			case FormatModeHtml:
-				txtData = f.HtmlPolicy.Sanitize(txtData)
-			default:
-				txtData = htmlStripTags.Sanitize(txtData)
-			}
-			if trunc {
-				txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
-			}
-			txt += fmt.Sprintf("%s\n\n", txtData)
+	}
+	txtData := evt.GetTextData()
+	if txtData != "" {
+		switch mode {
+		case FormatModeHtml:
+			txtData = f.HtmlPolicy.Sanitize(txtData)
+		default:
+			txtData = htmlStripTags.Sanitize(txtData)
 		}
+		if trunc {
+			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
+		}
+		txt += fmt.Sprintf("%s\n\n", txtData)
 	}
 	attrName, attrNameFound := evt.Attributes["name"]
 	if txt == "" && attrNameFound {
