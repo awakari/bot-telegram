@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"fmt"
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
+	"github.com/awakari/bot-telegram/api/grpc/queue"
 	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/config"
@@ -21,15 +23,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 )
+
+const ceKeyUserId = "awakariuserid"
 
 func main() {
 
@@ -86,6 +93,35 @@ func main() {
 		cfg.Api.Reader.CallBack.Port,
 		cfg.Api.Reader.CallBack.Path,
 	)
+
+	// init queues
+	connQueue, err := grpc.NewClient(cfg.Api.Queue.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		panic(err)
+	}
+	log.Info("connected to the queue service")
+	clientQueue := queue.NewServiceClient(connQueue)
+	svcQueue := queue.NewService(clientQueue)
+	svcQueue = queue.NewLoggingMiddleware(svcQueue, log)
+	err = svcQueue.SetConsumer(context.TODO(), cfg.Api.Queue.InterestsCreated.Name, cfg.Api.Queue.InterestsCreated.Subj)
+	if err != nil {
+		panic(err)
+	}
+	log.Info(fmt.Sprintf("initialized the %s queue", cfg.Api.Queue.InterestsCreated.Name))
+	go func() {
+		err = consumeQueueInterestsCreated(
+			context.Background(),
+			svcReader,
+			urlCallbackBase,
+			svcQueue,
+			cfg.Api.Queue.InterestsCreated.Name,
+			cfg.Api.Queue.InterestsCreated.Subj,
+			cfg.Api.Queue.InterestsCreated.BatchSize,
+		)
+		if err != nil {
+			panic(err)
+		}
+	}()
 
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
@@ -341,4 +377,40 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func consumeQueueInterestsCreated(ctx context.Context, svcReader reader.Service, urlCallbackBase string, svcQueue queue.Service, name, subj string, batchSize uint32) (err error) {
+	consume := func(evts []*pb.CloudEvent) (err error) {
+		for _, evt := range evts {
+			interestId := evt.GetTextData()
+			var userId string
+			if userIdAttr, userIdPresent := evt.Attributes[ceKeyUserId]; userIdPresent {
+				userId = userIdAttr.GetCeString()
+			}
+			if !strings.HasPrefix(userId, service.PrefixUserId) {
+				err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should have prefix: %s, got: %s", service.PrefixUserId, userId))
+			}
+			var chatId int64
+			if err == nil {
+				chatId, err = strconv.ParseInt(userId[len(service.PrefixUserId):], 10, 64)
+				if err != nil {
+					err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
+				}
+			}
+			if err == nil {
+				err = svcReader.CreateCallback(ctx, interestId, reader.MakeCallbackUrl(urlCallbackBase, chatId))
+			}
+			if err != nil {
+				break
+			}
+		}
+		return
+	}
+	for {
+		err = svcQueue.ReceiveMessages(ctx, name, subj, batchSize, consume)
+		if err != nil {
+			break
+		}
+	}
+	return
 }

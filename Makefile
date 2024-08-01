@@ -11,7 +11,8 @@ proto:
 	PATH=${PATH}:~/go/bin protoc --go_out=plugins=grpc:. --go_opt=paths=source_relative \
 		api/grpc/admin/*.proto \
 		api/grpc/tgbot/*.proto \
-		api/grpc/messages/*.proto
+		api/grpc/messages/*.proto \
+		api/grpc/queue/*.proto
 
 vet: proto
 	go vet

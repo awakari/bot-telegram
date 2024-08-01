@@ -3,9 +3,7 @@ package tgbot
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/awakari/bot-telegram/api/http/reader"
-	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
@@ -14,8 +12,6 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
 	"log/slog"
-	"strconv"
-	"strings"
 )
 
 type Controller interface {
@@ -95,36 +91,6 @@ func (c controller) ListChannels(ctx context.Context, req *ListChannelsRequest) 
 				Link:       ch.Link,
 			})
 		}
-	}
-	err = encodeError(err)
-	return
-}
-
-func (c controller) Subscribe(ctx context.Context, req *SubscribeRequest) (resp *SubscribeResponse, err error) {
-	subId := req.SubId
-	userId := req.UserId
-	if !strings.HasPrefix(userId, service.PrefixUserId) {
-		err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should have prefix: %s, got: %s", service.PrefixUserId, userId))
-	}
-	var chatId int64
-	if err == nil {
-		chatId, err = strconv.ParseInt(userId[len(service.PrefixUserId):], 10, 64)
-		if err != nil {
-			err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
-		}
-	}
-	if err == nil {
-		err = c.svcReader.CreateCallback(ctx, subId, reader.MakeCallbackUrl(c.urlCallbackBase, chatId))
-		err = encodeError(err)
-	}
-	return
-}
-
-func (c controller) Unsubscribe(ctx context.Context, req *UnsubscribeRequest) (resp *UnsubscribeResponse, err error) {
-	var cb reader.Callback
-	cb, err = c.svcReader.GetCallback(ctx, req.SubId, cb.Url)
-	if err == nil {
-		err = c.svcReader.DeleteCallback(ctx, req.SubId, cb.Url)
 	}
 	err = encodeError(err)
 	return

@@ -96,6 +96,14 @@ spec:
                 secretKeyRef:
                   name: "{{ include "bot-telegram.fullname" . }}-tokens"
                   key: payment
+            - name: API_QUEUE_URI
+              value: "{{ .Values.api.queue.uri }}"
+            - name: API_QUEUE_INTERESTS_CREATED_BATCH_SIZE
+              value: "{{ .Values.api.queue.interestsCreated.batchSize }}"
+            - name: API_QUEUE_INTERESTS_CREATED_NAME
+              value: "{{ .Values.api.queue.interestsCreated.name }}"
+            - name: API_QUEUE_INTERESTS_CREATED_SUBJ
+              value: "{{ .Values.api.queue.interestsCreated.subj }}"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

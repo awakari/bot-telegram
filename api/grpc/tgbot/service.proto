@@ -9,8 +9,6 @@ import "google/protobuf/timestamp.proto";
 service Service {
   rpc Authenticate(AuthenticateRequest) returns (AuthenticateResponse);
   rpc ListChannels(ListChannelsRequest) returns (ListChannelsResponse);
-  rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
-  rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse);
 }
 
 message AuthenticateRequest {

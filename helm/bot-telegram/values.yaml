@@ -107,6 +107,14 @@ api:
       connections:
         max: 100
       token: "xxxxxxxxxx"
+  queue:
+    uri: "queue:50051"
+    backoff:
+      error: "1s"
+    interestsCreated:
+      batchSize: 10
+      name: "bot-telegram"
+      subj: "interests-created"
 cert:
   acme:
     email: "awakari@awakari.com"

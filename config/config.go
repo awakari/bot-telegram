@@ -30,6 +30,7 @@ type Config struct {
 		}
 		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
 		Reader ReaderConfig
+		Queue  QueueConfig
 	}
 	Payment PaymentConfig
 	Log     struct {
@@ -84,6 +85,16 @@ type ReaderConfig struct {
 		Host     string `envconfig:"API_READER_CALLBACK_HOST" default:"bot-telegram" required:"true"`
 		Port     uint16 `envconfig:"API_READER_CALLBACK_PORT" default:"8081" required:"true"`
 		Path     string `envconfig:"API_READER_CALLBACK_PATH" default:"/v1/chat" required:"true"`
+	}
+}
+
+type QueueConfig struct {
+	BackoffError     time.Duration `envconfig:"API_QUEUE_BACKOFF_ERROR" default:"1s" required:"true"`
+	Uri              string        `envconfig:"API_QUEUE_URI" default:"queue:50051" required:"true"`
+	InterestsCreated struct {
+		BatchSize uint32 `envconfig:"API_QUEUE_INTERESTS_CREATED_BATCH_SIZE" default:"10" required:"true"`
+		Name      string `envconfig:"API_QUEUE_INTERESTS_CREATED_NAME" default:"bot-telegram" required:"true"`
+		Subj      string `envconfig:"API_QUEUE_INTERESTS_CREATED_SUBJ" default:"interests-created" required:"true"`
 	}
 }
 
