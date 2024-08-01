@@ -388,7 +388,7 @@ func consumeQueueInterestsCreated(ctx context.Context, svcReader reader.Service,
 				userId = userIdAttr.GetCeString()
 			}
 			if !strings.HasPrefix(userId, service.PrefixUserId) {
-				err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should have prefix: %s, got: %s", service.PrefixUserId, userId))
+				continue
 			}
 			var chatId int64
 			if err == nil {
