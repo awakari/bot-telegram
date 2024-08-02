@@ -11,9 +11,7 @@ type Config struct {
 			Uri string `envconfig:"API_ADMIN_URI" default:"api:56789" required:"true"`
 		}
 		GroupId  string `envconfig:"API_GROUP_ID" default:"default" required:"true"`
-		Messages struct {
-			Uri string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
-		}
+		Messages MessagesConfig
 		Telegram struct {
 			Bot struct {
 				Port uint16 `envconfig:"API_TELEGRAM_BOT_PORT" default:"50051" required:"true"`
@@ -70,14 +68,6 @@ type PriceConfig struct {
 	}
 }
 
-type FeedsConfig struct {
-	Uri string `envconfig:"API_SOURCE_FEEDS_URI" default:"source-feeds:50051" required:"true"`
-}
-
-type SitesConfig struct {
-	Uri string `envconfig:"API_SOURCE_SITES_URI" default:"source-sites:50051" required:"true"`
-}
-
 type ReaderConfig struct {
 	Uri      string `envconfig:"API_READER_URI" default:"http://reader:8080/v1" required:"true"`
 	CallBack struct {
@@ -96,6 +86,11 @@ type QueueConfig struct {
 		Name      string `envconfig:"API_QUEUE_INTERESTS_CREATED_NAME" default:"bot-telegram" required:"true"`
 		Subj      string `envconfig:"API_QUEUE_INTERESTS_CREATED_SUBJ" default:"interests-created" required:"true"`
 	}
+}
+
+type MessagesConfig struct {
+	Type string `envconfig:"API_MESSAGES_TYPE" default:"com_awakari_bot_telegram_v1" required:"true"`
+	Uri  string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

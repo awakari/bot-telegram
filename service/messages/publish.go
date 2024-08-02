@@ -68,7 +68,7 @@ func PublishBasicReplyHandlerFunc(
 	clientAwk api.Client,
 	groupId string,
 	svcMsgs messages.Service,
-	cfgPayment config.PaymentConfig,
+	cfg config.Config,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
@@ -79,14 +79,14 @@ func PublishBasicReplyHandlerFunc(
 			Id:          ksuid.New().String(),
 			Source:      "https://t.me/" + tgCtx.Chat().Username,
 			SpecVersion: attrValSpecVersion,
-			Type:        "com.awakari.bot-telegram.v1",
+			Type:        cfg.Api.Messages.Type,
 		}
 		if err == nil {
 			defer w.Close()
 			err = toCloudEvent(tgCtx.Message(), args[1], &evt)
 		}
 		if err == nil {
-			err = publish(tgCtx, w, &evt, svcMsgs, cfgPayment)
+			err = publish(tgCtx, w, &evt, svcMsgs, cfg.Payment)
 		}
 		return
 	}

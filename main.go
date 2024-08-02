@@ -171,6 +171,7 @@ func main() {
 		Writers:   map[string]model.Writer[*pb.CloudEvent]{},
 		Channels:  map[string]time.Time{},
 		ChansLock: &sync.Mutex{},
+		CfgMsgs:   cfg.Api.Messages,
 	}
 	defer chanPostHandler.Close()
 
@@ -190,7 +191,7 @@ func main() {
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId),
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, svcReader, urlCallbackBase),
-		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg.Payment),
+		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg),
 		subscriptions.ReqSubExtend: subExtHandler.HandleExtensionReply,
 		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
 		usage.ReqLimitIncrease:     limitsHandler.HandleIncrease,

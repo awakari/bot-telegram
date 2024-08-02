@@ -27,3 +27,5 @@ tg-bot-token.txt
 *.pem
 *.key
 tg-payment-*.txt
+.idea
+secret-bot-telegram-tls-server.yaml

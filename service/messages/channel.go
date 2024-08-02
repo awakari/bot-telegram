@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
@@ -40,6 +41,7 @@ type ChanPostHandler struct {
 	Writers   map[string]model.Writer[*pb.CloudEvent]
 	Channels  map[string]time.Time
 	ChansLock *sync.Mutex
+	CfgMsgs   config.MessagesConfig
 }
 
 const tagNoBot = "#nobot"
@@ -71,7 +73,7 @@ func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
 		Id:          ksuid.New().String(),
 		Source:      fmt.Sprintf("https://t.me/%s", chanUserName),
 		SpecVersion: attrValSpecVersion,
-		Type:        "com.awakari.bot-telegram.v1",
+		Type:        cp.CfgMsgs.Type,
 	}
 	err = toCloudEvent(tgMsg, tgCtx.Text(), &evt)
 	if err == nil {

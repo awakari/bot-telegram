@@ -90,6 +90,7 @@ api:
   admin:
     uri: "api:56789"
   messages:
+    type: "com_awakari_bot_telegram_v1"
     uri: "messages:50051"
   reader:
     uri: "http://reader:8080/v1"

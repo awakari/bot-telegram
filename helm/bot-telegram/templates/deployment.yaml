@@ -34,6 +34,8 @@ spec:
               value: "{{ .Values.api.uri }}"
             - name: API_ADMIN_URI
               value: "{{ .Values.api.admin.uri }}"
+            - name: API_MESSAGES_TYPE
+              value: "{{ .Values.api.messages.type }}"
             - name: API_MESSAGES_URI
               value: "{{ .Values.api.messages.uri }}"
             - name: API_READER_URI
