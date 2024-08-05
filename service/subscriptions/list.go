@@ -19,6 +19,20 @@ func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service,
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		cursor := subscription.Cursor{}
+		var m *telebot.ReplyMarkup
+		m, err = listButtons(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
+		if err == nil {
+			err = tgCtx.Send("Own interests list. Select one or more to follow in this chat:", m)
+		}
+		return
+	}
+}
+
+func ListPublicHandlerFunc(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
+	return func(tgCtx telebot.Context) (err error) {
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 		cursor := subscription.Cursor{
 			Id:        "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
 			Followers: math.MaxInt64,

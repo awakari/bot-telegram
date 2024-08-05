@@ -236,19 +236,23 @@ func main() {
 	err = b.SetCommands([]telebot.Command{
 		{
 			Text:        "start",
-			Description: "Start",
+			Description: "Start and list own Interests",
 		},
 		{
 			Text:        "app",
-			Description: "Manage Interests and Publishing in the Application",
+			Description: "Go to the Application",
 		},
 		{
 			Text:        "pub",
-			Description: "Publish a basic Message",
+			Description: "Publish a simple Message",
 		},
 		{
 			Text:        "sub",
-			Description: "Follow a new basic interest",
+			Description: "Create and follow a simple Interest",
+		},
+		{
+			Text:        "interests",
+			Description: "List all available Interests",
 		},
 		{
 			Text:        "donate",
@@ -330,6 +334,7 @@ func main() {
 	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
+	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(clientAwk, svcReader, groupId, urlCallbackBase))
 	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.com\">link</a>", telebot.ModeHTML)
