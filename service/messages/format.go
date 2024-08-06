@@ -1,14 +1,11 @@
 package messages
 
 import (
-	"encoding/base64"
 	"fmt"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
-	"sort"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
@@ -16,7 +13,8 @@ const fmtLenMaxAttrVal = 200
 const fmtLenMaxBodyTxt = 200
 
 type Format struct {
-	HtmlPolicy *bluemonday.Policy
+	HtmlPolicy       *bluemonday.Policy
+	UriReaderEvtBase string
 }
 
 type FormatMode int
@@ -142,25 +140,15 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		txt += obj + "\n\n"
 	}
 	//
+	addrEvtAttrs := f.UriReaderEvtBase + "/" + evt.Id
 	switch mode {
 	case FormatModeHtml:
-		txt += "Interest: <a href=\"https://awakari.com/sub-details.html?id=" + subId + "\">" + subDescr + "</a>\n\n"
+		txt += "Attributes: <a href=\"" + addrEvtAttrs + "\">" + evt.Id + "</a>\n"
+		txt += "Interest: <a href=\"https://awakari.com/sub-details.html?id=" + subId + "\">" + subDescr + "</a>"
 	default:
-		txt += "Interest: " + subDescr + "\n\n"
+		txt += "Attributes: " + addrEvtAttrs + "\nInterest: " + subDescr
 	}
 	//
-	var attrsTxt string
-	if attrs {
-		attrsTxt = f.convertExtraAttrs(evt, trunc)
-	}
-	if attrsTxt != "" {
-		switch mode {
-		case FormatModeHtml:
-			txt += fmt.Sprintf("<span class=\"tg-spoiler\">%s</span>\n", attrsTxt)
-		default:
-			txt += fmt.Sprintf("%s\n", attrsTxt)
-		}
-	}
 	return
 }
 
@@ -178,73 +166,6 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 			txt += fmt.Sprintf("%s\n\n", v)
 		}
 	}
-	return
-}
-
-func (f Format) convertExtraAttrs(evt *pb.CloudEvent, trunc bool) (txt string) {
-	txt += fmt.Sprintf("id: %s\nsource: %s\ntype: %s\n", evt.Id, evt.Source, evt.Type)
-	var attrNames []string
-	for attrName, _ := range evt.Attributes {
-		attrNames = append(attrNames, attrName)
-	}
-	sort.Strings(attrNames)
-	for _, attrName := range attrNames {
-		switch attrName {
-		case "summary":
-		case "title":
-		case "awakarimatchfound": // internal
-		case "awakariuserid": // do not expose
-		case "awkinternal": // internal
-		case "srccategories":
-		case "srcdescription":
-		case "srcimagetitle":
-		case "srcimageurl":
-		case "srctitle":
-		default:
-			attrVal := evt.Attributes[attrName]
-			switch vt := attrVal.Attr.(type) {
-			case *pb.CloudEventAttributeValue_CeBoolean:
-				switch vt.CeBoolean {
-				case true:
-					txt += fmt.Sprintf("%s: true\n", attrName)
-				default:
-					txt += fmt.Sprintf("%s: false\n", attrName)
-				}
-			case *pb.CloudEventAttributeValue_CeInteger:
-				txt += fmt.Sprintf("%s: %d\n", attrName, vt.CeInteger)
-			case *pb.CloudEventAttributeValue_CeString:
-				if vt.CeString != evt.Source { // "object"/"objecturl" might the same value as the source
-					v := f.HtmlPolicy.Sanitize(vt.CeString)
-					if trunc {
-						v = truncateStringUtf8(v, fmtLenMaxAttrVal)
-					}
-					txt += fmt.Sprintf("%s: %s\n", attrName, v)
-				}
-			case *pb.CloudEventAttributeValue_CeUri:
-				v := vt.CeUri
-				if trunc {
-					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
-				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
-			case *pb.CloudEventAttributeValue_CeUriRef:
-				v := vt.CeUriRef
-				if trunc {
-					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
-				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
-			case *pb.CloudEventAttributeValue_CeTimestamp:
-				v := vt.CeTimestamp
-				txt += fmt.Sprintf("%s: %s\n", attrName, v.AsTime().Format(time.RFC3339))
-			case *pb.CloudEventAttributeValue_CeBytes:
-				v := base64.StdEncoding.EncodeToString(vt.CeBytes)
-				if trunc {
-					v = truncateStringUtf8(v, fmtLenMaxAttrVal)
-				}
-				txt += fmt.Sprintf("%s: %s\n", attrName, v)
-			}
-		}
-	}
-
 	return
 }
 

@@ -142,7 +142,8 @@ func main() {
 		OnElements("code")
 	htmlPolicy.AllowDataURIImages()
 	fmtMsg := messages.Format{
-		HtmlPolicy: htmlPolicy,
+		HtmlPolicy:       htmlPolicy,
+		UriReaderEvtBase: cfg.Api.Reader.UriEventBase,
 	}
 
 	// init handlers

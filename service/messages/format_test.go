@@ -56,7 +56,7 @@ Increase your daily publication limit or nominate own sources for the dedicated 
 If you did not publish messages, <a href="https://awakari.com/pub.html?own=true">check own publication sources</a> you added.`,
 				},
 			},
-			out: "⚠ Daily publishing limit reached.\n\nIncrease your daily publication limit or nominate own sources for the dedicated limit.\n\nIf you did not publish messages, <a href=\"https://awakari.com/pub.html?o...\n\nInterest: <a href=\"https://awakari.com/sub-details.html?id=sub1\">sub1 description</a>\n\n<span class=\"tg-spoiler\">id: 82f39262-5eb4-4f7f-9142-7c489d670907\nsource: https://bbs.archlinux.org/extern.php?action=feed&fid=32&type=atom\ntype: com.awakari.api.permits.exhausted\ntime: 2024-05-31T23:54:00Z\n</span>\n",
+			out: "⚠ Daily publishing limit reached.\n\nIncrease your daily publication limit or nominate own sources for the dedicated limit.\n\nIf you did not publish messages, <a href=\"https://awakari.com/pub.html?o...\n\nAttributes: <a href=\"/82f39262-5eb4-4f7f-9142-7c489d670907\">82f39262-5eb4-4f7f-9142-7c489d670907</a>\nInterest: <a href=\"https://awakari.com/sub-details.html?id=sub1\">sub1 description</a>",
 		},
 	}
 	for k, c := range cases {
