@@ -56,7 +56,7 @@ Increase your daily publication limit or nominate own sources for the dedicated 
 If you did not publish messages, <a href="https://awakari.com/pub.html?own=true">check own publication sources</a> you added.`,
 				},
 			},
-			out: "⚠ Daily publishing limit reached.\n\nIncrease your daily publication limit or nominate own sources for the dedicated limit.\n\nIf you did not publish messages, <a href=\"https://awakari.com/pub.html?o...\n\nAttributes: <a href=\"/82f39262-5eb4-4f7f-9142-7c489d670907\">82f39262-5eb4-4f7f-9142-7c489d670907</a>\n\nInterest: <a href=\"https://awakari.com/sub-details.html?id=sub1\">sub1 description</a>",
+			out: "⚠ Daily publishing limit reached.\n\nIncrease your daily publication limit or nominate own source...\n\nOriginal: <a href=\"https://bbs.archlinux.org/extern.php?action=feed&fid=32&type=atom\">https://bbs.archlinux.org/extern.php?action=feed&fid=32&type=atom</a>\n\nInterest: <a href=\"https://awakari.com/sub-details.html?id=sub1\">sub1 description</a>\n\n<a href=\"/82f39262-5eb4-4f7f-9142-7c489d670907\">All Event Attributes</a>",
 		},
 	}
 	for k, c := range cases {

@@ -144,11 +144,11 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	addrInterest := "https://awakari.com/sub-details.html?id=" + subId
 	switch mode {
 	case FormatModeHtml:
-		txt += "Original: <a href=\"" + obj + "\">" + obj + "</a>\n"
-		txt += "Interest: <a href=\"" + addrInterest + "\">" + subDescr + "</a>\n"
+		txt += "Original: <a href=\"" + obj + "\">" + obj + "</a>\n\n"
+		txt += "Interest: <a href=\"" + addrInterest + "\">" + subDescr + "</a>\n\n"
 		txt += "<a href=\"" + addrEvtAttrs + "\">All Event Attributes</a>"
 	default:
-		txt += "Original: " + obj + "\nInterest: " + addrInterest + "\nAll Event Attributes: " + addrEvtAttrs
+		txt += "Original: " + obj + "\n\nInterest: " + addrInterest + "\n\nAll Event Attributes: " + addrEvtAttrs
 	}
 	//
 	return
