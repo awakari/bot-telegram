@@ -9,8 +9,8 @@ import (
 	"unicode/utf8"
 )
 
-const fmtLenMaxAttrVal = 200
-const fmtLenMaxBodyTxt = 200
+const fmtLenMaxAttrVal = 100
+const fmtLenMaxBodyTxt = 100
 
 type Format struct {
 	HtmlPolicy       *bluemonday.Policy
@@ -136,17 +136,19 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 			}
 		}
 	}
-	if obj != "" {
-		txt += obj + "\n\n"
+	if obj == "" {
+		obj = evt.Source
 	}
 	//
 	addrEvtAttrs := f.UriReaderEvtBase + "/" + evt.Id
+	addrInterest := "https://awakari.com/sub-details.html?id=\"" + subId
 	switch mode {
 	case FormatModeHtml:
-		txt += "Attributes: <a href=\"" + addrEvtAttrs + "\">" + evt.Id + "</a>\n\n"
-		txt += "Interest: <a href=\"https://awakari.com/sub-details.html?id=" + subId + "\">" + subDescr + "</a>"
+		txt += "Original: <a href=\"" + obj + "\">" + obj + "</a>\n"
+		txt += "Attributes: <a href=\"" + addrEvtAttrs + "\">" + evt.Id + "</a>\n"
+		txt += "Interest: <a href=\"" + addrInterest + "\">" + subDescr + "</a>"
 	default:
-		txt += "Attributes: " + addrEvtAttrs + "\n\nInterest: " + subDescr
+		txt += "Original: " + obj + "\nAttributes: " + addrEvtAttrs + "\nInterest: " + addrInterest
 	}
 	//
 	return
