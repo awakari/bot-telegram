@@ -140,7 +140,7 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		obj = evt.Source
 	}
 	//
-	addrEvtAttrs := f.UriReaderEvtBase + "/" + evt.Id
+	addrEvtAttrs := f.UriReaderEvtBase + "/" + evt.Id + "?format=html"
 	addrInterest := "https://awakari.com/sub-details.html?id=" + subId
 	switch mode {
 	case FormatModeHtml:
