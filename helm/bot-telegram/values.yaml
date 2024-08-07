@@ -94,7 +94,7 @@ api:
     uri: "messages:50051"
   reader:
     uri: "http://reader:8080/v1"
-    uriEvtBase: "https://reader.awakari.com/v1/evt"
+    uriEvtBase: "https://awakari.com/pub-msg.html?id="
     callback:
       protocol: "http"
       path: "/v1/chat"
