@@ -363,8 +363,18 @@ func main() {
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers)))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
-	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) error {
-		return chanPostHandler.Publish(tgCtx)
+	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) (err error) {
+		txt := tgCtx.Text()
+		ch := tgCtx.Chat()
+		chanUserName := ch.Username
+		if strings.HasPrefix(chanUserName, cfg.Api.Telegram.PublicInterestChannelPrefix) && strings.HasPrefix(txt, "/start ") {
+			// public interest channel created by Awakari
+			arg := txt[len("/start "):]
+			err = subscriptions.Start(tgCtx, clientAwk, svcReader, urlCallbackBase, arg, groupId)
+		} else {
+			err = chanPostHandler.Publish(tgCtx, chanUserName)
+		}
+		return
 	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
 		err = service.DonationMessagePin(tgCtx)

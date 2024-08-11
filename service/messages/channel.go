@@ -48,11 +48,10 @@ const tagNoBot = "#nobot"
 
 var errNoAck = errors.New("event was not accepted")
 
-func (cp ChanPostHandler) Publish(tgCtx telebot.Context) (err error) {
+func (cp ChanPostHandler) Publish(tgCtx telebot.Context, chanUserName string) (err error) {
 
 	tgMsg := tgCtx.Message()
 	ch := tgCtx.Chat()
-	chanUserName := ch.Username
 
 	var txt string
 	switch {

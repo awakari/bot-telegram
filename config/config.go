@@ -23,8 +23,9 @@ type Config struct {
 				ConnMax uint32 `envconfig:"API_TELEGRAM_WEBHOOK_CONN_MAX" default:"100"`
 				Token   string `envconfig:"API_TELEGRAM_WEBHOOK_TOKEN" default:"xxxxxxxxxx"`
 			}
-			SupportChatId int64  `envconfig:"API_TELEGRAM_SUPPORT_CHAT_ID" required:"true"`
-			Token         string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
+			SupportChatId               int64  `envconfig:"API_TELEGRAM_SUPPORT_CHAT_ID" required:"true"`
+			Token                       string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
+			PublicInterestChannelPrefix string `envconfig:"API_TELEGRAM_PUBLIC_INTEREST_CHANNEL_PREFIX" default:"awk_" required:"true"`
 		}
 		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
 		Reader ReaderConfig
