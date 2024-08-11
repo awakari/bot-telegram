@@ -48,7 +48,7 @@ func Start(
 	var userId string
 	switch tgCtx.Sender() {
 	case nil:
-		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Chat().ID) // public channel post has no sender
+		userId = fmt.Sprintf(service.FmtNamePub, tgCtx.Chat().Username) // public channel post has no sender
 	default:
 		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	}
