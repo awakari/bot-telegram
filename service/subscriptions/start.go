@@ -45,7 +45,13 @@ func Start(
 	groupId string,
 ) (err error) {
 	ctx := context.TODO()
-	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+	var userId string
+	switch tgCtx.Sender() {
+	case nil:
+		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Chat().ID) // public channel post has no sender
+	default:
+		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+	}
 	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID)
 	err = svcReader.CreateCallback(ctx, subId, urlCallback)
 	switch {
