@@ -30,18 +30,18 @@ var htmlStripTags = bluemonday.
 	AddSpaceWhenStrippingTag(true)
 
 func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatMode) (tgMsg any) {
-	fileTypeAttr, fileTypeFound := evt.Attributes[attrKeyFileType]
+	fileTypeAttr, fileTypeFound := evt.Attributes[ceKeyTgFileType]
 	if fileTypeFound && mode != FormatModeRaw {
 		ft := FileType(fileTypeAttr.GetCeInteger())
 		file := telebot.File{
-			FileID:   evt.Attributes[attrKeyFileId].GetCeString(),
-			UniqueID: evt.Attributes[attrKeyFileUniqueId].GetCeString(),
+			FileID:   evt.Attributes[ceKeyTgFileId].GetCeString(),
+			UniqueID: evt.Attributes[ceKeyTgFileUniqueId].GetCeString(),
 		}
 		switch ft {
 		case FileTypeAudio:
 			tgMsg = &telebot.Audio{
 				File:     file,
-				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
+				Duration: int(evt.Attributes[ceKeyTgFileMediaDuration].GetCeInteger()),
 				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		case FileTypeDocument:
@@ -52,21 +52,21 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		case FileTypeImage:
 			tgMsg = &telebot.Photo{
 				File:    file,
-				Width:   int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
-				Height:  int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
+				Width:   int(evt.Attributes[ceKeyTgFileImgWidth].GetCeInteger()),
+				Height:  int(evt.Attributes[ceKeyTgFileImgHeight].GetCeInteger()),
 				Caption: f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		case FileTypeVideo:
 			tgMsg = &telebot.Video{
 				File:     file,
-				Width:    int(evt.Attributes[attrKeyFileImgWidth].GetCeInteger()),
-				Height:   int(evt.Attributes[attrKeyFileImgHeight].GetCeInteger()),
-				Duration: int(evt.Attributes[attrKeyFileMediaDuration].GetCeInteger()),
+				Width:    int(evt.Attributes[ceKeyTgFileImgWidth].GetCeInteger()),
+				Height:   int(evt.Attributes[ceKeyTgFileImgHeight].GetCeInteger()),
+				Duration: int(evt.Attributes[ceKeyTgFileMediaDuration].GetCeInteger()),
 				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		}
 	} else {
-		_, msgFromTg := evt.Attributes[attrKeyMsgId]
+		_, msgFromTg := evt.Attributes[ceKeyTgMessageId]
 		switch msgFromTg {
 		case true:
 			// no need to truncate for telegram when message is from telegram
@@ -140,15 +140,43 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		obj = evt.Source
 	}
 	//
+	attrCats, _ := evt.Attributes[ceKeyCategories]
+	cats := strings.Split(attrCats.GetCeString(), " ")
+	var tags []string
+	var tagCount int
+	for _, cat := range cats {
+		var t string
+		switch strings.HasPrefix(cat, "#") {
+		case true:
+			t = cat
+		default:
+			t = "#" + cat
+		}
+		if len(t) > 1 {
+			tags = append(tags, t)
+		}
+		if tagCount > 10 {
+			break
+		}
+		tagCount++
+	}
+	//
 	addrEvtAttrs := f.UriReaderEvtBase + evt.Id
 	addrInterest := "https://awakari.com/sub-details.html?id=" + subId
 	switch mode {
 	case FormatModeHtml:
-		txt += "Original: <a href=\"" + obj + "\">" + obj + "</a>\n\n"
+		txt += "<a href=\"" + obj + "\">" + obj + "</a>\n\n"
 		txt += "Interest: <a href=\"" + addrInterest + "\">" + subDescr + "</a>\n\n"
+		if len(tags) > 0 {
+			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
+		}
 		txt += "<a href=\"" + addrEvtAttrs + "\">Event Attributes</a>"
 	default:
-		txt += "Original: " + obj + "\n\nInterest: " + addrInterest + "\n\nEvent Attributes: " + addrEvtAttrs
+		txt += obj + "\n\nInterest: " + addrInterest + "\n\n"
+		if len(tags) > 0 {
+			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
+		}
+		txt += "Event Attributes: " + addrEvtAttrs
 	}
 	//
 	return

@@ -24,7 +24,7 @@ import (
 
 const ReqMsgPub = "msg_pub"
 const PurposePublish = "msg_pub"
-const attrKeyMsgId = "tgmessageid"
+const ceKeyTgMessageId = "tgmessageid"
 const attrValSpecVersion = "1.0"
 const msgBusy = "Busy, please retry later"
 const msgFmtPublished = "Message published, id: <pre>%s</pre>"
@@ -33,15 +33,16 @@ const msgFmtPublishMissing = "message to publish is missing: %s"
 const msgFmtRunOnceFailed = "failed to publish event: %s, cause: %s, retrying in: %s"
 
 // file attrs
-const attrKeyFileId = "tgfileid"
-const attrKeyFileUniqueId = "tgfileuniqueid"
-const attrKeyFileMediaDuration = "tgfilemediaduration"
-const attrKeyFileImgHeight = "tgfileimgheight"
-const attrKeyFileImgWidth = "tgfileimgwidth"
-const attrKeyFileType = "tgfiletype"
-const attrKeyLatitude = "latitude"
-const attrKeyLongitude = "longitude"
-const attrKeyTime = "time"
+const ceKeyTgFileId = "tgfileid"
+const ceKeyTgFileUniqueId = "tgfileuniqueid"
+const ceKeyTgFileMediaDuration = "tgfilemediaduration"
+const ceKeyTgFileImgHeight = "tgfileimgheight"
+const ceKeyTgFileImgWidth = "tgfileimgwidth"
+const ceKeyTgFileType = "tgfiletype"
+const ceKeyLatitude = "latitude"
+const ceKeyLongitude = "longitude"
+const ceKeyTime = "time"
+const ceKeyCategories = "categories"
 
 type FileType int32
 
@@ -94,12 +95,12 @@ func PublishBasicReplyHandlerFunc(
 
 func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err error) {
 	evt.Attributes = map[string]*pb.CloudEventAttributeValue{
-		attrKeyMsgId: {
+		ceKeyTgMessageId: {
 			Attr: &pb.CloudEventAttributeValue_CeString{
 				CeString: strconv.Itoa(msg.ID),
 			},
 		},
-		attrKeyTime: {
+		ceKeyTime: {
 			Attr: &pb.CloudEventAttributeValue_CeTimestamp{
 				CeTimestamp: timestamppb.New(msg.Time()),
 			},
@@ -119,69 +120,69 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 		var f telebot.File
 		switch {
 		case msg.Audio != nil:
-			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileType] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(FileTypeAudio),
 				},
 			}
-			evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileMediaDuration] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Audio.Duration),
 				},
 			}
 			f = msg.Audio.File
 		case msg.Document != nil:
-			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileType] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(FileTypeDocument),
 				},
 			}
 			f = msg.Document.File
 		case msg.Location != nil:
-			evt.Attributes[attrKeyLatitude] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyLatitude] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeString{
 					CeString: fmt.Sprintf("%f", msg.Location.Lat),
 				},
 			}
-			evt.Attributes[attrKeyLongitude] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyLongitude] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeString{
 					CeString: fmt.Sprintf("%f", msg.Location.Lng),
 				},
 			}
 		case msg.Photo != nil:
-			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileType] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(FileTypeImage),
 				},
 			}
-			evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileImgHeight] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Photo.Height),
 				},
 			}
-			evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileImgWidth] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Photo.Width),
 				},
 			}
 			f = msg.Photo.File
 		case msg.Video != nil:
-			evt.Attributes[attrKeyFileType] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileType] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(FileTypeVideo),
 				},
 			}
-			evt.Attributes[attrKeyFileMediaDuration] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileMediaDuration] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Video.Duration),
 				},
 			}
-			evt.Attributes[attrKeyFileImgHeight] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileImgHeight] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Video.Height),
 				},
 			}
-			evt.Attributes[attrKeyFileImgWidth] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileImgWidth] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeInteger{
 					CeInteger: int32(msg.Video.Width),
 				},
@@ -189,14 +190,14 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 			f = msg.Video.File
 		}
 		if f.FileID != "" {
-			evt.Attributes[attrKeyFileId] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileId] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeString{
 					CeString: f.FileID,
 				},
 			}
 		}
 		if f.UniqueID != "" {
-			evt.Attributes[attrKeyFileUniqueId] = &pb.CloudEventAttributeValue{
+			evt.Attributes[ceKeyTgFileUniqueId] = &pb.CloudEventAttributeValue{
 				Attr: &pb.CloudEventAttributeValue_CeString{
 					CeString: f.UniqueID,
 				},
