@@ -1,7 +1,9 @@
 # Awakari Telegram Bot
 
 ```shell
-kubectl create secret generic bot-telegram-tokens \
-  --from-literal=telegram=<TELEGRAM_BOT_TOKEN> \
-  --from-literal=payment=<PAYMENT_PROVIDER_TOKEN>
+kubectl create secret generic bot-telegram \
+  --from-literal=telegram=<TGBOT_TOKEN> \
+  --from-literal=payment=<PAYMENT_TOKEN> \
+  --from-literal=donation=<DONATION_CHAT_ID> \
+  --from-literal=loginCodeFromUserIds=<USER_ID_1>:true,<USER_ID_2>:true,...
 ```
