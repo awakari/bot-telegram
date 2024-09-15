@@ -35,6 +35,7 @@ type Config struct {
 	Log     struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`
 	}
+	LoginCode LoginCodeConfig
 }
 
 type PaymentConfig struct {
@@ -93,6 +94,11 @@ type QueueConfig struct {
 type MessagesConfig struct {
 	Type string `envconfig:"API_MESSAGES_TYPE" default:"com_awakari_bot_telegram_v1" required:"true"`
 	Uri  string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
+}
+
+type LoginCodeConfig struct {
+	FromUserIds       map[int64]bool `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
+	ForwardFromUserId int64          `envconfig:"LOGIN_CODE_FORWARD_FROM_USER_ID" required:"true" default:"777000"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

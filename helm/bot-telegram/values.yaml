@@ -109,6 +109,9 @@ api:
       connections:
         max: 100
       token: "xxxxxxxxxx"
+    login:
+      chat:
+        id: "777000"
   queue:
     uri: "queue:50051"
     backoff:

@@ -71,7 +71,7 @@ spec:
             - name: API_TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: "{{ include "bot-telegram.fullname" . }}-tokens"
+                  name: "{{ include "bot-telegram.fullname" . }}"
                   key: telegram
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
@@ -98,7 +98,7 @@ spec:
             - name: PAYMENT_PROVIDER_TOKEN
               valueFrom:
                 secretKeyRef:
-                  name: "{{ include "bot-telegram.fullname" . }}-tokens"
+                  name: "{{ include "bot-telegram.fullname" . }}"
                   key: payment
             - name: API_QUEUE_URI
               value: "{{ .Values.api.queue.uri }}"
@@ -108,6 +108,13 @@ spec:
               value: "{{ .Values.api.queue.interestsCreated.name }}"
             - name: API_QUEUE_INTERESTS_CREATED_SUBJ
               value: "{{ .Values.api.queue.interestsCreated.subj }}"
+            - name: LOGIN_CODE_FROM_USER_IDS
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "bot-telegram.fullname" . }}"
+                  key: loginCodeFromUserIds
+            - name: LOGIN_CODE_FORWARD_FROM_USER_ID
+              value: "{{ .Values.api.telegram.login.chat.id }}"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

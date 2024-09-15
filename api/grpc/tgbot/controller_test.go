@@ -44,7 +44,7 @@ func TestMain(m *testing.M) {
 			err = srv.Serve(conn)
 		}
 		if err != nil {
-			log.Error("", err)
+			log.Error(err.Error())
 		}
 	}()
 	code := m.Run()

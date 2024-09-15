@@ -44,7 +44,7 @@ func main() {
 	slog.Info("starting...")
 	cfg, err := config.NewConfigFromEnv()
 	if err != nil {
-		slog.Error("failed to load the config", err)
+		slog.Error(fmt.Sprintf("failed to load the config: %s", err))
 	}
 	opts := slog.HandlerOptions{
 		Level: slog.Level(cfg.Log.Level),
@@ -64,7 +64,7 @@ func main() {
 		log.Info("connected the limits admin service")
 		defer connAdmin.Close()
 	} else {
-		log.Error("failed to connect the limits admin service", err)
+		log.Error(fmt.Sprintf("failed to connect the limits admin service: %s", err))
 	}
 	clientAdmin := grpcApiAdmin.NewServiceClient(connAdmin)
 	svcAdmin := grpcApiAdmin.NewService(clientAdmin)
@@ -76,7 +76,7 @@ func main() {
 		log.Info("connected the messages service")
 		defer connMsgs.Close()
 	} else {
-		log.Error("failed to connect the messages service", err)
+		log.Error(fmt.Sprintf("failed to connect the messages service: %s", err))
 	}
 	clientMsgs := grpcApiMsgs.NewServiceClient(connMsgs)
 	svcMsgs := grpcApiMsgs.NewService(clientMsgs)
@@ -188,7 +188,6 @@ func main() {
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		usage.LabelExtend: limitsHandler.HandleExtension,
 	}
-	txtHandlers := map[string]telebot.HandlerFunc{}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId),
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, svcReader, urlCallbackBase),
@@ -197,6 +196,16 @@ func main() {
 		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
 		usage.ReqLimitIncrease:     limitsHandler.HandleIncrease,
 		"support":                  supportHandler.Request,
+	}
+	fwdHandler := service.LoginCodeHandler{
+		FromUserIds:  cfg.LoginCode.FromUserIds,
+		SourceUserId: cfg.LoginCode.ForwardFromUserId,
+	}
+	txtHandlers := map[string]telebot.HandlerFunc{}
+	hRoot := service.RootHandler{
+		ReplyHandlers:  replyHandlers,
+		ForwardHandler: fwdHandler.Handle,
+		TxtHandlers:    txtHandlers,
 	}
 	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
 		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
@@ -353,12 +362,12 @@ func main() {
 		return tgCtx.Send("Open the <a href=\"https://awakari.com/privacy.html\">privacy link</a>", telebot.ModeHTML)
 	})
 	b.Handle(telebot.OnCallback, service.ErrorHandlerFunc(service.Callback(callbackHandlers)))
-	b.Handle(telebot.OnText, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnAudio, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnVideo, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnDocument, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
-	b.Handle(telebot.OnLocation, service.ErrorHandlerFunc(service.RootHandlerFunc(txtHandlers, replyHandlers)))
+	b.Handle(telebot.OnText, service.ErrorHandlerFunc(hRoot.Handle))
+	b.Handle(telebot.OnPhoto, service.ErrorHandlerFunc(hRoot.Handle))
+	b.Handle(telebot.OnAudio, service.ErrorHandlerFunc(hRoot.Handle))
+	b.Handle(telebot.OnVideo, service.ErrorHandlerFunc(hRoot.Handle))
+	b.Handle(telebot.OnDocument, service.ErrorHandlerFunc(hRoot.Handle))
+	b.Handle(telebot.OnLocation, service.ErrorHandlerFunc(hRoot.Handle))
 	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))
 	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers)))
 	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
