@@ -8,6 +8,7 @@ import (
 	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
 	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	"github.com/awakari/bot-telegram/api/grpc/queue"
+	apiGrpcSrcTg "github.com/awakari/bot-telegram/api/grpc/source-telegram"
 	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/config"
@@ -123,6 +124,9 @@ func main() {
 		}
 	}()
 
+	svcSrcTg := apiGrpcSrcTg.NewService(cfg.Api.SourceTelegram.Uri)
+	svcSrcTg = apiGrpcSrcTg.NewServiceLogging(svcSrcTg, log)
+
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
 	htmlPolicy.AllowStandardURLs()
@@ -200,6 +204,7 @@ func main() {
 	fwdHandler := service.LoginCodeHandler{
 		FromUserIds:  cfg.LoginCode.FromUserIds,
 		SourceUserId: cfg.LoginCode.ForwardFromUserId,
+		SvcSrcTg:     svcSrcTg,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{}
 	hRoot := service.RootHandler{

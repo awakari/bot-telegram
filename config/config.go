@@ -27,9 +27,10 @@ type Config struct {
 			Token                       string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 			PublicInterestChannelPrefix string `envconfig:"API_TELEGRAM_PUBLIC_INTEREST_CHANNEL_PREFIX" default:"awk_" required:"true"`
 		}
-		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
-		Reader ReaderConfig
-		Queue  QueueConfig
+		Uri            string `envconfig:"API_URI" default:"api:50051" required:"true"`
+		Reader         ReaderConfig
+		Queue          QueueConfig
+		SourceTelegram SourceTelegramConfig
 	}
 	Payment PaymentConfig
 	Log     struct {
@@ -96,8 +97,12 @@ type MessagesConfig struct {
 	Uri  string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
 }
 
+type SourceTelegramConfig struct {
+	Uri string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
+}
+
 type LoginCodeConfig struct {
-	FromUserIds       map[int64]bool `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
+	FromUserIds       map[int64]uint `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
 	ForwardFromUserId int64          `envconfig:"LOGIN_CODE_FORWARD_FROM_USER_ID" required:"true" default:"777000"`
 }
 

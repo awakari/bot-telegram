@@ -1,16 +1,19 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	apiGrpcSrcTg "github.com/awakari/bot-telegram/api/grpc/source-telegram"
 	"gopkg.in/telebot.v3"
 	"regexp"
 	"strconv"
 )
 
 type LoginCodeHandler struct {
-	FromUserIds  map[int64]bool
+	FromUserIds  map[int64]uint
 	SourceUserId int64
+	SvcSrcTg     apiGrpcSrcTg.Service
 }
 
 var rLoginCode = regexp.MustCompile(`Login code: (\d+).*`)
@@ -24,7 +27,8 @@ func (h LoginCodeHandler) Handle(tgCtx telebot.Context) (err error) {
 		return
 	}
 	userId := msg.Sender.ID
-	if !h.FromUserIds[userId] {
+	replicaIdx, replicaIdxPresent := h.FromUserIds[userId]
+	if !replicaIdxPresent {
 		err = fmt.Errorf("message is forwarded by user %d", userId)
 		return
 	}
@@ -33,7 +37,7 @@ func (h LoginCodeHandler) Handle(tgCtx telebot.Context) (err error) {
 	if err != nil {
 		return
 	}
-	fmt.Printf("LOGIN CODE: %d\n", code)
+	err = h.SvcSrcTg.Login(context.TODO(), int64(code), replicaIdx)
 	return
 }
 

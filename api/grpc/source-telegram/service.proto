@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package awakari.source.telegram;
+
+option go_package = "./api/grpc/source-telegram";
+
+service Service {
+  rpc Login(LoginRequest) returns (LoginResponse);
+}
+
+message LoginRequest {
+  uint32 code = 1;
+  uint32 replicaIndex = 2;
+}
+
+message LoginResponse {
+  bool success = 1;
+}

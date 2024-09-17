@@ -108,6 +108,8 @@ spec:
               value: "{{ .Values.api.queue.interestsCreated.name }}"
             - name: API_QUEUE_INTERESTS_CREATED_SUBJ
               value: "{{ .Values.api.queue.interestsCreated.subj }}"
+            - name: API_SOURCE_TELEGRAM_URI
+              value: "{{ .Values.api.sourceTelegram.uri }}"
             - name: LOGIN_CODE_FROM_USER_IDS
               valueFrom:
                 secretKeyRef:

@@ -120,6 +120,8 @@ api:
       batchSize: 10
       name: "bot-telegram"
       subj: "interests-created"
+  sourceTelegram:
+    uri: "source-telegram:50051"
 cert:
   acme:
     email: "awakari@awakari.com"
