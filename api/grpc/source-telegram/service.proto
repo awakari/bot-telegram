@@ -15,4 +15,5 @@ message LoginRequest {
 
 message LoginResponse {
   bool success = 1;
+  bool replicaMatch = 2;
 }

@@ -37,7 +37,11 @@ func (h LoginCodeHandler) Handle(tgCtx telebot.Context) (err error) {
 	if err != nil {
 		return
 	}
-	err = h.SvcSrcTg.Login(context.TODO(), int64(code), replicaIdx)
+	var success bool
+	success, err = h.SvcSrcTg.Login(context.TODO(), int64(code), replicaIdx)
+	if err == nil {
+		_ = tgCtx.Send(fmt.Sprintf("Replica %d logged in: %t", replicaIdx, success))
+	}
 	return
 }
 
