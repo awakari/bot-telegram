@@ -18,13 +18,13 @@ func NewServiceLogging(svc Service, log *slog.Logger) Service {
 	}
 }
 
-func (sl serviceLogging) Login(ctx context.Context, code int64, replicaIdx uint) (success bool, err error) {
+func (sl serviceLogging) Login(ctx context.Context, code string, replicaIdx uint32) (success bool, err error) {
 	success, err = sl.svc.Login(ctx, code, replicaIdx)
 	switch err {
 	case nil:
-		sl.log.Debug(fmt.Sprintf("api.grpc.source-telegram.Login(%d. %d): %t", code, replicaIdx, success))
+		sl.log.Debug(fmt.Sprintf("api.grpc.source-telegram.Login(%s. %d): %t", code, replicaIdx, success))
 	default:
-		sl.log.Error(fmt.Sprintf("api.grpc.source-telegram.Login(%d, %d): %s", code, replicaIdx, err))
+		sl.log.Error(fmt.Sprintf("api.grpc.source-telegram.Login(%s, %d): %s", code, replicaIdx, err))
 	}
 	return
 }

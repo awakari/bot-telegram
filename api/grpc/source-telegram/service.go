@@ -7,7 +7,7 @@ import (
 )
 
 type Service interface {
-	Login(ctx context.Context, code int64, replicaIdx uint) (success bool, err error)
+	Login(ctx context.Context, code string, replicaIdx uint32) (success bool, err error)
 }
 
 type service struct {
@@ -20,10 +20,10 @@ func NewService(uri string) Service {
 	}
 }
 
-func (svc service) Login(ctx context.Context, code int64, replicaIdx uint) (success bool, err error) {
+func (svc service) Login(ctx context.Context, code string, replicaIdx uint32) (success bool, err error) {
 	req := &LoginRequest{
-		Code:         uint32(code),
-		ReplicaIndex: uint32(replicaIdx),
+		Code:         code,
+		ReplicaIndex: replicaIdx,
 	}
 	creds := grpc.WithTransportCredentials(insecure.NewCredentials())
 	var replicaMatch bool

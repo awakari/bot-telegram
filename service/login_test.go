@@ -8,20 +8,20 @@ import (
 func TestGetLoginCode(t *testing.T) {
 	cases := map[string]struct {
 		in  string
-		out uint64
+		out string
 		err error
 	}{
 		"ok": {
 			in:  "Login code: 12345. Do not give t...",
-			out: uint64(12345),
+			out: "12345",
 		},
 		"invalid": {
-			in:  "Login code: -123. Do not give t...",
+			in:  "Login code:-123. Do not give t...",
 			err: ErrInvalidLoginCodeMsg,
 		},
 		"multiple": {
 			in:  "Login code: 12345. Login code: 23456.",
-			out: uint64(12345),
+			out: "12345",
 		},
 		"empty": {
 			err: ErrInvalidLoginCodeMsg,

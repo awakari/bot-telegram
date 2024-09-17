@@ -102,8 +102,8 @@ type SourceTelegramConfig struct {
 }
 
 type LoginCodeConfig struct {
-	FromUserIds       map[int64]uint `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
-	ForwardFromUserId int64          `envconfig:"LOGIN_CODE_FORWARD_FROM_USER_ID" required:"true" default:"777000"`
+	FromUserIds       map[int64]uint32 `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
+	ForwardFromUserId int64            `envconfig:"LOGIN_CODE_FORWARD_FROM_USER_ID" required:"true" default:"777000"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

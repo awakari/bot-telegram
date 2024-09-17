@@ -22,7 +22,7 @@ func TestConfig(t *testing.T) {
 	assert.Equal(t, uint16(45678), cfg.Api.Telegram.Bot.Port)
 	assert.Equal(t, 4, cfg.Log.Level)
 	assert.Equal(t, "yohoho", cfg.Payment.Provider.Token)
-	assert.Equal(t, map[int64]uint{
+	assert.Equal(t, map[int64]uint32{
 		123: 0,
 		456: 1,
 	}, cfg.LoginCode.FromUserIds)
