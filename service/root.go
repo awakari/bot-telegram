@@ -17,7 +17,7 @@ func (h RootHandler) Handle(tgCtx telebot.Context) (err error) {
 	switch {
 	case tgCtx.Message().IsReply():
 		err = h.handleReply(tgCtx)
-	case tgCtx.Message().IsForwarded():
+	case tgCtx.Message().IsForwarded() && h.ForwardHandler != nil:
 		err = h.ForwardHandler(tgCtx)
 	default:
 		txt := tgCtx.Text()

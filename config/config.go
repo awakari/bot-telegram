@@ -27,16 +27,14 @@ type Config struct {
 			Token                       string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 			PublicInterestChannelPrefix string `envconfig:"API_TELEGRAM_PUBLIC_INTEREST_CHANNEL_PREFIX" default:"awk_" required:"true"`
 		}
-		Uri            string `envconfig:"API_URI" default:"api:50051" required:"true"`
-		Reader         ReaderConfig
-		Queue          QueueConfig
-		SourceTelegram SourceTelegramConfig
+		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
+		Reader ReaderConfig
+		Queue  QueueConfig
 	}
 	Payment PaymentConfig
 	Log     struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`
 	}
-	LoginCode LoginCodeConfig
 }
 
 type PaymentConfig struct {
@@ -95,15 +93,6 @@ type QueueConfig struct {
 type MessagesConfig struct {
 	Type string `envconfig:"API_MESSAGES_TYPE" default:"com_awakari_bot_telegram_v1" required:"true"`
 	Uri  string `envconfig:"API_MESSAGES_URI" default:"messages:50051" required:"true"`
-}
-
-type SourceTelegramConfig struct {
-	Uri string `envconfig:"API_SOURCE_TELEGRAM_URI" default:"source-telegram:50051" required:"true"`
-}
-
-type LoginCodeConfig struct {
-	FromUserIds       map[int64]uint32 `envconfig:"LOGIN_CODE_FROM_USER_IDS" required:"true"`
-	ForwardFromUserId int64            `envconfig:"LOGIN_CODE_FORWARD_FROM_USER_ID" required:"true" default:"777000"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {
