@@ -68,17 +68,19 @@ ingress:
 resources:
   requests:
     cpu: 2m
-    memory: 16Mi
+    memory: 8Mi
   limits:
     cpu: 1000m
-    memory: 256Mi
+    memory: 64Mi
 
 autoscaling:
   enabled: true
   minReplicas: 1
   maxReplicas: 100
-  targetCPUUtilizationValue: 1000m
-  targetMemoryUtilizationValue: 128Mi
+  targetCPUUtilizationValue: 100m
+  targetMemoryUtilizationValue: 64Mi
+
+priority: 1
 
 nodeSelector: {}
 
