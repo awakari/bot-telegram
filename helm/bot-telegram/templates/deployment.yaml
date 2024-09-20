@@ -27,7 +27,7 @@ spec:
       serviceAccountName: {{ include "bot-telegram.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
-      priority: "{{ .Values.priority }}"
+      priority: {{ .Values.priority }}
       containers:
         - name: {{ .Chart.Name }}
           env:
