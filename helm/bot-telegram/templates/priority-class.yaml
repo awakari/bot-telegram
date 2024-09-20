@@ -1,0 +1,8 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: "{{ .Values.priority.class }}"
+value: {{ .Values.priority.value }}
+globalDefault: false
+description: "This priority class should be used for high priority services only."
+preemptionPolicy: "{{ .Values.priority.preemptionPolicy }}"

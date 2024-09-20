@@ -80,7 +80,10 @@ autoscaling:
   targetCPUUtilizationValue: 100m
   targetMemoryUtilizationValue: 64Mi
 
-priority: 1
+priority:
+  class: "awk-major"
+  value: 100
+  preemptionPolicy: "PreemptLowerPriority"
 
 nodeSelector: {}
 
