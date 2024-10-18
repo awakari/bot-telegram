@@ -2,7 +2,6 @@ package service
 
 import (
 	"gopkg.in/telebot.v3"
-	"strconv"
 )
 
 const donationDefaultMsgTxt = "Help Awakari to be free"
@@ -13,8 +12,8 @@ func DonationHandler(ctx telebot.Context) (err error) {
 }
 
 func DonationMessage(ctx telebot.Context, msgTxt string) (msg *telebot.Message, err error) {
-	customerId := "tg___user_id_" + strconv.FormatInt(ctx.Sender().ID, 10) + "%40awakari.com"
-	link := "https://donate.stripe.com/14k7uCaYq5befN65kk?prefilled_email=" + customerId
+	//customerId := "tg___user_id_" + strconv.FormatInt(ctx.Sender().ID, 10) + "%40awakari.com"
+	link := "https://t.me/tribute/app?startapp=dcS8"
 	msg, err = ctx.Bot().Send(ctx.Chat(), msgTxt, &telebot.ReplyMarkup{
 		InlineKeyboard: [][]telebot.InlineButton{
 			{
