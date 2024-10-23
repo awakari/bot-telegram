@@ -200,6 +200,7 @@ func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bo
 }
 
 func truncateStringUtf8(s string, lenMax int) string {
+	s = strings.TrimSpace(s)
 	if len(s) <= lenMax {
 		return s
 	}
