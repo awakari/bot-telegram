@@ -14,6 +14,7 @@ import (
 )
 
 const CmdPageNext = "subs_next"
+const CmdPageNextFollowing = "following_next"
 
 func ListOnGroupStartHandlerFunc(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
@@ -143,6 +144,87 @@ func listButtons(
 			if public {
 				cmdData += " public"
 			}
+			if len(cmdData) > service.CmdLimit {
+				cmdData = cmdData[:service.CmdLimit]
+			}
+			rows = append(rows, m.Row(telebot.Btn{
+				Text: "Next Page >",
+				Data: cmdData,
+			}))
+		}
+		m.Inline(rows...)
+	}
+	return
+}
+
+func ListFollowing(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
+	return func(tgCtx telebot.Context) (err error) {
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		var m *telebot.ReplyMarkup
+		m, err = listButtonsFollowing(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, "", urlCallBackBase)
+		if err == nil {
+			err = tgCtx.Send("List of interests you following in this chat. Select any to stop:", m)
+		}
+		return
+	}
+}
+
+func PageNextFollowing(clientAwk api.Client, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
+	return func(tgCtx telebot.Context, args ...string) (err error) {
+		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		var cursor string
+		if len(args) > 0 {
+			cursor = args[0]
+		}
+		var m *telebot.ReplyMarkup
+		m, err = listButtonsFollowing(groupIdCtx, userId, clientAwk, svcReader, tgCtx.Chat().ID, cursor, urlCallBackBase)
+		if err == nil {
+			err = tgCtx.Send("Interests list page:", m, telebot.ModeHTML)
+		}
+		return
+	}
+}
+
+func listButtonsFollowing(
+	groupIdCtx context.Context,
+	userId string,
+	clientAwk api.Client,
+	svcReader reader.Service,
+	chatId int64,
+	cursor string,
+	urlCallBackBase string,
+) (m *telebot.ReplyMarkup, err error) {
+	cbUrl := reader.MakeCallbackUrl(urlCallBackBase, chatId)
+	var interestIds []string
+	interestIds, err = svcReader.ListByUrl(groupIdCtx, service.PageLimit, cbUrl, cursor)
+	if err == nil {
+		m = &telebot.ReplyMarkup{}
+		var sub subscription.Data
+		var rows []telebot.Row
+		for _, interestId := range interestIds {
+			var descr string
+			sub, err = clientAwk.ReadSubscription(groupIdCtx, userId, interestId)
+			switch err {
+			case nil:
+				descr = sub.Description
+				if sub.Public {
+					descr = "👁 " + descr
+				}
+			default:
+				descr = "ID: " + interestId
+				err = nil
+			}
+			btn := telebot.Btn{
+				Text: descr,
+			}
+			btn.Data = fmt.Sprintf("%s %s", CmdStop, interestId)
+			row := m.Row(btn)
+			rows = append(rows, row)
+		}
+		if len(interestIds) == service.PageLimit {
+			cmdData := fmt.Sprintf("%s %s", CmdPageNextFollowing, interestIds[len(interestIds)-1])
 			if len(cmdData) > service.CmdLimit {
 				cmdData = cmdData[:service.CmdLimit]
 			}

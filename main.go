@@ -177,13 +177,14 @@ func main() {
 	defer chanPostHandler.Close()
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdDescription: subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
-		subscriptions.CmdExtend:      subExtHandler.RequestExtensionDaysCount,
-		subscriptions.CmdStart:       subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
-		subscriptions.CmdStop:        subscriptions.Stop(svcReader, urlCallbackBase),
-		subscriptions.CmdPageNext:    subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
-		usage.CmdExtend:              limitsHandler.RequestExtension,
-		usage.CmdIncrease:            limitsHandler.RequestIncrease,
+		subscriptions.CmdDescription:       subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
+		subscriptions.CmdExtend:            subExtHandler.RequestExtensionDaysCount,
+		subscriptions.CmdStart:             subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
+		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase),
+		subscriptions.CmdPageNext:          subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
+		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(clientAwk, svcReader, groupId, urlCallbackBase),
+		usage.CmdExtend:                    limitsHandler.RequestExtension,
+		usage.CmdIncrease:                  limitsHandler.RequestIncrease,
 	}
 	webappHandlers := map[string]service.ArgHandlerFunc{
 		usage.LabelExtend: limitsHandler.HandleExtension,
@@ -254,6 +255,10 @@ func main() {
 		{
 			Text:        "sub",
 			Description: "Create and follow a simple Interest",
+		},
+		{
+			Text:        "following",
+			Description: "List of all interests following in this chat",
 		},
 		{
 			Text:        "interests",
@@ -339,6 +344,7 @@ func main() {
 	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
+	b.Handle("/following", subscriptions.ListFollowing(clientAwk, svcReader, groupId, urlCallbackBase))
 	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(clientAwk, svcReader, groupId, urlCallbackBase))
 	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {

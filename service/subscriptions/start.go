@@ -14,7 +14,7 @@ import (
 )
 
 const CmdStart = "sub_start"
-const MsgFmtChatLinked = "Following the interest \"%s\" in this chat. " +
+const MsgFmtChatLinked = "Following the interest %s in this chat. " +
 	"New results will appear here. " +
 	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
@@ -67,8 +67,14 @@ func Start(
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
 	}
-	if err == nil {
-		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subData.Description), telebot.ModeHTML, telebot.NoPreview)
+	var subDescr string
+	switch err {
+	case nil:
+		subDescr = "named \"" + subData.Description + "\""
+	default:
+		// it's still ok to follow an interest created by a non-telegram user in Awakari web UI
+		subDescr = "id: <code>" + subId + "</code>"
 	}
+	err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr), telebot.ModeHTML, telebot.NoPreview)
 	return
 }

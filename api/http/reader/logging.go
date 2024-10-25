@@ -39,6 +39,13 @@ func (sl serviceLogging) DeleteCallback(ctx context.Context, subId, url string) 
 	return
 }
 
+func (sl serviceLogging) ListByUrl(ctx context.Context, limit uint32, url, cursor string) (page []string, err error) {
+	page, err = sl.svc.ListByUrl(ctx, limit, url, cursor)
+	ll := sl.logLevel(err)
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.ListByUrl(%d, %s, %s): %d, err=%s", limit, url, cursor, len(page), err))
+	return
+}
+
 func (sl serviceLogging) logLevel(err error) (lvl slog.Level) {
 	switch err {
 	case nil:

@@ -14,6 +14,7 @@ type Service interface {
 	CreateCallback(ctx context.Context, subId, url string) (err error)
 	GetCallback(ctx context.Context, subId, url string) (cb Callback, err error)
 	DeleteCallback(ctx context.Context, subId, url string) (err error)
+	ListByUrl(ctx context.Context, limit uint32, url, cursor string) (page []string, err error)
 }
 
 type service struct {
@@ -74,6 +75,48 @@ func (svc service) GetCallback(ctx context.Context, subId, url string) (cb Callb
 
 func (svc service) DeleteCallback(ctx context.Context, subId, callbackUrl string) (err error) {
 	err = svc.updateCallback(ctx, subId, callbackUrl, modeUnsubscribe)
+	return
+}
+
+func (svc service) ListByUrl(ctx context.Context, limit uint32, url, cursor string) (page []string, err error) {
+	var req *http.Request
+	req, err = http.NewRequestWithContext(
+		ctx,
+		http.MethodGet,
+		fmt.Sprintf(
+			"%s/callbacks/list-by-url/%s?cursor=%s&limit=%d",
+			svc.uriBase,
+			base64.URLEncoding.EncodeToString([]byte(url)),
+			cursor,
+			limit,
+		),
+		http.NoBody,
+	)
+	var resp *http.Response
+	if err == nil {
+		resp, err = svc.clientHttp.Do(req)
+	}
+	var ip interestPage
+	switch err {
+	case nil:
+		defer resp.Body.Close()
+		switch resp.StatusCode {
+		case http.StatusOK:
+			err = json.NewDecoder(resp.Body).Decode(&ip)
+			if err != nil {
+				err = fmt.Errorf("%w: %s", ErrInternal, err)
+			}
+		case http.StatusNotFound:
+			err = ErrNotFound
+		default:
+			err = fmt.Errorf("%w: response status %d", ErrInternal, resp.StatusCode)
+		}
+	default:
+		err = fmt.Errorf("%w: %s", ErrInternal, err)
+	}
+	if err == nil {
+		page = ip.Page
+	}
 	return
 }
 
