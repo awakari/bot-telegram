@@ -2,24 +2,19 @@ package messages
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/awakari/bot-telegram/api/grpc/messages"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/model"
-	"github.com/cenkalti/backoff/v4"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/segmentio/ksuid"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
-	"log/slog"
 	"strconv"
-	"time"
 )
 
 const ReqMsgPub = "msg_pub"
@@ -68,7 +63,6 @@ func PublishBasicRequest(tgCtx telebot.Context) (err error) {
 func PublishBasicReplyHandlerFunc(
 	clientAwk api.Client,
 	groupId string,
-	svcMsgs messages.Service,
 	cfg config.Config,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
@@ -87,7 +81,7 @@ func PublishBasicReplyHandlerFunc(
 			err = toCloudEvent(tgCtx.Message(), args[1], &evt)
 		}
 		if err == nil {
-			err = publish(tgCtx, w, &evt, svcMsgs, cfg.Payment)
+			err = publish(tgCtx, w, &evt)
 		}
 		return
 	}
@@ -211,8 +205,6 @@ func publish(
 	tgCtx telebot.Context,
 	w model.Writer[*pb.CloudEvent],
 	evt *pb.CloudEvent,
-	svcMsgs messages.Service,
-	cfgPayment config.PaymentConfig,
 ) (err error) {
 	var ackCount uint32
 	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
@@ -230,112 +222,4 @@ func publish(
 		}
 	}
 	return
-}
-
-func publishInvoice(
-	tgCtx telebot.Context,
-	evt *pb.CloudEvent,
-	svcMsgs messages.Service,
-	cfgPayment config.PaymentConfig,
-	kbd *telebot.ReplyMarkup,
-) (ackCount uint32, err error) {
-	ackCount, err = svcMsgs.PutBatch(context.TODO(), []*pb.CloudEvent{evt})
-	if ackCount == 1 {
-		if kbd == nil {
-			_ = tgCtx.Send(msgLimitReached)
-		} else {
-			_ = tgCtx.Send(msgLimitReached, kbd)
-		}
-		var orderData []byte
-		orderData, err = json.Marshal(service.Order{
-			Purpose: PurposePublish,
-			Payload: evt.Id,
-		})
-		if err == nil {
-			label := fmt.Sprintf("Publish Message %s", evt.Id)
-			invoice := telebot.Invoice{
-				Start:       evt.Id,
-				Title:       "Publish Message",
-				Description: label,
-				Payload:     string(orderData),
-				Currency:    cfgPayment.Currency.Code,
-				Prices: []telebot.Price{
-					{
-						Label:  label,
-						Amount: int(cfgPayment.Price.MessagePublishing.Extra * cfgPayment.Currency.SubFactor),
-					},
-				},
-				Token: cfgPayment.Provider.Token,
-				Total: int(cfgPayment.Price.MessagePublishing.Extra * cfgPayment.Currency.SubFactor),
-			}
-			_, err = tgCtx.Bot().Send(tgCtx.Sender(), &invoice)
-		}
-	}
-	return
-}
-
-func PublishPreCheckout(svcMsgs messages.Service, cfgPayment config.PaymentConfig) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		ctx, cancel := context.WithTimeout(context.TODO(), cfgPayment.PreCheckout.Timeout)
-		defer cancel()
-		evtId := args[0]
-		var evts []*pb.CloudEvent
-		evts, err = svcMsgs.GetBatch(ctx, []string{evtId})
-		switch {
-		case err != nil:
-			err = tgCtx.Accept(err.Error())
-		case len(evts) == 0:
-			err = tgCtx.Accept(fmt.Sprintf(msgFmtPublishMissing, evtId))
-		default:
-			err = tgCtx.Accept()
-		}
-		return
-	}
-}
-
-func PublishPaid(
-	svcMsgs messages.Service,
-	clientAwk api.Client,
-	groupId string,
-	log *slog.Logger,
-	cfgBackoff config.BackoffConfig,
-) service.ArgHandlerFunc {
-	return func(tgCtx telebot.Context, args ...string) (err error) {
-		evtId := args[0]
-		var evts []*pb.CloudEvent
-		evts, err = svcMsgs.GetBatch(context.TODO(), []string{evtId})
-		if err == nil {
-			if len(evts) == 0 {
-				err = fmt.Errorf(msgFmtPublishMissing, evtId)
-			}
-		}
-		var w model.Writer[*pb.CloudEvent]
-		if err == nil {
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
-			userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-			w, err = clientAwk.OpenMessagesWriter(groupIdCtx, userId)
-		}
-		if err == nil {
-			defer w.Close()
-			b := backoff.NewExponentialBackOff()
-			b.InitialInterval = cfgBackoff.Init
-			b.Multiplier = cfgBackoff.Factor
-			b.MaxElapsedTime = cfgBackoff.LimitTotal
-			ew := writer{
-				e: evts[0],
-				w: w,
-			}
-			err = backoff.RetryNotify(ew.runOnce, b, func(err error, d time.Duration) {
-				log.Warn(fmt.Sprintf(msgFmtRunOnceFailed, evtId, err, d))
-				if d > 1*time.Second {
-					_ = tgCtx.Send("Publishing the message, please wait...")
-				}
-			})
-		}
-		if err == nil {
-			_ = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evtId), telebot.ModeHTML)
-			_, err = svcMsgs.DeleteBatch(context.TODO(), []string{evtId})
-		}
-		return
-	}
 }

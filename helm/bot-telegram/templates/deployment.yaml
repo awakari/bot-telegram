@@ -33,12 +33,8 @@ spec:
           env:
             - name: API_URI
               value: "{{ .Values.api.uri }}"
-            - name: API_ADMIN_URI
-              value: "{{ .Values.api.admin.uri }}"
             - name: API_MESSAGES_TYPE
               value: "{{ .Values.api.messages.type }}"
-            - name: API_MESSAGES_URI
-              value: "{{ .Values.api.messages.uri }}"
             - name: API_READER_URI
               value: "{{ .Values.api.reader.uri }}"
             - name: API_READER_URI_EVT_BASE
@@ -66,9 +62,15 @@ spec:
             - name: API_TELEGRAM_WEBHOOK_CONN_MAX
               value: "{{ .Values.api.telegram.webhook.connections.max }}"
             - name: API_TELEGRAM_WEBHOOK_TOKEN
-              value: "{{ .Values.api.telegram.webhook.token }}"
+              valueFrom:
+                secretKeyRef:
+                  name: "{{ include "bot-telegram.fullname" . }}"
+                  key: webhookToken
             - name: API_TELEGRAM_SUPPORT_CHAT_ID
-              value: "{{ .Values.api.telegram.support.chat.id }}"
+              valueFrom:
+                secretKeyRef:
+                  key: support
+                  name: "{{ include "bot-telegram.fullname" . }}"
             - name: API_TELEGRAM_TOKEN
               valueFrom:
                 secretKeyRef:
@@ -76,31 +78,6 @@ spec:
                   key: telegram
             - name: LOG_LEVEL
               value: "{{ .Values.log.level }}"
-            - name: PAYMENT_BACKOFF_FACTOR
-              value: "{{ .Values.payment.backoff.factor }}"
-            - name: PAYMENT_BACKOFF_INIT
-              value: "{{ .Values.payment.backoff.init }}"
-            - name: PAYMENT_BACKOFF_LIMIT_TOTAL
-              value: "{{ .Values.payment.backoff.limitTotal }}"
-            - name: PAYMENT_CURRENCY_CODE
-              value: "{{ .Values.payment.currency.code }}"
-            - name: PAYMENT_CURRENCY_SUB_FACTOR
-              value: "{{ .Values.payment.currency.subFactor }}"
-            - name: PAYMENT_PRE_CHECKOUT_TIMEOUT
-              value: "{{ .Values.payment.preCheckout.timeout }}"
-            - name: PAYMENT_PRICE_MESSAGE_PUBLISHING_DAILY_LIMIT
-              value: "{{ .Values.payment.price.messagePublishing.dailyLimit }}"
-            - name: PAYMENT_PRICE_MESSAGE_PUBLISHING_EXTRA
-              value: "{{ .Values.payment.price.messagePublishing.extra }}"
-            - name: PAYMENT_PRICE_SUBSCRIPTION_COUNT_LIMIT
-              value: "{{ .Values.payment.price.subscription.countLimit }}"
-            - name: PAYMENT_PRICE_SUBSCRIPTION_EXTENSION
-              value: "{{ .Values.payment.price.subscription.extension }}"
-            - name: PAYMENT_PROVIDER_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: "{{ include "bot-telegram.fullname" . }}"
-                  key: payment
             - name: API_QUEUE_URI
               value: "{{ .Values.api.queue.uri }}"
             - name: API_QUEUE_INTERESTS_CREATED_BATCH_SIZE

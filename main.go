@@ -5,8 +5,6 @@ import (
 	"crypto/tls"
 	"fmt"
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
-	grpcApiAdmin "github.com/awakari/bot-telegram/api/grpc/admin"
-	grpcApiMsgs "github.com/awakari/bot-telegram/api/grpc/messages"
 	"github.com/awakari/bot-telegram/api/grpc/queue"
 	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
 	"github.com/awakari/bot-telegram/api/http/reader"
@@ -16,7 +14,6 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
-	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
@@ -57,30 +54,6 @@ func main() {
 		ApiUri(cfg.Api.Uri).
 		Build()
 	defer clientAwk.Close()
-
-	// init Awakari admin client
-	connAdmin, err := grpc.Dial(cfg.Api.Admin.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		log.Info("connected the limits admin service")
-		defer connAdmin.Close()
-	} else {
-		log.Error(fmt.Sprintf("failed to connect the limits admin service: %s", err))
-	}
-	clientAdmin := grpcApiAdmin.NewServiceClient(connAdmin)
-	svcAdmin := grpcApiAdmin.NewService(clientAdmin)
-	svcAdmin = grpcApiAdmin.NewServiceLogging(svcAdmin, log)
-
-	// init the internal Awakari messages storage client
-	connMsgs, err := grpc.Dial(cfg.Api.Messages.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err == nil {
-		log.Info("connected the messages service")
-		defer connMsgs.Close()
-	} else {
-		log.Error(fmt.Sprintf("failed to connect the messages service: %s", err))
-	}
-	clientMsgs := grpcApiMsgs.NewServiceClient(connMsgs)
-	svcMsgs := grpcApiMsgs.NewService(clientMsgs)
-	svcMsgs = grpcApiMsgs.NewServiceLogging(svcMsgs, log)
 
 	// init websub reader
 	clientHttp := http.Client{}
@@ -151,20 +124,6 @@ func main() {
 	supportHandler := support.Handler{
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 	}
-	limitsHandler := usage.LimitsHandler{
-		CfgPayment:     cfg.Payment,
-		ClientAdmin:    svcAdmin,
-		ClientAwk:      clientAwk,
-		GroupId:        groupId,
-		Log:            log,
-		SupportHandler: supportHandler,
-	}
-	subExtHandler := subscriptions.ExtendHandler{
-		CfgPayment: cfg.Payment,
-		ClientAwk:  clientAwk,
-		GroupId:    groupId,
-		Log:        log,
-	}
 	chanPostHandler := messages.ChanPostHandler{
 		ClientAwk: clientAwk,
 		GroupId:   groupId,
@@ -177,41 +136,20 @@ func main() {
 	defer chanPostHandler.Close()
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdDescription:       subscriptions.DescriptionHandlerFunc(clientAwk, groupId),
-		subscriptions.CmdExtend:            subExtHandler.RequestExtensionDaysCount,
 		subscriptions.CmdStart:             subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
 		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase),
 		subscriptions.CmdPageNext:          subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
 		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(clientAwk, svcReader, groupId, urlCallbackBase),
-		usage.CmdExtend:                    limitsHandler.RequestExtension,
-		usage.CmdIncrease:                  limitsHandler.RequestIncrease,
-	}
-	webappHandlers := map[string]service.ArgHandlerFunc{
-		usage.LabelExtend: limitsHandler.HandleExtension,
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqDescribe:  subscriptions.DescriptionReplyHandlerFunc(clientAwk, groupId),
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, svcReader, urlCallbackBase),
-		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, svcMsgs, cfg),
-		subscriptions.ReqSubExtend: subExtHandler.HandleExtensionReply,
-		usage.ReqLimitExtend:       limitsHandler.HandleExtension,
-		usage.ReqLimitIncrease:     limitsHandler.HandleIncrease,
+		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{}
 	hRoot := service.RootHandler{
 		ReplyHandlers: replyHandlers,
 		TxtHandlers:   txtHandlers,
-	}
-	preCheckoutHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimitSet:       limitsHandler.PreCheckout,
-		subscriptions.PurposeExtend: subExtHandler.ExtensionPreCheckout,
-		//messages.PurposePublish:     messages.PublishPreCheckout(svcMsgs, cfg.Payment),
-	}
-	paymentHandlers := map[string]service.ArgHandlerFunc{
-		usage.PurposeLimitSet:       limitsHandler.HandleLimitOrderPaid,
-		subscriptions.PurposeExtend: subExtHandler.ExtendPaid,
-		//messages.PurposePublish:     messages.PublishPaid(svcMsgs, clientAwkInternal, groupId, log, cfg.Payment.Backoff),
 	}
 
 	// init Telegram bot
@@ -369,9 +307,6 @@ func main() {
 	b.Handle(telebot.OnVideo, service.ErrorHandlerFunc(hRoot.Handle))
 	b.Handle(telebot.OnDocument, service.ErrorHandlerFunc(hRoot.Handle))
 	b.Handle(telebot.OnLocation, service.ErrorHandlerFunc(hRoot.Handle))
-	b.Handle(telebot.OnWebApp, service.ErrorHandlerFunc(service.WebAppData(webappHandlers)))
-	b.Handle(telebot.OnCheckout, service.ErrorHandlerFunc(service.PreCheckout(preCheckoutHandlers)))
-	b.Handle(telebot.OnPayment, service.ErrorHandlerFunc(service.Payment(paymentHandlers)))
 	//
 	b.Handle(telebot.OnChannelPost, func(tgCtx telebot.Context) (err error) {
 		txt := tgCtx.Text()

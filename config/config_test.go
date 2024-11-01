@@ -12,7 +12,6 @@ func TestConfig(t *testing.T) {
 	os.Setenv("LOG_LEVEL", "4")
 	os.Setenv("API_TELEGRAM_WEBHOOK_PORT", "56789")
 	os.Setenv("API_TELEGRAM_TOKEN", "yohoho")
-	os.Setenv("PAYMENT_PROVIDER_TOKEN", "yohoho")
 	os.Setenv("REPLICA_RANGE", "2")
 	os.Setenv("REPLICA_NAME", "replica-0")
 	cfg, err := NewConfigFromEnv()
@@ -20,5 +19,4 @@ func TestConfig(t *testing.T) {
 	assert.Equal(t, uint16(56789), cfg.Api.Telegram.Webhook.Port)
 	assert.Equal(t, uint16(45678), cfg.Api.Telegram.Bot.Port)
 	assert.Equal(t, 4, cfg.Log.Level)
-	assert.Equal(t, "yohoho", cfg.Payment.Provider.Token)
 }

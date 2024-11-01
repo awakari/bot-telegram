@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/bot-telegram/service/usage"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/limits"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
@@ -16,13 +15,11 @@ import (
 	"gopkg.in/telebot.v3"
 	"regexp"
 	"strings"
-	"time"
 )
 
 const limitGroupOrCondChildrenCount = 4
 const minTextCondTermsLength = 3
 const maxTextCondTermsLength = 256
-const expiresDefaultDuration = time.Hour * 24 * usage.ExpiresDefaultDays // ~ month
 
 const ReqSubCreate = "sub_create"
 const msgSubCreate = "Following a simple text interest. " +
@@ -91,24 +88,10 @@ func CreateBasicReplyHandlerFunc(
 func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subscription.Data) (id string, err error) {
 	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-	//
-	// TODO: use the below code only when payments are connected
-	//var existingIds []string
-	//existingIds, err = clientAwk.SearchSubscriptions(groupIdCtx, userId, 1, "")
-	//if err == nil {
-	//	switch len(existingIds) {
-	//	case 0: // leave expires = 0 (means "never") when user has no subscriptions
-	//	default:
-	//		sd.Expires = time.Now().Add(expiresDefaultDuration) // expire in a fixed period
-	//	}
-	//}
-	//
-	if err == nil {
-		id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
-		switch {
-		case errors.Is(err, limits.ErrReached):
-			err = fmt.Errorf("%w, consider to request to increase your limit", errLimitReached)
-		}
+	id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
+	switch {
+	case errors.Is(err, limits.ErrReached):
+		err = fmt.Errorf("%w, consider to request to increase your limit", errLimitReached)
 	}
 	return
 }

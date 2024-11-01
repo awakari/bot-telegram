@@ -92,11 +92,8 @@ tolerations: []
 affinity: {}
 
 api:
-  admin:
-    uri: "api:56789"
   messages:
     type: "com_awakari_bot_telegram_v1"
-    uri: "messages:50051"
   reader:
     uri: "http://reader:8080/v1"
     uriEvtBase: "https://awakari.com/pub-msg.html?id="
@@ -104,16 +101,10 @@ api:
       protocol: "http"
       path: "/v1/chat"
   uri: "api:50051"
-  cert: server-cert
   telegram:
-    support:
-      chat:
-        id: 0
-    token: telegram-bot-token
     webhook:
       connections:
         max: 100
-      token: "xxxxxxxxxx"
   queue:
     uri: "queue:50051"
     backoff:
@@ -131,22 +122,3 @@ cert:
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4
-payment:
-  backoff:
-    init: 100ms
-    factor: 2
-    limitTotal: 15m
-  currency:
-    code: EUR
-    subFactor: 100
-  preCheckout:
-    timeout: 10s
-  price:
-    messagePublishing:
-      dailyLimit: 0.04
-      extra: 1
-    subscription:
-      countLimit: 0.1
-      extension: 0.1
-  provider:
-    token: payment-provider-token
