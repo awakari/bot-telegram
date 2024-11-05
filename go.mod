@@ -3,8 +3,8 @@ module github.com/awakari/bot-telegram
 go 1.23
 
 require (
-	github.com/awakari/client-sdk-go v1.2.1
-	github.com/bytedance/sonic v1.12.3
+	github.com/awakari/client-sdk-go v1.2.2
+	github.com/bytedance/sonic v1.12.4
 	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/cloudevents/sdk-go/binding/format/protobuf/v2 v2.15.2
 	github.com/cloudevents/sdk-go/v2 v2.15.2
@@ -48,6 +48,6 @@ require (
 	golang.org/x/net v0.30.0 // indirect
 	golang.org/x/sys v0.26.0 // indirect
 	golang.org/x/text v0.19.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20241015192408-796eee8c2d53 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20241104194629-dd2ea8efbc28 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
