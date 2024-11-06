@@ -2,13 +2,13 @@ package subscriptions
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/client-sdk-go/api"
 	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
 	"github.com/awakari/client-sdk-go/model/subscription"
 	"github.com/awakari/client-sdk-go/model/subscription/condition"
+	"github.com/bytedance/sonic"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/telebot.v3"
@@ -30,7 +30,7 @@ var jsonToProtoOpts = protojson.UnmarshalOptions{
 func (ch ConditionHandler) Update(tgCtx telebot.Context, args ...string) (err error) {
 	payload := []byte(args[0])
 	var sp subPayload
-	err = json.Unmarshal(payload, &sp)
+	err = sonic.Unmarshal(payload, &sp)
 	condProto := &subscriptions.Condition{}
 	if err == nil {
 		err = convertConditionJsonToProto(payload, condProto)

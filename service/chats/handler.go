@@ -2,13 +2,13 @@ package chats
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/utf8"
 	"github.com/cenkalti/backoff/v4"
 	ceProto "github.com/cloudevents/sdk-go/binding/format/protobuf/v2"
@@ -122,7 +122,7 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 
 	defer ctx.Request.Body.Close()
 	var evts []*ce.Event
-	err = json.NewDecoder(ctx.Request.Body).Decode(&evts)
+	err = sonic.ConfigDefault.NewDecoder(ctx.Request.Body).Decode(&evts)
 	if err != nil {
 		ctx.String(http.StatusBadRequest, fmt.Sprintf("failed to deserialize the request payload: %s", err))
 		return

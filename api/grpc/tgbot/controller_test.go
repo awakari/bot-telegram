@@ -76,7 +76,7 @@ func TestController_Validate(t *testing.T) {
 		},
 		"invalid json": {
 			token: "https://t.me/i/userpic/321/eZwlVwBo7HPBjQVUYv91UGeeKSFoXBbnt28fwa1Htsg.png",
-			err:   status.Error(codes.Unauthenticated, "invalid character 'h' looking for beginning of value"),
+			err:   status.Error(codes.Unauthenticated, "\"Syntax error at index 1: invalid char\\n\\n\\thttps://t.me/i/userpic/321/eZwlV\\n\\t.^..............................\\n\""),
 		},
 		"ok": {
 			token: `{
@@ -90,7 +90,7 @@ func TestController_Validate(t *testing.T) {
 			}`,
 		},
 		"empty": {
-			err: status.Error(codes.Unauthenticated, "unexpected end of JSON input"),
+			err: status.Error(codes.Unauthenticated, "\"Syntax error no sources available, the input json is empty: errors.SyntaxError{Pos:0, Src:\\\"\\\", Code:0x1, Msg:\\\"\\\"}\""),
 		},
 	}
 	//

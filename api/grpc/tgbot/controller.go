@@ -2,10 +2,10 @@ package tgbot
 
 import (
 	"context"
-	"encoding/json"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/client-sdk-go/api"
+	"github.com/bytedance/sonic"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -54,7 +54,7 @@ func NewController(
 func (c controller) Authenticate(ctx context.Context, req *AuthenticateRequest) (resp *AuthenticateResponse, err error) {
 	resp = &AuthenticateResponse{}
 	var creds tgverifier.Credentials
-	err = json.Unmarshal(req.Data, &creds)
+	err = sonic.Unmarshal(req.Data, &creds)
 	if err == nil {
 		err = creds.Verify(c.secretToken)
 	}

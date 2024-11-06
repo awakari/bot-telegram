@@ -3,9 +3,9 @@ package reader
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/bytedance/sonic"
 	"io"
 	"net/http"
 )
@@ -58,7 +58,7 @@ func (svc service) GetCallback(ctx context.Context, subId, url string) (cb Callb
 		defer resp.Body.Close()
 		switch resp.StatusCode {
 		case http.StatusOK:
-			err = json.NewDecoder(resp.Body).Decode(&cb)
+			err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&cb)
 			if err != nil {
 				err = fmt.Errorf("%w: %s", ErrInternal, err)
 			}
@@ -102,7 +102,7 @@ func (svc service) ListByUrl(ctx context.Context, limit uint32, url, cursor stri
 		defer resp.Body.Close()
 		switch resp.StatusCode {
 		case http.StatusOK:
-			err = json.NewDecoder(resp.Body).Decode(&ip)
+			err = sonic.ConfigDefault.NewDecoder(resp.Body).Decode(&ip)
 			if err != nil {
 				err = fmt.Errorf("%w: %s", ErrInternal, err)
 			}
