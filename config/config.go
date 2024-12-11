@@ -24,9 +24,17 @@ type Config struct {
 			Token                       string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 			PublicInterestChannelPrefix string `envconfig:"API_TELEGRAM_PUBLIC_INTEREST_CHANNEL_PREFIX" default:"awk_" required:"true"`
 		}
-		Uri    string `envconfig:"API_URI" default:"api:50051" required:"true"`
 		Reader ReaderConfig
 		Queue  QueueConfig
+		Writer struct {
+			Uri string `envconfig:"API_WRITER_URI" default:"http://pub:8080/v1/batch" required:"true"`
+		}
+		Interests struct {
+			Uri string `envconfig:"API_INTERESTS_URI" default:"http://interests-api:8080/v1" required:"true"`
+		}
+		Token struct {
+			Internal string `envconfig:"API_TOKEN_INTERNAL" required:"true"`
+		}
 	}
 	Log struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`

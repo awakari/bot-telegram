@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/interests"
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
-	"github.com/awakari/client-sdk-go/api"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/utf8"
 	"github.com/cenkalti/backoff/v4"
@@ -15,7 +15,6 @@ import (
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	ce "github.com/cloudevents/sdk-go/v2/event"
 	"github.com/gin-gonic/gin"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"net/http"
 	"reflect"
@@ -35,7 +34,7 @@ type handler struct {
 	urlCallbackBase string
 	svcReader       apiHttpReader.Service
 	tgBot           *telebot.Bot
-	clientAwk       api.Client
+	svcInterests    interests.Service
 	groupId         string
 }
 
@@ -50,7 +49,7 @@ func NewHandler(
 	urlCallbackBase string,
 	svcReader apiHttpReader.Service,
 	tgBot *telebot.Bot,
-	clientAwk api.Client,
+	svcInterests interests.Service,
 	groupId string,
 ) Handler {
 	return handler{
@@ -59,7 +58,7 @@ func NewHandler(
 		urlCallbackBase: urlCallbackBase,
 		svcReader:       svcReader,
 		tgBot:           tgBot,
-		clientAwk:       clientAwk,
+		svcInterests:    svcInterests,
 		groupId:         groupId,
 	}
 }
@@ -115,9 +114,8 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	}
 
 	var subDescr string
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, h.groupId)
 	userId := service.PrefixUserId + chatIdRaw
-	sub, _ := h.clientAwk.ReadSubscription(groupIdCtx, userId, subId)
+	sub, _ := h.svcInterests.Read(context.TODO(), h.groupId, userId, subId)
 	subDescr = sub.Description
 
 	defer ctx.Request.Body.Close()

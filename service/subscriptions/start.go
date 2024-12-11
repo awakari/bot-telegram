@@ -4,12 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
-	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/model/subscription"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 )
 
@@ -19,7 +18,7 @@ const MsgFmtChatLinked = "Following the interest %s in this chat. " +
 	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
 func StartHandler(
-	clientAwk api.Client,
+	svcInterests interests.Service,
 	svcReader reader.Service,
 	urlCallbackBase string,
 	groupId string,
@@ -28,7 +27,7 @@ func StartHandler(
 		switch len(args) {
 		case 1: // ask for min delivery interval
 			subId := args[0]
-			err = Start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
+			err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId)
 		default:
 			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 2 arguments, got %d", len(args)))
 		}
@@ -38,7 +37,7 @@ func StartHandler(
 
 func Start(
 	tgCtx telebot.Context,
-	clientAwk api.Client,
+	svcInterests interests.Service,
 	svcReader reader.Service,
 	urlCallbackBase string,
 	subId string,
@@ -62,10 +61,9 @@ func Start(
 			err = svcReader.CreateCallback(ctx, subId, urlCallback)
 		}
 	}
-	var subData subscription.Data
+	var subData interest.Data
 	if err == nil {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
-		subData, err = clientAwk.ReadSubscription(groupIdCtx, userId, subId)
+		subData, err = svcInterests.Read(context.TODO(), groupId, userId, subId)
 	}
 	var subDescr string
 	switch err {

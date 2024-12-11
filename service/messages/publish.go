@@ -4,14 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/awakari/bot-telegram/api/http/pub"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/api/grpc/limits"
-	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/segmentio/ksuid"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
 	"strconv"
@@ -61,15 +58,13 @@ func PublishBasicRequest(tgCtx telebot.Context) (err error) {
 }
 
 func PublishBasicReplyHandlerFunc(
-	clientAwk api.Client,
+	svcPub pub.Service,
 	groupId string,
 	cfg config.Config,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
 		sender := tgCtx.Sender()
 		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
-		w, err := clientAwk.OpenMessagesWriter(groupIdCtx, userId)
 		evt := pb.CloudEvent{
 			Id:          ksuid.New().String(),
 			Source:      "https://t.me/" + tgCtx.Chat().Username,
@@ -77,11 +72,10 @@ func PublishBasicReplyHandlerFunc(
 			Type:        cfg.Api.Messages.Type,
 		}
 		if err == nil {
-			defer w.Close()
 			err = toCloudEvent(tgCtx.Message(), args[1], &evt)
 		}
 		if err == nil {
-			err = publish(tgCtx, w, &evt)
+			err = publish(tgCtx, svcPub, &evt, groupId, userId)
 		}
 		return
 	}
@@ -203,23 +197,16 @@ func toCloudEvent(msg *telebot.Message, txt string, evt *pb.CloudEvent) (err err
 
 func publish(
 	tgCtx telebot.Context,
-	w model.Writer[*pb.CloudEvent],
+	svcPub pub.Service,
 	evt *pb.CloudEvent,
+	groupId, userId string,
 ) (err error) {
-	var ackCount uint32
-	ackCount, err = w.WriteBatch([]*pb.CloudEvent{evt})
+	err = svcPub.Publish(context.TODO(), evt, groupId, userId)
 	switch {
-	case ackCount == 0 && errors.Is(err, limits.ErrReached):
-		// ackCount, err = publishInvoice(tgCtx, evt, svcMsgs, cfgPayment, kbd)
-		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to request to increase your limit."))
-	case ackCount == 1:
+	case errors.Is(err, pub.ErrLimitReached):
+		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to increase."))
+	default:
 		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
-	}
-	if err == nil {
-		switch ackCount {
-		case 0:
-			err = tgCtx.Send(msgBusy)
-		}
 	}
 	return
 }

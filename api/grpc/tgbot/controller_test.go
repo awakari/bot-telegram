@@ -33,7 +33,6 @@ func TestMain(m *testing.M) {
 			"",
 			slog.Default(),
 			nil,
-			nil,
 			messages.Format{},
 		)
 		RegisterServiceServer(srv, c)

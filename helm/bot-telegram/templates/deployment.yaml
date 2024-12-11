@@ -31,8 +31,6 @@ spec:
       containers:
         - name: {{ .Chart.Name }}
           env:
-            - name: API_URI
-              value: "{{ .Values.api.uri }}"
             - name: API_MESSAGES_TYPE
               value: "{{ .Values.api.messages.type }}"
             - name: API_READER_URI
@@ -86,6 +84,15 @@ spec:
               value: "{{ .Values.api.queue.interestsCreated.name }}"
             - name: API_QUEUE_INTERESTS_CREATED_SUBJ
               value: "{{ .Values.api.queue.interestsCreated.subj }}"
+            - name: API_WRITER_URI
+              value: "{{ .Values.api.writer.uri }}"
+            - name: API_INTERESTS_URI
+              value: "{{ .Values.api.interests.uri }}"
+            - name: API_TOKEN_INTERNAL
+              valueFrom:
+                secretKeyRef:
+                  key: "{{ .Values.api.token.internal.key }}"
+                  name: "{{ .Values.api.token.internal.name }}"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

@@ -101,6 +101,15 @@ api:
       protocol: "http"
       path: "/v1/chat"
   uri: "api:50051"
+  interests:
+    uri: "http://interests-api:8080/v1"
+  writer:
+    backoff: "10s"
+    uri: "http://pub:8080/v1"
+  token:
+    internal:
+      key: "api-token-internal"
+      name: "auth"
   telegram:
     webhook:
       connections:

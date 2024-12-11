@@ -4,14 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	protoInterests "github.com/awakari/bot-telegram/api/grpc/interests"
+	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/service"
-	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/api/grpc/limits"
-	"github.com/awakari/client-sdk-go/api/grpc/subscriptions"
-	"github.com/awakari/client-sdk-go/model/subscription"
-	"github.com/awakari/client-sdk-go/model/subscription/condition"
-	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"regexp"
 	"strings"
@@ -43,7 +40,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 }
 
 func CreateBasicReplyHandlerFunc(
-	clientAwk api.Client,
+	svcInterests interests.Service,
 	groupId string,
 	svcReader reader.Service,
 	urlCallbackBase string,
@@ -56,11 +53,11 @@ func CreateBasicReplyHandlerFunc(
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
 		}
-		var sd subscription.Data
+		var sd interest.Data
 		if err == nil {
 			name := args[0]
 			keywords := args[1]
-			sd.Condition = condition.NewBuilder().
+			sd.Condition = interest.NewBuilder().
 				AnyOfWords(keywords).
 				BuildTextCondition()
 			sd.Description = name
@@ -69,10 +66,10 @@ func CreateBasicReplyHandlerFunc(
 		}
 		var subId string
 		if err == nil {
-			subId, err = create(tgCtx, clientAwk, groupId, sd)
+			subId, err = create(tgCtx, svcInterests, groupId, sd)
 		}
 		if err == nil {
-			err = Start(tgCtx, clientAwk, svcReader, urlCallbackBase, subId, groupId)
+			err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId)
 		} else {
 			err = fmt.Errorf("failed to register the interest:\n%w", err)
 		}
@@ -85,36 +82,35 @@ func CreateBasicReplyHandlerFunc(
 	}
 }
 
-func create(tgCtx telebot.Context, clientAwk api.Client, groupId string, sd subscription.Data) (id string, err error) {
-	groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), service.KeyGroupId, groupId)
+func create(tgCtx telebot.Context, svcInterests interests.Service, groupId string, sd interest.Data) (id string, err error) {
 	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-	id, err = clientAwk.CreateSubscription(groupIdCtx, userId, sd)
+	id, err = svcInterests.Create(context.TODO(), groupId, userId, sd)
 	switch {
-	case errors.Is(err, limits.ErrReached):
+	case errors.Is(err, interests.ErrLimitReached):
 		err = fmt.Errorf("%w, consider to request to increase your limit", errLimitReached)
 	}
 	return
 }
 
-func decodeNumOp(src subscriptions.Operation) (dst condition.NumOp) {
+func decodeNumOp(src protoInterests.Operation) (dst interest.NumOp) {
 	switch src {
-	case subscriptions.Operation_Gt:
-		dst = condition.NumOpGt
-	case subscriptions.Operation_Gte:
-		dst = condition.NumOpGte
-	case subscriptions.Operation_Eq:
-		dst = condition.NumOpEq
-	case subscriptions.Operation_Lte:
-		dst = condition.NumOpLte
-	case subscriptions.Operation_Lt:
-		dst = condition.NumOpLt
+	case protoInterests.Operation_Gt:
+		dst = interest.NumOpGt
+	case protoInterests.Operation_Gte:
+		dst = interest.NumOpGte
+	case protoInterests.Operation_Eq:
+		dst = interest.NumOpEq
+	case protoInterests.Operation_Lte:
+		dst = interest.NumOpLte
+	case protoInterests.Operation_Lt:
+		dst = interest.NumOpLt
 	default:
-		dst = condition.NumOpUndefined
+		dst = interest.NumOpUndefined
 	}
 	return
 }
 
-func validateSubscriptionData(sd subscription.Data) (err error) {
+func validateSubscriptionData(sd interest.Data) (err error) {
 	if sd.Description == "" {
 		err = errors.New("invalid interest:\nempty description")
 	}
@@ -124,12 +120,12 @@ func validateSubscriptionData(sd subscription.Data) (err error) {
 	return err
 }
 
-func validateCondition(cond condition.Condition) (err error) {
+func validateCondition(cond interest.Condition) (err error) {
 	switch tc := cond.(type) {
-	case condition.GroupCondition:
+	case interest.GroupCondition:
 		children := tc.GetGroup()
 		countChildren := len(children)
-		if tc.GetLogic() == condition.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
+		if tc.GetLogic() == interest.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
 			err = fmt.Errorf(
 				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to follow an additional interest instead",
 				errInvalidCondition,
@@ -144,7 +140,7 @@ func validateCondition(cond condition.Condition) (err error) {
 				}
 			}
 		}
-	case condition.TextCondition:
+	case interest.TextCondition:
 		lenTerms := len(tc.GetTerm())
 		if lenTerms < minTextCondTermsLength || lenTerms > maxTextCondTermsLength {
 			err = fmt.Errorf(

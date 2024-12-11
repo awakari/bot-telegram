@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/service/messages"
-	"github.com/awakari/client-sdk-go/api"
 	"github.com/bytedance/sonic"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
 	"google.golang.org/grpc/codes"
@@ -24,7 +23,6 @@ type controller struct {
 	svcReader       reader.Service
 	urlCallbackBase string
 	log             *slog.Logger
-	clientAwk       api.Client
 	tgBot           *telebot.Bot
 	msgFmt          messages.Format
 }
@@ -35,7 +33,6 @@ func NewController(
 	svcReader reader.Service,
 	urlCallbackBase string,
 	log *slog.Logger,
-	clientAwk api.Client,
 	tgBot *telebot.Bot,
 	msgFmt messages.Format,
 ) Controller {
@@ -45,7 +42,6 @@ func NewController(
 		svcReader:       svcReader,
 		urlCallbackBase: urlCallbackBase,
 		log:             log,
-		clientAwk:       clientAwk,
 		tgBot:           tgBot,
 		msgFmt:          msgFmt,
 	}

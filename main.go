@@ -7,6 +7,8 @@ import (
 	grpcApi "github.com/awakari/bot-telegram/api/grpc"
 	"github.com/awakari/bot-telegram/api/grpc/queue"
 	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
+	"github.com/awakari/bot-telegram/api/http/interests"
+	"github.com/awakari/bot-telegram/api/http/pub"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
@@ -14,8 +16,6 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
-	"github.com/awakari/client-sdk-go/api"
-	"github.com/awakari/client-sdk-go/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
@@ -48,12 +48,13 @@ func main() {
 	}
 	log := slog.New(slog.NewTextHandler(os.Stdout, &opts))
 
-	// init Awakari client
-	clientAwk, err := api.
-		NewClientBuilder().
-		ApiUri(cfg.Api.Uri).
-		Build()
-	defer clientAwk.Close()
+	svcPub := pub.NewService(http.DefaultClient, cfg.Api.Writer.Uri, cfg.Api.Token.Internal)
+	svcPub = pub.NewLogging(svcPub, log)
+	log.Info("initialized the Awakari publish API client")
+
+	svcInterests := interests.NewService(http.DefaultClient, cfg.Api.Interests.Uri, cfg.Api.Token.Internal)
+	svcInterests = interests.NewLogging(svcInterests, log)
+	log.Info("initialized the Awakari interests API client")
 
 	// init websub reader
 	clientHttp := http.Client{}
@@ -125,25 +126,23 @@ func main() {
 		SupportChatId: cfg.Api.Telegram.SupportChatId,
 	}
 	chanPostHandler := messages.ChanPostHandler{
-		ClientAwk: clientAwk,
+		SvcPub:    svcPub,
 		GroupId:   groupId,
 		Log:       log,
-		Writers:   map[string]model.Writer[*pb.CloudEvent]{},
 		Channels:  map[string]time.Time{},
 		ChansLock: &sync.Mutex{},
 		CfgMsgs:   cfg.Api.Messages,
 	}
-	defer chanPostHandler.Close()
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdStart:             subscriptions.StartHandler(clientAwk, svcReader, urlCallbackBase, groupId),
+		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcReader, urlCallbackBase, groupId),
 		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase),
-		subscriptions.CmdPageNext:          subscriptions.PageNext(clientAwk, svcReader, groupId, urlCallbackBase),
-		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(clientAwk, svcReader, groupId, urlCallbackBase),
+		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcReader, groupId, urlCallbackBase),
+		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcReader, groupId, urlCallbackBase),
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(clientAwk, groupId, svcReader, urlCallbackBase),
-		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(clientAwk, groupId, cfg),
+		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId, svcReader, urlCallbackBase),
+		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(svcPub, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
 	txtHandlers := map[string]telebot.HandlerFunc{}
@@ -234,7 +233,6 @@ func main() {
 		svcReader,
 		urlCallbackBase,
 		log,
-		clientAwk,
 		b,
 		fmtMsg,
 	)
@@ -250,14 +248,14 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(clientAwk, svcReader, groupId, urlCallbackBase)
+	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(svcInterests, svcReader, groupId, urlCallbackBase)
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			cmdTxt := tgCtx.Text()
 			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
 				arg := cmdTxt[len("/start "):]
-				err = subscriptions.Start(tgCtx, clientAwk, svcReader, urlCallbackBase, arg, groupId)
+				err = subscriptions.Start(tgCtx, svcInterests, svcReader, urlCallbackBase, arg, groupId)
 			} else {
 				chat := tgCtx.Chat()
 				switch chat.Type {
@@ -282,8 +280,8 @@ func main() {
 	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
-	b.Handle("/following", subscriptions.ListFollowing(clientAwk, svcReader, groupId, urlCallbackBase))
-	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(clientAwk, svcReader, groupId, urlCallbackBase))
+	b.Handle("/following", subscriptions.ListFollowing(svcInterests, svcReader, groupId, urlCallbackBase))
+	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(svcInterests, svcReader, groupId, urlCallbackBase))
 	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.com\">link</a>", telebot.ModeHTML)
@@ -315,7 +313,7 @@ func main() {
 		if strings.HasPrefix(chanUserName, cfg.Api.Telegram.PublicInterestChannelPrefix) && strings.HasPrefix(txt, "/start ") {
 			// public interest channel created by Awakari
 			arg := txt[len("/start "):]
-			err = subscriptions.Start(tgCtx, clientAwk, svcReader, urlCallbackBase, arg, groupId)
+			err = subscriptions.Start(tgCtx, svcInterests, svcReader, urlCallbackBase, arg, groupId)
 		} else {
 			err = chanPostHandler.Publish(tgCtx, chanUserName)
 		}
@@ -329,7 +327,7 @@ func main() {
 	go b.Start()
 
 	// chats websub handler (subscriber)
-	hChats := chats.NewHandler(cfg.Api.Reader.Uri, fmtMsg, urlCallbackBase, svcReader, b, clientAwk, groupId)
+	hChats := chats.NewHandler(cfg.Api.Reader.Uri, fmtMsg, urlCallbackBase, svcReader, b, svcInterests, groupId)
 	r := gin.Default()
 	r.
 		Group(cfg.Api.Reader.CallBack.Path).

@@ -1,0 +1,114 @@
+syntax = "proto3";
+
+package awakari.interests.api;
+
+option go_package = "api/grpc/interests";
+
+import "google/protobuf/timestamp.proto";
+
+// Create
+
+message CreateRequest {
+  string description = 1;
+  bool enabled = 2;
+  Condition cond = 3;
+  google.protobuf.Timestamp expires = 4;
+  bool public = 5;
+  string id = 6; // optional predefined id
+
+  bool discover = 100; // used to discover new sources
+}
+
+message CreateResponse {
+  string id = 1;
+}
+
+// Read
+
+message ReadRequest {
+  string id = 1;
+}
+
+message ReadResponse {
+  string description = 1;
+  bool enabled = 2;
+  Condition cond = 3;
+  google.protobuf.Timestamp expires = 4;
+  google.protobuf.Timestamp created = 5;
+  google.protobuf.Timestamp updated = 6;
+  bool public = 7;
+  int64 followers = 8;
+  bool own = 9;
+}
+
+// Delete
+
+message DeleteRequest {
+  string id = 1;
+}
+
+message DeleteResponse {
+}
+
+// Search
+
+// Search REST API conversion
+
+message Interest {
+  string id = 1;
+  string description = 2;
+  bool enabled = 3;
+  Condition cond = 4;
+  google.protobuf.Timestamp expires = 5;
+  google.protobuf.Timestamp created = 6;
+  google.protobuf.Timestamp updated = 7;
+  bool public = 8;
+  int64 followers = 9;
+}
+
+message SearchRestResponse {
+  repeated Interest subs = 1;
+}
+
+message Condition {
+  bool not = 1;
+  oneof cond {
+    GroupCondition gc = 2;
+    TextCondition tc = 3;
+    NumberCondition nc = 4;
+  }
+}
+
+message GroupCondition {
+  GroupLogic logic = 1;
+  repeated Condition group = 2;
+}
+
+message TextCondition {
+  string id = 1;
+  string key = 2;
+  string term = 3;
+  bool exact = 4;
+}
+
+message NumberCondition {
+  string id = 1;
+  string key = 2;
+  Operation op = 3;
+  double val = 4;
+}
+
+enum Operation {
+  Undefined = 0;
+  Gt = 1;
+  Gte = 2;
+  Eq = 3;
+  Lte = 4;
+  Lt = 5;
+}
+
+enum GroupLogic {
+  And = 0;
+  Or = 1;
+  Xor = 2;
+}
