@@ -93,17 +93,17 @@ func listButtons(
 		m = &telebot.ReplyMarkup{}
 		var rows []telebot.Row
 		var lastFollowers int64
-		for _, interest := range page {
+		for _, i := range page {
 			var subLinkedHere bool
-			lastFollowers = interest.Followers
+			lastFollowers = i.Followers
 			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
-			_, err = svcReader.GetCallback(groupIdCtx, interest.Id, reader.MakeCallbackUrl(urlCallBackBase, chatId))
+			_, err = svcReader.GetCallback(groupIdCtx, i.Id, reader.MakeCallbackUrl(urlCallBackBase, chatId))
 			if err == nil {
 				subLinkedHere = true
 			}
 			err = nil
 			if err == nil {
-				descr := interest.Description
+				descr := i.Description
 				if subLinkedHere {
 					descr += " ✓"
 				}
@@ -120,13 +120,13 @@ func listButtons(
 				btn := telebot.Btn{
 					Text: descr,
 				}
-				if interest.Public {
+				if i.Public {
 					btn.Text = "👁 " + btn.Text
 				}
 				if btnCmd == CmdStart && subLinkedHere {
-					btn.Data = fmt.Sprintf("%s %s", CmdStop, interest)
+					btn.Data = fmt.Sprintf("%s %s", CmdStop, i.Id)
 				} else {
-					btn.Data = fmt.Sprintf("%s %s", btnCmd, interest)
+					btn.Data = fmt.Sprintf("%s %s", btnCmd, i.Id)
 				}
 				row := m.Row(btn)
 				rows = append(rows, row)
