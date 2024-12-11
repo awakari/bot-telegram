@@ -136,7 +136,7 @@ func listButtons(
 			}
 		}
 		if len(page) == service.PageLimit {
-			cmdData := fmt.Sprintf("%s %s %s %d", CmdPageNext, btnCmd, page[len(page)-1], lastFollowers)
+			cmdData := fmt.Sprintf("%s %s %s %d", CmdPageNext, btnCmd, page[len(page)-1].Id, lastFollowers)
 			if public {
 				cmdData += " public"
 			}
