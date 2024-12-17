@@ -34,6 +34,11 @@ var ErrInvalid = errors.New("invalid request")
 var ErrLimitReached = errors.New("own interest limit reached")
 var ErrNotFound = errors.New("interest not found")
 
+var protoJsonUnmarshalOpts = protojson.UnmarshalOptions{
+	DiscardUnknown: true,
+	AllowPartial:   true,
+}
+
 func NewService(clientHttp *http.Client, url, token string) Service {
 	return service{
 		clientHttp: clientHttp,
@@ -91,7 +96,7 @@ func (svc service) Create(ctx context.Context, groupId, userId string, subData i
 
 	var respProto apiGrpc.CreateResponse
 	if err == nil {
-		err = protojson.Unmarshal(respData, &respProto)
+		err = protoJsonUnmarshalOpts.Unmarshal(respData, &respProto)
 	}
 
 	if err == nil {
@@ -132,7 +137,7 @@ func (svc service) Read(ctx context.Context, groupId, userId, subId string) (sub
 
 	var respProto apiGrpc.ReadResponse
 	if err == nil {
-		err = protojson.Unmarshal(respData, &respProto)
+		err = protoJsonUnmarshalOpts.Unmarshal(respData, &respProto)
 	}
 
 	if err == nil {
@@ -239,7 +244,7 @@ func (svc service) Search(ctx context.Context, groupId, userId string, q interes
 
 	var respProto apiGrpc.SearchRestResponse
 	if err == nil {
-		err = protojson.Unmarshal(respData, &respProto)
+		err = protoJsonUnmarshalOpts.Unmarshal(respData, &respProto)
 	}
 
 	if err == nil {
