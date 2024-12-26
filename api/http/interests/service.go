@@ -211,7 +211,7 @@ func (svc service) Search(ctx context.Context, groupId, userId string, q interes
 	}
 
 	if cursor.Id != "" {
-		reqUrl += "&id=" + cursor.Id
+		reqUrl += "&cursor=" + cursor.Id
 	}
 
 	if q.Public {
@@ -225,7 +225,7 @@ func (svc service) Search(ctx context.Context, groupId, userId string, q interes
 	}
 
 	var req *http.Request
-	req, err = http.NewRequestWithContext(ctx, http.MethodGet, svc.url, nil)
+	req, err = http.NewRequestWithContext(ctx, http.MethodGet, reqUrl, nil)
 
 	var resp *http.Response
 	if err == nil {
