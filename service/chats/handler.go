@@ -42,6 +42,7 @@ const keyHubChallenge = "hub.challenge"
 const keyHubTopic = "hub.topic"
 const linkSelfSuffix = ">; rel=\"self\""
 const keyAckCount = "X-Ack-Count"
+const deliveryInterval = 3 * time.Second // https://core.telegram.org/bots/faq#my-bot-is-hitting-limits-how-do-i-avoid-this
 
 func NewHandler(
 	topicPrefixBase string,
@@ -155,7 +156,10 @@ func (h handler) deliver(
 			},
 		},
 	})
-	for _, evt := range evts {
+	for i, evt := range evts {
+		if i > 0 {
+			time.Sleep(deliveryInterval) // try to avoid hitting the telegram delivery limit
+		}
 		var evtProto *pb.CloudEvent
 		evtProto, err = ceProto.ToProto(evt)
 		var dataTxt string
