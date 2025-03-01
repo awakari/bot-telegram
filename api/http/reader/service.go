@@ -8,10 +8,11 @@ import (
 	"github.com/bytedance/sonic"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Service interface {
-	CreateCallback(ctx context.Context, subId, url string) (err error)
+	CreateCallback(ctx context.Context, subId, url string, interval time.Duration) (err error)
 	GetCallback(ctx context.Context, subId, url string) (cb Callback, err error)
 	DeleteCallback(ctx context.Context, subId, url string) (err error)
 	ListByUrl(ctx context.Context, limit uint32, url, cursor string) (page []string, err error)
@@ -41,8 +42,8 @@ func NewService(clientHttp *http.Client, uriBase string) Service {
 	}
 }
 
-func (svc service) CreateCallback(ctx context.Context, subId, callbackUrl string) (err error) {
-	err = svc.updateCallback(ctx, subId, callbackUrl, modeSubscribe)
+func (svc service) CreateCallback(ctx context.Context, subId, callbackUrl string, interval time.Duration) (err error) {
+	err = svc.updateCallback(ctx, subId, callbackUrl, modeSubscribe, interval)
 	return
 }
 
@@ -74,7 +75,7 @@ func (svc service) GetCallback(ctx context.Context, subId, url string) (cb Callb
 }
 
 func (svc service) DeleteCallback(ctx context.Context, subId, callbackUrl string) (err error) {
-	err = svc.updateCallback(ctx, subId, callbackUrl, modeUnsubscribe)
+	err = svc.updateCallback(ctx, subId, callbackUrl, modeUnsubscribe, 0)
 	return
 }
 
@@ -120,7 +121,7 @@ func (svc service) ListByUrl(ctx context.Context, limit uint32, url, cursor stri
 	return
 }
 
-func (svc service) updateCallback(_ context.Context, subId, url, mode string) (err error) {
+func (svc service) updateCallback(_ context.Context, subId, url, mode string, interval time.Duration) (err error) {
 	topicUri := fmt.Sprintf(fmtTopicUri, svc.uriBase, FmtJson, subId)
 	data := map[string][]string{
 		keyHubCallback: {
@@ -133,8 +134,12 @@ func (svc service) updateCallback(_ context.Context, subId, url, mode string) (e
 			topicUri,
 		},
 	}
+	reqUri := topicUri
+	if interval > 0 {
+		reqUri += "?interval=" + interval.String()
+	}
 	var resp *http.Response
-	resp, err = svc.clientHttp.PostForm(topicUri, data)
+	resp, err = svc.clientHttp.PostForm(reqUri, data)
 	switch err {
 	case nil:
 		switch resp.StatusCode {

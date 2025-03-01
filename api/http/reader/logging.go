@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 )
 
 type serviceLogging struct {
@@ -18,10 +19,10 @@ func NewServiceLogging(svc Service, log *slog.Logger) Service {
 	}
 }
 
-func (sl serviceLogging) CreateCallback(ctx context.Context, subId, url string) (err error) {
-	err = sl.svc.CreateCallback(ctx, subId, url)
+func (sl serviceLogging) CreateCallback(ctx context.Context, subId, url string, interval time.Duration) (err error) {
+	err = sl.svc.CreateCallback(ctx, subId, url, interval)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.CreateCallback(%s, %s): err=%s", subId, url, err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.CreateCallback(%s, %s, %s): err=%s", subId, url, interval, err))
 	return
 }
 

@@ -10,11 +10,14 @@ import (
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
 	"gopkg.in/telebot.v3"
+	"html"
+	"time"
 )
 
 const CmdStart = "sub_start"
+const ReqStart = "sub_start"
 const MsgFmtChatLinked = "Following the interest %s in this chat. " +
-	"New results will appear here. " +
+	"New results will appear here with a minimum interval of %s. " +
 	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
 func StartHandler(
@@ -25,14 +28,36 @@ func StartHandler(
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		switch len(args) {
-		case 1: // ask for min delivery interval
+		case 1:
 			subId := args[0]
-			err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId)
+			err = StartIntervalRequest(tgCtx, subId)
+		case 3:
+			var interval time.Duration
+			interval, err = time.ParseDuration(args[2])
+			if err != nil {
+				err = errors.New(fmt.Sprintf("invalid interval value: %s", args[2]))
+			}
+			if interval < 0 {
+				err = errors.New("error: interval should not be negative")
+			}
+			if err == nil {
+				subId := args[1]
+				err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId, interval)
+			}
 		default:
-			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 2 arguments, got %d", len(args)))
+			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 3 arguments, got %d: %+v", len(args), args))
 		}
 		return
 	}
+}
+
+func StartIntervalRequest(tgCtx telebot.Context, interestId string) (err error) {
+	_ = tgCtx.Send("Reply a minimum notification interval, for example `0`, `1s`, `2m` or `3h`:", telebot.ModeMarkdownV2)
+	err = tgCtx.Send(ReqStart+" "+interestId, &telebot.ReplyMarkup{
+		ForceReply:  true,
+		Placeholder: "0",
+	})
+	return
 }
 
 func Start(
@@ -42,6 +67,7 @@ func Start(
 	urlCallbackBase string,
 	subId string,
 	groupId string,
+	interval time.Duration,
 ) (err error) {
 	ctx := context.TODO()
 	var userId string
@@ -52,13 +78,13 @@ func Start(
 		userId = fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
 	}
 	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID)
-	err = svcReader.CreateCallback(ctx, subId, urlCallback)
+	err = svcReader.CreateCallback(ctx, subId, urlCallback, interval)
 	switch {
 	case errors.Is(err, chats.ErrAlreadyExists):
 		// might be not an error, so try to re-link the subscription
 		err = svcReader.DeleteCallback(ctx, subId, urlCallback)
 		if err == nil {
-			err = svcReader.CreateCallback(ctx, subId, urlCallback)
+			err = svcReader.CreateCallback(ctx, subId, urlCallback, interval)
 		}
 	}
 	var subData interest.Data
@@ -68,11 +94,11 @@ func Start(
 	var subDescr string
 	switch err {
 	case nil:
-		subDescr = "named \"" + subData.Description + "\""
+		subDescr = "named \"" + html.EscapeString(subData.Description) + "\""
 	default:
 		// it's still ok to follow an interest created by a non-telegram user in Awakari web UI
 		subDescr = "id: <code>" + subId + "</code>"
 	}
-	err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr), telebot.ModeHTML, telebot.NoPreview)
+	err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
 	return
 }

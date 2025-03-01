@@ -141,7 +141,8 @@ func main() {
 		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcReader, groupId, urlCallbackBase),
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId, svcReader, urlCallbackBase),
+		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId),
+		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcReader, urlCallbackBase, groupId),
 		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(svcPub, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
@@ -255,7 +256,7 @@ func main() {
 			cmdTxt := tgCtx.Text()
 			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
 				arg := cmdTxt[len("/start "):]
-				err = subscriptions.Start(tgCtx, svcInterests, svcReader, urlCallbackBase, arg, groupId)
+				err = subscriptions.StartIntervalRequest(tgCtx, arg)
 			} else {
 				chat := tgCtx.Chat()
 				switch chat.Type {
@@ -313,7 +314,7 @@ func main() {
 		if strings.HasPrefix(chanUserName, cfg.Api.Telegram.PublicInterestChannelPrefix) && strings.HasPrefix(txt, "/start ") {
 			// public interest channel created by Awakari
 			arg := txt[len("/start "):]
-			err = subscriptions.Start(tgCtx, svcInterests, svcReader, urlCallbackBase, arg, groupId)
+			err = subscriptions.StartIntervalRequest(tgCtx, arg)
 		} else {
 			err = chanPostHandler.Publish(tgCtx, chanUserName)
 		}
@@ -358,7 +359,7 @@ func consumeQueueInterestsCreated(ctx context.Context, svcReader reader.Service,
 				}
 			}
 			if err == nil {
-				err = svcReader.CreateCallback(ctx, interestId, reader.MakeCallbackUrl(urlCallbackBase, chatId))
+				err = svcReader.CreateCallback(ctx, interestId, reader.MakeCallbackUrl(urlCallbackBase, chatId), 0)
 			}
 			if err != nil {
 				break

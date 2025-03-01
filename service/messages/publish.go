@@ -11,6 +11,7 @@ import (
 	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/telebot.v3"
+	"html"
 	"strconv"
 )
 
@@ -206,7 +207,7 @@ func publish(
 	case errors.Is(err, pub.ErrLimitReached):
 		err = errors.New(fmt.Sprintf("Message daily publishing limit reached. Consider to increase."))
 	default:
-		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, evt.Id), telebot.ModeHTML)
+		err = tgCtx.Send(fmt.Sprintf(msgFmtPublished, html.EscapeString(evt.Id)), telebot.ModeHTML)
 	}
 	return
 }

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	protoInterests "github.com/awakari/bot-telegram/api/grpc/interests"
 	"github.com/awakari/bot-telegram/api/http/interests"
-	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
@@ -39,12 +38,7 @@ func CreateBasicRequest(tgCtx telebot.Context) (err error) {
 	return
 }
 
-func CreateBasicReplyHandlerFunc(
-	svcInterests interests.Service,
-	groupId string,
-	svcReader reader.Service,
-	urlCallbackBase string,
-) service.ArgHandlerFunc {
+func CreateBasicReplyHandlerFunc(svcInterests interests.Service, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		if len(args) < 2 {
 			err = errCreateSubNotEnoughArgs
@@ -69,7 +63,7 @@ func CreateBasicReplyHandlerFunc(
 			subId, err = create(tgCtx, svcInterests, groupId, sd)
 		}
 		if err == nil {
-			err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId)
+			err = StartIntervalRequest(tgCtx, subId)
 		} else {
 			err = fmt.Errorf("failed to register the interest:\n%w", err)
 		}
