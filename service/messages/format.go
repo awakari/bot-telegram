@@ -166,7 +166,11 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	switch mode {
 	case FormatModeHtml:
 		txt += "<a href=\"" + obj + "\">" + obj + "</a>\n\n"
-		txt += "Interest: <a href=\"" + addrInterest + "\">" + subDescr + "</a>\n\n"
+		interestLnkTxt := subDescr
+		if interestLnkTxt == "" {
+			interestLnkTxt = addrInterest
+		}
+		txt += "Interest: <a href=\"" + addrInterest + "\">" + interestLnkTxt + "</a>\n\n"
 		if len(tags) > 0 {
 			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
 		}
