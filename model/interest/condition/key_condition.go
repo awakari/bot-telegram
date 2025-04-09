@@ -1,4 +1,4 @@
-package interest
+package condition
 
 type (
 	KeyCondition interface {
@@ -9,6 +9,7 @@ type (
 	keyCondition struct {
 		Condition Condition
 		Key       string
+		Id        string
 	}
 )
 
@@ -25,4 +26,8 @@ func (kc keyCondition) IsNot() bool {
 
 func (kc keyCondition) GetKey() string {
 	return kc.Key
+}
+
+func (kc keyCondition) GetId() string {
+	return kc.Id
 }

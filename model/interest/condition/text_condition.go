@@ -1,4 +1,4 @@
-package interest
+package condition
 
 type (
 	TextCondition interface {

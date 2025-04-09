@@ -76,6 +76,7 @@ message Condition {
     GroupCondition gc = 2;
     TextCondition tc = 3;
     NumberCondition nc = 4;
+    SemanticCondition sc = 5;
   }
 }
 
@@ -96,6 +97,11 @@ message NumberCondition {
   string key = 2;
   Operation op = 3;
   double val = 4;
+}
+
+message SemanticCondition {
+  string id = 1;
+  string query = 2;
 }
 
 enum Operation {

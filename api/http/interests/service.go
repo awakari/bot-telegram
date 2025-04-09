@@ -8,6 +8,7 @@ import (
 	apiGrpc "github.com/awakari/bot-telegram/api/grpc/interests"
 	"github.com/awakari/bot-telegram/model"
 	"github.com/awakari/bot-telegram/model/interest"
+	"github.com/awakari/bot-telegram/model/interest/condition"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
@@ -19,7 +20,7 @@ type Service interface {
 	Create(ctx context.Context, groupId, userId string, subData interest.Data) (id string, err error)
 	Read(ctx context.Context, groupId, userId, subId string) (subData interest.Data, err error)
 	Delete(ctx context.Context, groupId, userId, subId string) (err error)
-	Search(ctx context.Context, groupId, userId string, q interest.Query, cursor interest.Cursor) (page []*apiGrpc.Interest, err error)
+	Search(ctx context.Context, groupId, userId string, q interest.Query, cursor condition.Cursor) (page []*apiGrpc.Interest, err error)
 }
 
 type service struct {
@@ -193,7 +194,7 @@ func (svc service) Delete(ctx context.Context, groupId, userId, subId string) (e
 	return
 }
 
-func (svc service) Search(ctx context.Context, groupId, userId string, q interest.Query, cursor interest.Cursor) (page []*apiGrpc.Interest, err error) {
+func (svc service) Search(ctx context.Context, groupId, userId string, q interest.Query, cursor condition.Cursor) (page []*apiGrpc.Interest, err error) {
 
 	reqUrl := svc.url + "?sort="
 	switch q.Sort {
@@ -254,12 +255,12 @@ func (svc service) Search(ctx context.Context, groupId, userId string, q interes
 	return
 }
 
-func encodeCondition(src interest.Condition) (dst *apiGrpc.Condition) {
+func encodeCondition(src condition.Condition) (dst *apiGrpc.Condition) {
 	dst = &apiGrpc.Condition{
 		Not: src.IsNot(),
 	}
 	switch c := src.(type) {
-	case interest.GroupCondition:
+	case condition.GroupCondition:
 		var dstGroup []*apiGrpc.Condition
 		for _, childSrc := range c.GetGroup() {
 			childDst := encodeCondition(childSrc)
@@ -271,7 +272,7 @@ func encodeCondition(src interest.Condition) (dst *apiGrpc.Condition) {
 				Group: dstGroup,
 			},
 		}
-	case interest.TextCondition:
+	case condition.TextCondition:
 		dst.Cond = &apiGrpc.Condition_Tc{
 			Tc: &apiGrpc.TextCondition{
 				Key:   c.GetKey(),
@@ -279,7 +280,13 @@ func encodeCondition(src interest.Condition) (dst *apiGrpc.Condition) {
 				Exact: c.IsExact(),
 			},
 		}
-	case interest.NumberCondition:
+	case condition.SemanticCondition:
+		dst.Cond = &apiGrpc.Condition_Sc{
+			Sc: &apiGrpc.SemanticCondition{
+				Query: c.Query(),
+			},
+		}
+	case condition.NumberCondition:
 		dstOp := encodeNumOp(c.GetOperation())
 		dst.Cond = &apiGrpc.Condition_Nc{
 			Nc: &apiGrpc.NumberCondition{
@@ -292,17 +299,17 @@ func encodeCondition(src interest.Condition) (dst *apiGrpc.Condition) {
 	return
 }
 
-func encodeNumOp(src interest.NumOp) (dst apiGrpc.Operation) {
+func encodeNumOp(src condition.NumOp) (dst apiGrpc.Operation) {
 	switch src {
-	case interest.NumOpGt:
+	case condition.NumOpGt:
 		dst = apiGrpc.Operation_Gt
-	case interest.NumOpGte:
+	case condition.NumOpGte:
 		dst = apiGrpc.Operation_Gte
-	case interest.NumOpEq:
+	case condition.NumOpEq:
 		dst = apiGrpc.Operation_Eq
-	case interest.NumOpLte:
+	case condition.NumOpLte:
 		dst = apiGrpc.Operation_Lte
-	case interest.NumOpLt:
+	case condition.NumOpLt:
 		dst = apiGrpc.Operation_Lt
 	default:
 		dst = apiGrpc.Operation_Undefined
@@ -310,12 +317,12 @@ func encodeNumOp(src interest.NumOp) (dst apiGrpc.Operation) {
 	return
 }
 
-func decodeCondition(src *apiGrpc.Condition) (dst interest.Condition, err error) {
-	gc, nc, tc := src.GetGc(), src.GetNc(), src.GetTc()
+func decodeCondition(src *apiGrpc.Condition) (dst condition.Condition, err error) {
+	gc, nc, sc, tc := src.GetGc(), src.GetNc(), src.GetSc(), src.GetTc()
 	switch {
 	case gc != nil:
-		var group []interest.Condition
-		var childDst interest.Condition
+		var group []condition.Condition
+		var childDst condition.Condition
 		for _, childSrc := range gc.Group {
 			childDst, err = decodeCondition(childSrc)
 			if err != nil {
@@ -324,21 +331,26 @@ func decodeCondition(src *apiGrpc.Condition) (dst interest.Condition, err error)
 			group = append(group, childDst)
 		}
 		if err == nil {
-			dst = interest.NewGroupCondition(
-				interest.NewCondition(src.Not),
-				interest.GroupLogic(gc.GetLogic()),
+			dst = condition.NewGroupCondition(
+				condition.NewCondition(src.Not),
+				condition.GroupLogic(gc.GetLogic()),
 				group,
 			)
 		}
 	case nc != nil:
 		dstOp := decodeNumOp(nc.Op)
-		dst = interest.NewNumberCondition(
-			interest.NewKeyCondition(interest.NewCondition(src.Not), nc.GetKey()),
+		dst = condition.NewNumberCondition(
+			condition.NewKeyCondition(condition.NewCondition(src.Not), nc.GetKey()),
 			dstOp, nc.Val,
 		)
+	case sc != nil:
+		dst = condition.NewSemanticCondition(
+			condition.NewCondition(src.Not),
+			sc.GetId(), sc.GetQuery(),
+		)
 	case tc != nil:
-		dst = interest.NewTextCondition(
-			interest.NewKeyCondition(interest.NewCondition(src.Not), tc.GetKey()),
+		dst = condition.NewTextCondition(
+			condition.NewKeyCondition(condition.NewCondition(src.Not), tc.GetKey()),
 			tc.GetTerm(), tc.GetExact(),
 		)
 	default:
@@ -347,20 +359,20 @@ func decodeCondition(src *apiGrpc.Condition) (dst interest.Condition, err error)
 	return
 }
 
-func decodeNumOp(src apiGrpc.Operation) (dst interest.NumOp) {
+func decodeNumOp(src apiGrpc.Operation) (dst condition.NumOp) {
 	switch src {
 	case apiGrpc.Operation_Gt:
-		dst = interest.NumOpGt
+		dst = condition.NumOpGt
 	case apiGrpc.Operation_Gte:
-		dst = interest.NumOpGte
+		dst = condition.NumOpGte
 	case apiGrpc.Operation_Eq:
-		dst = interest.NumOpEq
+		dst = condition.NumOpEq
 	case apiGrpc.Operation_Lte:
-		dst = interest.NumOpLte
+		dst = condition.NumOpLte
 	case apiGrpc.Operation_Lt:
-		dst = interest.NumOpLt
+		dst = condition.NumOpLt
 	default:
-		dst = interest.NumOpUndefined
+		dst = condition.NumOpUndefined
 	}
 	return
 }

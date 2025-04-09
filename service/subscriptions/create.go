@@ -7,6 +7,7 @@ import (
 	protoInterests "github.com/awakari/bot-telegram/api/grpc/interests"
 	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/model/interest"
+	"github.com/awakari/bot-telegram/model/interest/condition"
 	"github.com/awakari/bot-telegram/service"
 	"gopkg.in/telebot.v3"
 	"regexp"
@@ -51,7 +52,7 @@ func CreateBasicReplyHandlerFunc(svcInterests interests.Service, groupId string)
 		if err == nil {
 			name := args[0]
 			keywords := args[1]
-			sd.Condition = interest.NewBuilder().
+			sd.Condition = condition.NewBuilder().
 				AnyOfWords(keywords).
 				BuildTextCondition()
 			sd.Description = name
@@ -86,20 +87,20 @@ func create(tgCtx telebot.Context, svcInterests interests.Service, groupId strin
 	return
 }
 
-func decodeNumOp(src protoInterests.Operation) (dst interest.NumOp) {
+func decodeNumOp(src protoInterests.Operation) (dst condition.NumOp) {
 	switch src {
 	case protoInterests.Operation_Gt:
-		dst = interest.NumOpGt
+		dst = condition.NumOpGt
 	case protoInterests.Operation_Gte:
-		dst = interest.NumOpGte
+		dst = condition.NumOpGte
 	case protoInterests.Operation_Eq:
-		dst = interest.NumOpEq
+		dst = condition.NumOpEq
 	case protoInterests.Operation_Lte:
-		dst = interest.NumOpLte
+		dst = condition.NumOpLte
 	case protoInterests.Operation_Lt:
-		dst = interest.NumOpLt
+		dst = condition.NumOpLt
 	default:
-		dst = interest.NumOpUndefined
+		dst = condition.NumOpUndefined
 	}
 	return
 }
@@ -114,12 +115,12 @@ func validateSubscriptionData(sd interest.Data) (err error) {
 	return err
 }
 
-func validateCondition(cond interest.Condition) (err error) {
+func validateCondition(cond condition.Condition) (err error) {
 	switch tc := cond.(type) {
-	case interest.GroupCondition:
+	case condition.GroupCondition:
 		children := tc.GetGroup()
 		countChildren := len(children)
-		if tc.GetLogic() == interest.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
+		if tc.GetLogic() == condition.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
 			err = fmt.Errorf(
 				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to follow an additional interest instead",
 				errInvalidCondition,
@@ -134,7 +135,7 @@ func validateCondition(cond interest.Condition) (err error) {
 				}
 			}
 		}
-	case interest.TextCondition:
+	case condition.TextCondition:
 		lenTerms := len(tc.GetTerm())
 		if lenTerms < minTextCondTermsLength || lenTerms > maxTextCondTermsLength {
 			err = fmt.Errorf(

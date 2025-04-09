@@ -1,6 +1,7 @@
 package interest
 
 import (
+	"github.com/awakari/bot-telegram/model/interest/condition"
 	"time"
 )
 
@@ -8,7 +9,7 @@ type Data struct {
 
 	// Condition represents the certain criteria to select the Subscription for the further routing.
 	// It's immutable once the Subscription is created.
-	Condition Condition
+	Condition condition.Condition
 
 	// Description is a human-readable subscription description.
 	Description string

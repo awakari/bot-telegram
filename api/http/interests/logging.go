@@ -5,6 +5,7 @@ import (
 	"fmt"
 	apiGrpc "github.com/awakari/bot-telegram/api/grpc/interests"
 	"github.com/awakari/bot-telegram/model/interest"
+	"github.com/awakari/bot-telegram/model/interest/condition"
 	"github.com/awakari/bot-telegram/util"
 	"log/slog"
 )
@@ -39,7 +40,7 @@ func (l logging) Delete(ctx context.Context, groupId, userId, subId string) (err
 	return
 }
 
-func (l logging) Search(ctx context.Context, groupId, userId string, q interest.Query, cursor interest.Cursor) (page []*apiGrpc.Interest, err error) {
+func (l logging) Search(ctx context.Context, groupId, userId string, q interest.Query, cursor condition.Cursor) (page []*apiGrpc.Interest, err error) {
 	page, err = l.svc.Search(ctx, groupId, userId, q, cursor)
 	l.log.Log(ctx, util.LogLevel(err), fmt.Sprintf("interests.Search(%s, %s, %v, %v): %d, %s", groupId, userId, q, cursor, len(page), err))
 	return

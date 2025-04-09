@@ -8,6 +8,7 @@ import (
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/model"
 	"github.com/awakari/bot-telegram/model/interest"
+	"github.com/awakari/bot-telegram/model/interest/condition"
 	"github.com/awakari/bot-telegram/service"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
@@ -21,7 +22,7 @@ const CmdPageNextFollowing = "following_next"
 func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-		cursor := interest.Cursor{}
+		cursor := condition.Cursor{}
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
 		if err == nil {
@@ -34,7 +35,7 @@ func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reade
 func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-		cursor := interest.Cursor{
+		cursor := condition.Cursor{
 			Id:        "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
 			Followers: math.MaxInt64,
 		}
@@ -50,7 +51,7 @@ func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Serv
 func PageNext(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
-		var cursor interest.Cursor
+		var cursor condition.Cursor
 		var public bool
 		if len(args) > 2 {
 			cursor.Id = args[1]
@@ -75,7 +76,7 @@ func listButtons(
 	svcReader reader.Service,
 	chatId int64,
 	btnCmd string,
-	cursor interest.Cursor,
+	cursor condition.Cursor,
 	public bool,
 	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
