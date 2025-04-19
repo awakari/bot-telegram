@@ -79,7 +79,7 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 	return
 }
 
-func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatMode, trunc, attrs bool) (txt string) {
+func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode FormatMode, trunc, attrs bool) (txt string) {
 	if attrs {
 		txt += f.convertHeaderAttrs(evt, mode, trunc)
 	}
@@ -161,12 +161,12 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		tagCount++
 	}
 	//
-	addrEvtAttrs := f.UriReaderEvtBase + evt.Id
-	addrInterest := "https://awakari.com/sub-details.html?id=" + subId
+	addrEvtAttrs := f.UriReaderEvtBase + evt.Id + "?interestId=" + interestId
+	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:
 		txt += "<a href=\"" + obj + "\">" + obj + "</a>\n\n"
-		interestLnkTxt := subDescr
+		interestLnkTxt := descr
 		if interestLnkTxt == "" {
 			interestLnkTxt = addrInterest
 		}
@@ -174,13 +174,13 @@ func (f Format) convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		if len(tags) > 0 {
 			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
 		}
-		txt += "<a href=\"" + addrEvtAttrs + "\">Event Attributes</a>"
+		txt += "<a href=\"" + addrEvtAttrs + "\">Result Details</a>"
 	default:
 		txt += obj + "\n\nInterest: " + addrInterest + "\n\n"
 		if len(tags) > 0 {
 			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
 		}
-		txt += "Event Attributes: " + addrEvtAttrs
+		txt += "Result Details: " + addrEvtAttrs
 	}
 	//
 	return
