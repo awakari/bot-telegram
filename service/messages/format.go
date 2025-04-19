@@ -161,7 +161,7 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		tagCount++
 	}
 	//
-	addrEvtAttrs := f.UriReaderEvtBase + evt.Id + "?interestId=" + interestId
+	addrEvtAttrs := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
 	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:
