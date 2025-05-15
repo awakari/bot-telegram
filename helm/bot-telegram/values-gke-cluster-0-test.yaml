@@ -1,0 +1,27 @@
+api:
+  reader:
+    uri: "http://reader.default.svc.cluster.local:8080/v1"
+  interests:
+    uri: "http://interests-api.default.svc.cluster.local:8080/v1"
+  writer:
+    uri: "http://pub.default.svc.cluster.local:8080/v1"
+  queue:
+    uri: "queue.default.svc.cluster.local:50051"
+    interestsCreated:
+      name: "bot-telegram-test"
+
+ingress:
+  hosts:
+    - host: test.tgbot.awakari.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: secret-bot-telegram-test-tls-server
+      hosts:
+        - test.tgbot.awakari.com
+
+priority:
+  class: "awk-min"
+  value: 0
+  preemptionPolicy: "PreemptLowerPriority"

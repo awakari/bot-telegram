@@ -6,6 +6,11 @@ on:
       - "*"
       - "!master"
 
+env:
+  COMPONENT: bot-telegram
+  VERSION: test
+  CHART_VERSION: 0.0.0
+
 jobs:
 
   build:
@@ -38,7 +43,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.23
+          go-version: 1.24
 
       - name: Install Protoc
         uses: arduino/setup-protoc@v1
@@ -47,5 +52,53 @@ jobs:
 
       - name: Test
         run: make test
-        env:
-          DB_URI_TEST_MONGO: ${{ secrets.DB_URI_TEST_MONGO }}
+
+      - name: Registry login
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
+
+      - name: Publish Test Image
+        run: make testing
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v1
+        with:
+          version: v3.12.0
+
+      - name: Helm Lint
+        run: |
+          helm lint helm/${COMPONENT}
+
+      - name: Helm Package
+        run: |
+          helm dependency update helm/${COMPONENT}
+          helm package helm/${COMPONENT}
+
+      - name: Google Cloud Auth
+        uses: 'google-github-actions/auth@v1'
+        with:
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+
+      - uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GKE_RPOJECT_ID }}
+
+      - name: Kubeconfig
+        run: |
+          gcloud components install gke-gcloud-auth-plugin
+          gcloud container clusters get-credentials ${{ secrets.GKE_CLUSTER_NAME_DEMO }} \
+            --region ${{ secrets.GKE_CLUSTER_REGION }} \
+            --project ${{ secrets.GKE_PROJECT_ID }}
+
+      - name: Helm Upgrade
+        run: |
+          helm upgrade --install ${COMPONENT}-test ${COMPONENT}-0.0.0.tgz \
+            --create-namespace \
+            --namespace test \
+            --values helm/bot-telegram/values-gke-cluster-0.yaml \
+            --values helm/bot-telegram/values-gke-cluster-0-test.yaml \
+            --set image.tag=$(git rev-parse --short HEAD) \
+            --set podAnnotations.commit=$(git rev-parse --short HEAD)

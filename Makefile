@@ -39,6 +39,9 @@ run: docker
 		--expose 8080 \
 		awakari/bot-telegram
 
+testing: docker
+	./scripts/testing.sh
+
 staging: docker
 	./scripts/staging.sh
 
