@@ -15,3 +15,8 @@ ingress:
     - secretName: secret-bot-telegram-test-tls-server
       hosts:
         - test.tgbot.awakari.com
+
+priority:
+  class: "awk-min"
+  value: 0
+  preemptionPolicy: "PreemptLowerPriority"
