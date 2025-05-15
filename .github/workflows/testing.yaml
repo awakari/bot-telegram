@@ -95,7 +95,7 @@ jobs:
 
       - name: Helm Upgrade
         run: |
-          helm upgrade --install ${COMPONENT}-test ${COMPONENT}-test-0.0.0.tgz \
+          helm upgrade --install ${COMPONENT}-test ${COMPONENT}-0.0.0.tgz \
             --create-namespace \
             --namespace test \
             --values helm/bot-telegram/values-gke-cluster-0.yaml \
