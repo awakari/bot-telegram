@@ -55,7 +55,7 @@ jobs:
           username: ${{ secrets.REGISTRY_USER }}
           password: ${{ secrets.REGISTRY_ACCESS_TOKEN }}
 
-      - name: Staging
+      - name: Publish Test Image
         run: make testing
 
       - name: Set up Helm
