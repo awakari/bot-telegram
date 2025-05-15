@@ -1,4 +1,15 @@
-# prod
+api:
+  reader:
+    uri: "http://reader.default.svc.cluster.local:8080/v1"
+  interests:
+    uri: "http://interests-api.default.svc.cluster.local:8080/v1"
+  writer:
+    uri: "http://pub.default.svc.cluster.local:8080/v1"
+  queue:
+    uri: "queue.default.svc.cluster.local:50051"
+    interestsCreated:
+      name: "bot-telegram-test"
+
 cert:
   acme:
     server: "https://acme-staging-v02.api.letsencrypt.org/directory"
