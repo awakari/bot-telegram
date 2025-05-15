@@ -10,12 +10,6 @@ api:
     interestsCreated:
       name: "bot-telegram-test"
 
-cert:
-  acme:
-    server: "https://acme-staging-v02.api.letsencrypt.org/directory"
-  issuer:
-    name: letsencrypt-staging
-
 ingress:
   hosts:
     - host: test.tgbot.awakari.com
