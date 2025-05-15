@@ -1,0 +1,17 @@
+# prod
+cert:
+  acme:
+    server: "https://acme-staging-v02.api.letsencrypt.org/directory"
+  issuer:
+    name: letsencrypt-staging
+
+ingress:
+  hosts:
+    - host: test.tgbot.awakari.com
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls:
+    - secretName: secret-bot-telegram-test-tls-server
+      hosts:
+        - test.tgbot.awakari.com

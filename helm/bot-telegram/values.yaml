@@ -131,3 +131,5 @@ cert:
 log:
   # https://pkg.go.dev/golang.org/x/exp/slog#Level
   level: -4
+secret:
+  name: "bot-telegram"
