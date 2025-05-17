@@ -1,0 +1,7 @@
+{
+       "welcome": "Welcome to the Awakari Bot!",
+       "subscribe": "Subscribe to events",
+       "unsubscribe": "Unsubscribe",
+       "language_changed": "Language changed to {{.Lang}}",
+       "help": "Available commands:\n/subscribe - Subscribe to events\n/unsubscribe - Unsubscribe\n/language - Change language"
+     }
