@@ -253,6 +253,7 @@ func main() {
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
+			log.Info("Handling /start command", "user_id", tgCtx.Sender().ID, "chat_type", tgCtx.Chat().Type)
 			cmdTxt := tgCtx.Text()
 			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
 				arg := cmdTxt[len("/start "):]
