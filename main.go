@@ -254,6 +254,7 @@ func main() {
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			log.Info("Handling /start command", "user_id", tgCtx.Sender().ID, "chat_type", tgCtx.Chat().Type)
+			log.Info("New feature added", "user_id", tgCtx.Sender().ID, "timestamp", time.Now())
 			cmdTxt := tgCtx.Text()
 			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
 				arg := cmdTxt[len("/start "):]
