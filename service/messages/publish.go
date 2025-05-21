@@ -7,6 +7,7 @@ import (
 	"github.com/awakari/bot-telegram/api/http/pub"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/util"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/segmentio/ksuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -64,8 +65,7 @@ func PublishBasicReplyHandlerFunc(
 	cfg config.Config,
 ) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		sender := tgCtx.Sender()
-		userId := fmt.Sprintf(service.FmtUserId, sender.ID)
+		userId := util.SenderToUserId(tgCtx)
 		evt := pb.CloudEvent{
 			Id:          ksuid.New().String(),
 			Source:      "https://t.me/" + tgCtx.Chat().Username,

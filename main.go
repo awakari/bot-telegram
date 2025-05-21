@@ -16,6 +16,7 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
+	"github.com/awakari/bot-telegram/util"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
@@ -58,7 +59,7 @@ func main() {
 
 	// init websub reader
 	clientHttp := http.Client{}
-	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri)
+	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri, cfg.Api.Token.Internal)
 	svcReader = reader.NewServiceLogging(svcReader, log)
 	urlCallbackBase := fmt.Sprintf(
 		"%s://%s:%d%s",
@@ -87,6 +88,7 @@ func main() {
 			context.Background(),
 			svcReader,
 			urlCallbackBase,
+			cfg.Api.GroupId,
 			svcQueue,
 			cfg.Api.Queue.InterestsCreated.Name,
 			cfg.Api.Queue.InterestsCreated.Subj,
@@ -136,7 +138,7 @@ func main() {
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcReader, urlCallbackBase, groupId),
-		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase),
+		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase, cfg.Api.GroupId),
 		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcReader, groupId, urlCallbackBase),
 		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcReader, groupId, urlCallbackBase),
 	}
@@ -340,7 +342,15 @@ func main() {
 	}
 }
 
-func consumeQueueInterestsCreated(ctx context.Context, svcReader reader.Service, urlCallbackBase string, svcQueue queue.Service, name, subj string, batchSize uint32) (err error) {
+func consumeQueueInterestsCreated(
+	ctx context.Context,
+	svcReader reader.Service,
+	urlCallbackBase string,
+	groupId string,
+	svcQueue queue.Service,
+	name, subj string,
+	batchSize uint32,
+) (err error) {
 	consume := func(evts []*pb.CloudEvent) (err error) {
 		for _, evt := range evts {
 			interestId := evt.GetTextData()
@@ -348,18 +358,18 @@ func consumeQueueInterestsCreated(ctx context.Context, svcReader reader.Service,
 			if userIdAttr, userIdPresent := evt.Attributes[ceKeyUserId]; userIdPresent {
 				userId = userIdAttr.GetCeString()
 			}
-			if !strings.HasPrefix(userId, service.PrefixUserId) {
+			if !strings.HasPrefix(userId, util.PrefixUserId) {
 				continue
 			}
 			var chatId int64
 			if err == nil {
-				chatId, err = strconv.ParseInt(userId[len(service.PrefixUserId):], 10, 64)
+				chatId, err = strconv.ParseInt(userId[len(util.PrefixUserId):], 10, 64)
 				if err != nil {
 					err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
 				}
 			}
 			if err == nil {
-				err = svcReader.CreateCallback(ctx, interestId, reader.MakeCallbackUrl(urlCallbackBase, chatId), 0)
+				err = svcReader.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
 			}
 			if err != nil {
 				break

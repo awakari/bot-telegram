@@ -9,6 +9,7 @@ import (
 	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/model/interest/condition"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/util"
 	"gopkg.in/telebot.v3"
 	"regexp"
 	"strings"
@@ -78,7 +79,7 @@ func CreateBasicReplyHandlerFunc(svcInterests interests.Service, groupId string)
 }
 
 func create(tgCtx telebot.Context, svcInterests interests.Service, groupId string, sd interest.Data) (id string, err error) {
-	userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+	userId := util.SenderToUserId(tgCtx)
 	id, err = svcInterests.Create(context.TODO(), groupId, userId, sd)
 	switch {
 	case errors.Is(err, interests.ErrLimitReached):

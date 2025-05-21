@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/awakari/bot-telegram/api/http/interests"
 	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
-	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/messages"
+	"github.com/awakari/bot-telegram/util"
 	"github.com/bytedance/sonic"
 	"github.com/bytedance/sonic/utf8"
 	"github.com/cenkalti/backoff/v4"
@@ -92,13 +92,13 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 		return
 	}
 
-	var subId string
+	var interestId string
 	topicParts := strings.Split(topic, "/")
 	topicPartsLen := len(topicParts)
 	if topicPartsLen > 0 {
-		subId = topicParts[topicPartsLen-1]
+		interestId = topicParts[topicPartsLen-1]
 	}
-	if subId == "" {
+	if interestId == "" {
 		ctx.String(http.StatusBadRequest, fmt.Sprintf("invalid self link header value in the request: %s", topic))
 		return
 	}
@@ -114,10 +114,13 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 		return
 	}
 
-	var subDescr string
-	userId := service.PrefixUserId + chatIdRaw
-	sub, _ := h.svcInterests.Read(context.TODO(), h.groupId, userId, subId)
-	subDescr = sub.Description
+	var interesDescr string
+	userId := ctx.Query("userId")
+	if userId == "" {
+		userId = util.PrefixUserId + chatIdRaw // legacy way to determine the user id
+	}
+	i, _ := h.svcInterests.Read(context.TODO(), h.groupId, userId, interestId)
+	interesDescr = i.Description
 
 	defer ctx.Request.Body.Close()
 	var evts []*ce.Event
@@ -128,7 +131,7 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	}
 
 	var countAck uint32
-	countAck, err = h.deliver(ctx, evts, subId, subDescr, chatId)
+	countAck, err = h.deliver(ctx, evts, interestId, userId, interesDescr, chatId)
 	if err == nil || countAck > 0 {
 		ctx.Writer.Header().Add(keyAckCount, strconv.FormatUint(uint64(countAck), 10))
 		ctx.Status(http.StatusOK)
@@ -142,8 +145,9 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 func (h handler) deliver(
 	ctx context.Context,
 	evts []*ce.Event,
-	subId string,
-	subDescr string,
+	interestId string,
+	interestDescr string,
+	userId string,
 	chatId int64,
 ) (
 	countAck uint32,
@@ -174,32 +178,37 @@ func (h handler) deliver(
 				TextData: dataTxt,
 			}
 		}
-		tgMsg := h.format.Convert(evtProto, subId, subDescr, messages.FormatModeHtml)
+		tgMsg := h.format.Convert(evtProto, interestId, interestDescr, messages.FormatModeHtml)
 		err = tgCtx.Send(tgMsg, telebot.ModeHTML)
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
-				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
+				go h.handleFloodError(ctx, tgCtx, interestId, userId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				errTb := &telebot.Error{}
 				if errors.As(err, &errTb) && errTb.Code == 403 {
 					fmt.Printf("Bot blocked: %s, removing the chat from the storage", err)
-					urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId)
-					err = h.svcReader.DeleteCallback(ctx, subId, urlCallback)
+					urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
+					err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+					if err != nil {
+						// legacy callbacks may be without user id parameter
+						urlCallback = apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
+						err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+					}
 					return
 				}
 				fmt.Printf("Failed to send message %+v to chat %d in HTML mode, cause: %s (%s)\n", tgMsg, chatId, err, reflect.TypeOf(err))
-				tgMsg = h.format.Convert(evtProto, subId, subDescr, messages.FormatModePlain)
+				tgMsg = h.format.Convert(evtProto, interestId, interestDescr, messages.FormatModePlain)
 				err = tgCtx.Send(tgMsg) // fallback: try to re-send as a plain text
 			}
 		}
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
-				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
+				go h.handleFloodError(ctx, tgCtx, interestId, userId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				fmt.Printf("Failed to send message %+v in plain text mode, cause: %s\n", tgMsg, err)
-				tgMsg = h.format.Convert(evtProto, subId, subDescr, messages.FormatModeRaw)
+				tgMsg = h.format.Convert(evtProto, interestId, interestDescr, messages.FormatModeRaw)
 				err = tgCtx.Send(tgMsg) // fallback: try to re-send as a raw text w/o file attachments
 			}
 		}
@@ -210,7 +219,7 @@ func (h handler) deliver(
 		if err != nil {
 			switch err.(type) {
 			case telebot.FloodError:
-				go h.handleFloodError(ctx, tgCtx, subId, chatId, err.(telebot.FloodError).RetryAfter)
+				go h.handleFloodError(ctx, tgCtx, interestId, userId, chatId, err.(telebot.FloodError).RetryAfter)
 			default:
 				fmt.Printf("FATAL: failed to send message %+v in raw text mode, cause: %s\n", tgMsg, err)
 				countAck++ // to skip
@@ -221,10 +230,15 @@ func (h handler) deliver(
 	return
 }
 
-func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, subId string, chatId int64, retryAfter int) {
-	urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId)
-	_ = h.svcReader.DeleteCallback(ctx, subId, urlCallback)
-	fmt.Printf("High message rate detected for the interest %s\n", subId)
+func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, interestId, userId string, chatId int64, retryAfter int) {
+	urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
+	err := h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+	if err != nil {
+		// legacy callbacks may be without user id parameter
+		urlCallback = apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
+		err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+	}
+	fmt.Printf("High message rate detected for the interest %s\n", interestId)
 	retryDuration := time.Duration(retryAfter) * time.Second
 	time.Sleep(retryDuration)
 	b := backoff.NewExponentialBackOff()
@@ -235,7 +249,7 @@ func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, su
 			"⚠ High message rate detected. "+
 				"Results streaming stopped to prevent a further flood. "+
 				"Typical cause: interest conditions are too vague. "+
-				"Review the <a href=\"https://awakari.com/sub-details.html?id="+subId+
+				"Review the <a href=\"https://awakari.com/sub-details.html?id="+interestId+
 				"\">interest</a> and make it more specific. "+
 				"Link it back to a chat later using the /start command of the bot.",
 			telebot.ModeHTML,

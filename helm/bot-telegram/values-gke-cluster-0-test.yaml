@@ -1,6 +1,6 @@
 api:
   reader:
-    uri: "http://reader.default.svc.cluster.local:8080/v1"
+    uri: "http://reader.default.svc.cluster.local:8080"
   interests:
     uri: "http://interests-api.default.svc.cluster.local:8080/v1"
   writer:
