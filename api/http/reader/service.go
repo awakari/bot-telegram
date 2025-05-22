@@ -154,8 +154,8 @@ func (svc service) updateCallback(ctx context.Context, interestId, groupId, user
 		},
 	}
 	reqUri := fmt.Sprintf("%s/v2?format=%s&interestId=%s", svc.uriBase, FmtJson, interestId)
-	if interval > 0 {
-		reqUri += "?interval=" + interval.String()
+	if interval > 0 && mode == modeSubscribe {
+		reqUri += "&interval=" + interval.String()
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUri, strings.NewReader(data.Encode()))
