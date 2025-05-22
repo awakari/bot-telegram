@@ -131,7 +131,7 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	}
 
 	var countAck uint32
-	countAck, err = h.deliver(ctx, evts, interestId, userId, interesDescr, chatId)
+	countAck, err = h.deliver(ctx, evts, interestId, interesDescr, userId, chatId)
 	if err == nil || countAck > 0 {
 		ctx.Writer.Header().Add(keyAckCount, strconv.FormatUint(uint64(countAck), 10))
 		ctx.Status(http.StatusOK)
