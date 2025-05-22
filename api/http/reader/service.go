@@ -62,7 +62,7 @@ func (svc service) Subscription(ctx context.Context, interestId, groupId, userId
 	)
 	var resp *http.Response
 	if err == nil {
-		req.Header.Set("Authorization", svc.tokenInternal)
+		req.Header.Set("Authorization", "Bearer "+svc.tokenInternal)
 		req.Header.Set(model.KeyGroupId, groupId)
 		req.Header.Set(model.KeyUserId, userId)
 		resp, err = svc.clientHttp.Do(req)
@@ -79,7 +79,8 @@ func (svc service) Subscription(ctx context.Context, interestId, groupId, userId
 		case http.StatusNotFound:
 			err = ErrNotFound
 		default:
-			err = fmt.Errorf("%w: response status %d", ErrInternal, resp.StatusCode)
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			err = fmt.Errorf("%w: response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
 		err = fmt.Errorf("%w: %s", ErrInternal, err)
@@ -108,7 +109,7 @@ func (svc service) InterestsByUrl(ctx context.Context, groupId, userId string, l
 	)
 	var resp *http.Response
 	if err == nil {
-		req.Header.Set("Authorization", svc.tokenInternal)
+		req.Header.Set("Authorization", "Bearer "+svc.tokenInternal)
 		req.Header.Set(model.KeyGroupId, groupId)
 		req.Header.Set(model.KeyUserId, userId)
 		resp, err = svc.clientHttp.Do(req)
@@ -126,7 +127,8 @@ func (svc service) InterestsByUrl(ctx context.Context, groupId, userId string, l
 		case http.StatusNotFound:
 			err = ErrNotFound
 		default:
-			err = fmt.Errorf("%w: response status %d", ErrInternal, resp.StatusCode)
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			err = fmt.Errorf("%w: response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
 		err = fmt.Errorf("%w: %s", ErrInternal, err)
@@ -159,7 +161,7 @@ func (svc service) updateCallback(ctx context.Context, interestId, groupId, user
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqUri, strings.NewReader(data.Encode()))
 	var resp *http.Response
 	if err == nil {
-		req.Header.Set("Authorization", svc.tokenInternal)
+		req.Header.Set("Authorization", "Bearer "+svc.tokenInternal)
 		req.Header.Set(model.KeyGroupId, groupId)
 		req.Header.Set(model.KeyUserId, userId)
 		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
@@ -176,8 +178,8 @@ func (svc service) updateCallback(ctx context.Context, interestId, groupId, user
 			err = fmt.Errorf("%w: callback already registered for the subscription %s", ErrConflict, interestId)
 		default:
 			defer resp.Body.Close()
-			respBody, _ := io.ReadAll(resp.Body)
-			err = fmt.Errorf("%w: unexpected create callback response %d, %s", ErrInternal, resp.StatusCode, string(respBody))
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			err = fmt.Errorf("%w: unexpected create callback response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
 		err = fmt.Errorf("%w: %s", ErrInternal, err)
