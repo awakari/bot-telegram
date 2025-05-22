@@ -79,7 +79,7 @@ func (svc service) Subscription(ctx context.Context, interestId, groupId, userId
 		case http.StatusNotFound:
 			err = ErrNotFound
 		default:
-			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x1000))
 			err = fmt.Errorf("%w: response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
@@ -127,7 +127,7 @@ func (svc service) InterestsByUrl(ctx context.Context, groupId, userId string, l
 		case http.StatusNotFound:
 			err = ErrNotFound
 		default:
-			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x1000))
 			err = fmt.Errorf("%w: response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
@@ -178,7 +178,7 @@ func (svc service) updateCallback(ctx context.Context, interestId, groupId, user
 			err = fmt.Errorf("%w: callback already registered for the subscription %s", ErrConflict, interestId)
 		default:
 			defer resp.Body.Close()
-			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x100))
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x1000))
 			err = fmt.Errorf("%w: unexpected create callback response %d, %s", ErrInternal, resp.StatusCode, string(body))
 		}
 	default:
