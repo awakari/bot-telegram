@@ -16,7 +16,6 @@ func Stop(svcReader reader.Service, urlCallbackBase, groupId string) service.Arg
 		interestId := args[0]
 		userId := util.SenderToUserId(tgCtx)
 		urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
-		urlCallbackOld := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
 		_, err = svcReader.Subscription(ctx, interestId, groupId, userId, urlCallback)
 		switch err {
 		case nil:
@@ -24,6 +23,7 @@ func Stop(svcReader reader.Service, urlCallbackBase, groupId string) service.Arg
 				err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
 			}
 		default:
+			urlCallbackOld := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
 			_, err = svcReader.Subscription(ctx, interestId, groupId, userId, urlCallbackOld)
 			if err == nil {
 				err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallbackOld)
