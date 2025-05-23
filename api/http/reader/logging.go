@@ -19,31 +19,31 @@ func NewServiceLogging(svc Service, log *slog.Logger) Service {
 	}
 }
 
-func (sl serviceLogging) CreateCallback(ctx context.Context, subId, url string, interval time.Duration) (err error) {
-	err = sl.svc.CreateCallback(ctx, subId, url, interval)
+func (sl serviceLogging) Subscribe(ctx context.Context, interestId, groupId, userId, url string, interval time.Duration) (err error) {
+	err = sl.svc.Subscribe(ctx, interestId, groupId, userId, url, interval)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.CreateCallback(%s, %s, %s): err=%s", subId, url, interval, err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.Subscribe(%s, %s, %s): err=%s", interestId, url, interval, err))
 	return
 }
 
-func (sl serviceLogging) GetCallback(ctx context.Context, subId, url string) (cb Callback, err error) {
-	cb, err = sl.svc.GetCallback(ctx, subId, url)
+func (sl serviceLogging) Subscription(ctx context.Context, interestId, groupId, userId, url string) (cb Subscription, err error) {
+	cb, err = sl.svc.Subscription(ctx, interestId, groupId, userId, url)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.GetCallback(%s, %s): %+v, err=%s", subId, url, cb, err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.Subscription(%s, %s): %+v, err=%s", interestId, url, cb, err))
 	return
 }
 
-func (sl serviceLogging) DeleteCallback(ctx context.Context, subId, url string) (err error) {
-	err = sl.svc.DeleteCallback(ctx, subId, url)
+func (sl serviceLogging) Unsubscribe(ctx context.Context, interestId, groupId, userId, url string) (err error) {
+	err = sl.svc.Unsubscribe(ctx, interestId, groupId, userId, url)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.DeleteCallback(%s, %s): err=%s", subId, url, err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.Unsubscribe(%s, %s): err=%s", interestId, url, err))
 	return
 }
 
-func (sl serviceLogging) ListByUrl(ctx context.Context, limit uint32, url, cursor string) (page []string, err error) {
-	page, err = sl.svc.ListByUrl(ctx, limit, url, cursor)
+func (sl serviceLogging) InterestsByUrl(ctx context.Context, groupId, userId string, limit uint32, url, cursor string) (page []string, err error) {
+	page, err = sl.svc.InterestsByUrl(ctx, groupId, userId, limit, url, cursor)
 	ll := sl.logLevel(err)
-	sl.log.Log(ctx, ll, fmt.Sprintf("reader.ListByUrl(%d, %s, %s): %d, err=%s", limit, url, cursor, len(page), err))
+	sl.log.Log(ctx, ll, fmt.Sprintf("reader.InterestsByUrl(%s, %s, %d, %s, %s): %d, err=%s", groupId, userId, limit, url, cursor, len(page), err))
 	return
 }
 

@@ -95,10 +95,11 @@ api:
   messages:
     type: "com_awakari_bot_telegram_v1"
   reader:
-    uri: "http://reader:8080/v1"
+    uri: "http://reader:8080"
     uriEvtBase: "https://awakari.com/pub-msg.html?id="
     callback:
       protocol: "http"
+      host: "bot-telegram"
       path: "/v1/chat"
   uri: "api:50051"
   interests:

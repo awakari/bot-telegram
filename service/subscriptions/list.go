@@ -10,6 +10,7 @@ import (
 	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/model/interest/condition"
 	"github.com/awakari/bot-telegram/service"
+	"github.com/awakari/bot-telegram/util"
 	"google.golang.org/grpc/metadata"
 	"gopkg.in/telebot.v3"
 	"math"
@@ -21,7 +22,7 @@ const CmdPageNextFollowing = "following_next"
 
 func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		userId := util.SenderToUserId(tgCtx)
 		cursor := condition.Cursor{}
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
@@ -34,7 +35,7 @@ func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reade
 
 func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
-		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		userId := util.SenderToUserId(tgCtx)
 		cursor := condition.Cursor{
 			Id:        "zzzzzzzz-zzzz-zzzz-zzzz-zzzzzzzzzzzz",
 			Followers: math.MaxInt64,
@@ -50,7 +51,7 @@ func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Serv
 
 func PageNext(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
-		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		userId := util.SenderToUserId(tgCtx)
 		var cursor condition.Cursor
 		var public bool
 		if len(args) > 2 {
@@ -97,8 +98,10 @@ func listButtons(
 		for _, i := range page {
 			var subLinkedHere bool
 			lastFollowers = i.Followers
-			groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
-			_, err = svcReader.GetCallback(groupIdCtx, i.Id, reader.MakeCallbackUrl(urlCallBackBase, chatId))
+			_, err = svcReader.Subscription(context.TODO(), i.Id, groupId, userId, reader.MakeCallbackUrl(urlCallBackBase, chatId, userId))
+			if err != nil {
+				_, err = svcReader.Subscription(context.TODO(), i.Id, groupId, userId, reader.MakeCallbackUrl(urlCallBackBase, chatId, ""))
+			}
 			if err == nil {
 				subLinkedHere = true
 			}
@@ -157,7 +160,7 @@ func listButtons(
 func ListFollowing(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
-		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		userId := util.SenderToUserId(tgCtx)
 		var m *telebot.ReplyMarkup
 		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, "", urlCallBackBase)
 		if err == nil {
@@ -170,7 +173,7 @@ func ListFollowing(svcInterests interests.Service, svcReader reader.Service, gro
 func PageNextFollowing(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
-		userId := fmt.Sprintf(service.FmtUserId, tgCtx.Sender().ID)
+		userId := util.SenderToUserId(tgCtx)
 		var cursor string
 		if len(args) > 0 {
 			cursor = args[0]
@@ -193,9 +196,10 @@ func listButtonsFollowing(
 	cursor string,
 	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
-	cbUrl := reader.MakeCallbackUrl(urlCallBackBase, chatId)
+	cbUrl := reader.MakeCallbackUrl(urlCallBackBase, chatId, "") // makes a prefix w/o user id appended
 	var interestIds []string
-	interestIds, err = svcReader.ListByUrl(groupIdCtx, service.PageLimit, cbUrl, cursor)
+	interestIds, err = svcReader.InterestsByUrl(groupIdCtx, groupId, userId, service.PageLimit, cbUrl, cursor)
+	interestIds = append(interestIds)
 	if err == nil {
 		m = &telebot.ReplyMarkup{}
 		var sub interest.Data
