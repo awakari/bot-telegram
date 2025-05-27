@@ -38,6 +38,7 @@ const FmtJson = "json"
 var ErrInternal = errors.New("internal failure")
 var ErrConflict = errors.New("conflict")
 var ErrNotFound = errors.New("not found")
+var ErrPermitExhausted = errors.New("permit exhausted")
 
 func NewService(clientHttp *http.Client, uriBase, tokenInternal string) Service {
 	return service{
@@ -176,6 +177,8 @@ func (svc service) updateCallback(ctx context.Context, interestId, groupId, user
 			err = fmt.Errorf("%w: callback not found for the subscription %s", ErrConflict, interestId)
 		case http.StatusConflict:
 			err = fmt.Errorf("%w: callback already registered for the subscription %s", ErrConflict, interestId)
+		case http.StatusTooManyRequests:
+			err = ErrPermitExhausted
 		default:
 			defer resp.Body.Close()
 			body, _ := io.ReadAll(io.LimitReader(resp.Body, 0x1000))

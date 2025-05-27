@@ -16,19 +16,15 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
-	"github.com/awakari/bot-telegram/util"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/status"
 	"gopkg.in/telebot.v3"
 	"log/slog"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -352,29 +348,30 @@ func consumeQueueInterestsCreated(
 	batchSize uint32,
 ) (err error) {
 	consume := func(evts []*pb.CloudEvent) (err error) {
-		for _, evt := range evts {
-			interestId := evt.GetTextData()
-			var userId string
-			if userIdAttr, userIdPresent := evt.Attributes[ceKeyUserId]; userIdPresent {
-				userId = userIdAttr.GetCeString()
-			}
-			if !strings.HasPrefix(userId, util.PrefixUserId) {
-				continue
-			}
-			var chatId int64
-			if err == nil {
-				chatId, err = strconv.ParseInt(userId[len(util.PrefixUserId):], 10, 64)
-				if err != nil {
-					err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
-				}
-			}
-			if err == nil {
-				err = svcReader.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
-			}
-			if err != nil {
-				break
-			}
-		}
+		// commented because the bot should not consume the user's subscriptions permits anymore
+		//for _, evt := range evts {
+		//    interestId := evt.GetTextData()
+		//    var userId string
+		//    if userIdAttr, userIdPresent := evt.Attributes[ceKeyUserId]; userIdPresent {
+		//        userId = userIdAttr.GetCeString()
+		//    }
+		//    if !strings.HasPrefix(userId, util.PrefixUserId) {
+		//        continue
+		//    }
+		//    var chatId int64
+		//    if err == nil {
+		//        chatId, err = strconv.ParseInt(userId[len(util.PrefixUserId):], 10, 64)
+		//        if err != nil {
+		//            err = status.Error(codes.InvalidArgument, fmt.Sprintf("User id should end with numeric id: %s, %s", userId, err))
+		//        }
+		//    }
+		//    if err == nil {
+		//        err = svcReader.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
+		//    }
+		//    if err != nil {
+		//        break
+		//    }
+		//}
 		return
 	}
 	for {

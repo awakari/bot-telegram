@@ -80,8 +80,7 @@ func Start(
 	}
 	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
 	err = svcReader.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
-	switch {
-	case errors.Is(err, chats.ErrAlreadyExists):
+	if errors.Is(err, chats.ErrAlreadyExists) {
 		// might be not an error, so try to re-link the subscription
 		err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
 		if err != nil {
@@ -92,18 +91,23 @@ func Start(
 			err = svcReader.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
 		}
 	}
-	var subData interest.Data
-	if err == nil {
+	switch {
+	case err == nil:
+		var subData interest.Data
 		subData, err = svcInterests.Read(context.TODO(), groupId, userId, interestId)
-	}
-	var subDescr string
-	switch err {
-	case nil:
-		subDescr = "named \"" + html.EscapeString(subData.Description) + "\""
+		var subDescr string
+		switch err {
+		case nil:
+			subDescr = "named \"" + html.EscapeString(subData.Description) + "\""
+		default:
+			// it's still ok to follow an interest created by a non-telegram user in Awakari web UI
+			subDescr = "id: <code>" + interestId + "</code>"
+		}
+		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
+	case errors.Is(err, reader.ErrPermitExhausted):
+		err = tgCtx.Send("Error: subscription count limit reached", telebot.ModeHTML, telebot.NoPreview)
 	default:
-		// it's still ok to follow an interest created by a non-telegram user in Awakari web UI
-		subDescr = "id: <code>" + interestId + "</code>"
+		err = tgCtx.Send("Unexpected failure", telebot.ModeHTML, telebot.NoPreview)
 	}
-	err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
 	return
 }
