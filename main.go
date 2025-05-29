@@ -298,7 +298,7 @@ func main() {
 				case telebot.ChatSuperGroup:
 					err = subListHandlerFunc(tgCtx)
 				case telebot.ChatPrivate:
-					err = service.DonationMessagePin(tgCtx)
+					// err = service.DonationMessagePin(tgCtx)
 					err = subListHandlerFunc(tgCtx)
 				default:
 					err = fmt.Errorf("unsupported chat type (supported options: \"private\", \"group\", \"supergroup\"): %s", chat.Type)
@@ -352,7 +352,7 @@ func main() {
 		return
 	})
 	b.Handle(telebot.OnAddedToGroup, func(tgCtx telebot.Context) error {
-		err = service.DonationMessagePin(tgCtx)
+		// err = service.DonationMessagePin(tgCtx)
 		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
 	b.Handle(telebot.OnChatMember, service.ErrorHandlerFunc(hPaid.Handle))
