@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package awakari.usage.limits;
 
-option go_package = "api/grpc/limits";
+option go_package = "api/grpc/usage/limits";
 
 import "api/grpc/usage/subject/subject.proto";
 import "google/protobuf/timestamp.proto";
