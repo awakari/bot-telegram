@@ -105,7 +105,16 @@ func Start(
 		}
 		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
 	case errors.Is(err, reader.ErrPermitExhausted):
-		err = tgCtx.Send("Error: subscription count limit reached", telebot.ModeHTML, telebot.NoPreview)
+		err = tgCtx.Send("Subscription count limit reached", &telebot.ReplyMarkup{
+			InlineKeyboard: [][]telebot.InlineButton{
+				{
+					telebot.InlineButton{
+						Text: "Increase to 10",
+						URL:  "https://t.me/tribute/app?startapp=sv5Q",
+					},
+				},
+			},
+		})
 	default:
 		err = tgCtx.Send("Unexpected failure", telebot.ModeHTML, telebot.NoPreview)
 	}
