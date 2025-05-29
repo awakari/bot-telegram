@@ -15,3 +15,8 @@ ingress:
     - secretName: secret-bot-telegram-tls-server
       hosts:
         - tgbot.awakari.com
+
+api:
+  usage:
+    limits:
+      subs: "-1002672306001:10"

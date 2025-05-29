@@ -20,4 +20,7 @@ func TestConfig(t *testing.T) {
 	assert.Equal(t, uint16(56789), cfg.Api.Telegram.Webhook.Port)
 	assert.Equal(t, uint16(45678), cfg.Api.Telegram.Bot.Port)
 	assert.Equal(t, 4, cfg.Log.Level)
+	assert.Equal(t, cfg.Api.Usage.Limits.Subscriptions, map[int64]int64{
+		-1002672306001: 10,
+	})
 }

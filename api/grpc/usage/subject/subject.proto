@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package awakari.usage.subject;
+
+option go_package = "github.com/awakari/bot-telegram/api/grpc/usage/subject";
+
+enum Subject {
+  Undefined = 0;
+  Interests = 1;
+  PublishHourly = 2;
+  PublishDaily = 3;
+  InterestsPublic = 4;
+  Subscriptions = 5;
+}

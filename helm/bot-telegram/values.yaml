@@ -123,6 +123,15 @@ api:
       batchSize: 10
       name: "bot-telegram"
       subj: "interests-created"
+  usage:
+    uri: "usage:50051"
+    conn:
+      count:
+        init: 1
+        max: 2
+      idleTimeout: "15m"
+    limits:
+      subs: {}
 cert:
   acme:
     email: "awakari@awakari.com"

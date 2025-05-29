@@ -35,6 +35,19 @@ type Config struct {
 		Token struct {
 			Internal string `envconfig:"API_TOKEN_INTERNAL" required:"true"`
 		}
+		Usage struct {
+			Uri        string `envconfig:"API_USAGE_URI" default:"usage:50051" required:"true"`
+			Connection struct {
+				Count struct {
+					Init uint32 `envconfig:"API_USAGE_CONN_COUNT_INIT" default:"1" required:"true"`
+					Max  uint32 `envconfig:"API_USAGE_CONN_COUNT_MAX" default:"10" required:"true"`
+				}
+				IdleTimeout time.Duration `envconfig:"API_USAGE_CONN_IDLE_TIMEOUT" default:"15m" required:"true"`
+			}
+			Limits struct {
+				Subscriptions map[int64]int64 `envconfig:"API_USAGE_LIMITS_SUBSCRIPTIONS" default:"-1002672306001:10" required:"true"`
+			}
+		}
 	}
 	Log struct {
 		Level int `envconfig:"LOG_LEVEL" default:"-4" required:"true"`

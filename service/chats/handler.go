@@ -117,7 +117,7 @@ func (h handler) DeliverMessages(ctx *gin.Context) {
 	var interesDescr string
 	userId := ctx.Query("userId")
 	if userId == "" {
-		userId = util.PrefixUserId + chatIdRaw // legacy way to determine the user id
+		userId = util.TelegramToAwakariUserId(chatId) // legacy way to determine the user id
 	}
 	i, _ := h.svcInterests.Read(context.TODO(), h.groupId, userId, interestId)
 	interesDescr = i.Description

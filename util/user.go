@@ -5,12 +5,17 @@ import (
 	"strconv"
 )
 
-const PrefixUserId = "tg://user?id="
+const prefixUserId = "tg://user?id="
 
 func SenderToUserId(ctxTg telebot.Context) (id string) {
 	sender := ctxTg.Sender()
 	if sender != nil {
-		id = PrefixUserId + strconv.FormatInt(sender.ID, 10)
+		id = TelegramToAwakariUserId(sender.ID)
 	}
+	return
+}
+
+func TelegramToAwakariUserId(tgUserId int64) (id string) {
+	id = prefixUserId + strconv.FormatInt(tgUserId, 10)
 	return
 }

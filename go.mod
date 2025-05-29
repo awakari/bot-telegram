@@ -11,6 +11,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/microcosm-cc/bluemonday v1.0.27
+	github.com/processout/grpc-go-pool v1.2.1
 	github.com/segmentio/ksuid v1.0.4
 	github.com/stretchr/testify v1.10.0
 	google.golang.org/grpc v1.71.1

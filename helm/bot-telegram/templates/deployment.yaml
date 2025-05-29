@@ -93,6 +93,17 @@ spec:
                 secretKeyRef:
                   key: "{{ .Values.api.token.internal.key }}"
                   name: "{{ .Values.api.token.internal.name }}"
+
+            - name: API_USAGE_LIMITS_SUBSCRIPTIONS
+              value: "{{ .Values.api.usage.limits.subs }}"
+            - name: API_USAGE_URI
+              value: "{{ .Values.api.usage.uri }}"
+            - name: API_USAGE_CONN_COUNT_INIT
+              value: "{{ .Values.api.usage.conn.count.init }}"
+            - name: API_USAGE_CONN_COUNT_MAX
+              value: "{{ .Values.api.usage.conn.count.max }}"
+            - name: API_USAGE_CONN_IDLE_TIMEOUT
+              value: "{{ .Values.api.usage.conn.idleTimeout }}"
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"

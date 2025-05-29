@@ -4,21 +4,24 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	grpcApi "github.com/awakari/bot-telegram/api/grpc"
+	apiGrpc "github.com/awakari/bot-telegram/api/grpc"
 	"github.com/awakari/bot-telegram/api/grpc/queue"
-	grpcApiTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
+	apiGrpcTgBot "github.com/awakari/bot-telegram/api/grpc/tgbot"
+	apiGrpcUsageLimits "github.com/awakari/bot-telegram/api/grpc/usage/limits"
 	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/api/http/pub"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
+	"github.com/awakari/bot-telegram/service/limits"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
+	grpcpool "github.com/processout/grpc-go-pool"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"gopkg.in/telebot.v3"
@@ -29,8 +32,6 @@ import (
 	"sync"
 	"time"
 )
-
-const ceKeyUserId = "awakariuserid"
 
 func main() {
 
@@ -95,6 +96,22 @@ func main() {
 		}
 	}()
 
+	connPoolLimits, err := grpcpool.New(
+		func() (*grpc.ClientConn, error) {
+			return grpc.NewClient(cfg.Api.Usage.Uri, grpc.WithTransportCredentials(insecure.NewCredentials()))
+		},
+		int(cfg.Api.Usage.Connection.Count.Init),
+		int(cfg.Api.Usage.Connection.Count.Max),
+		cfg.Api.Usage.Connection.IdleTimeout,
+	)
+	if err != nil {
+		panic(err)
+	}
+	defer connPoolLimits.Close()
+	clientLimits := apiGrpcUsageLimits.NewClientPool(connPoolLimits)
+	svcLimits := limits.NewService(clientLimits)
+	svcLimits = limits.NewLogging(svcLimits, log)
+
 	// init events format, see https://core.telegram.org/bots/api#html-style for details
 	htmlPolicy := bluemonday.NewPolicy()
 	htmlPolicy.AllowStandardURLs()
@@ -150,6 +167,13 @@ func main() {
 		TxtHandlers:   txtHandlers,
 	}
 
+	hPaid := service.PaidChatMemberHandler{
+		GroupId:           groupId,
+		Log:               log,
+		LimitByChatIdSubs: cfg.Api.Usage.Limits.Subscriptions,
+		SvcLimits:         svcLimits,
+	}
+
 	// init Telegram bot
 	s := telebot.Settings{
 		Client: &http.Client{
@@ -166,6 +190,15 @@ func main() {
 			Listen:         fmt.Sprintf(":%d", cfg.Api.Telegram.Webhook.Port),
 			MaxConnections: int(cfg.Api.Telegram.Webhook.ConnMax),
 			SecretToken:    cfg.Api.Telegram.Webhook.Token,
+			AllowedUpdates: []string{
+				"callback_query",
+				"channel_post",
+				"chat_member",
+				"chosen_inline_result",
+				"inline_query",
+				"message",
+				"poll",
+			},
 		},
 		Token: cfg.Api.Telegram.Token,
 	}
@@ -226,7 +259,7 @@ func main() {
 	}
 
 	// init the Telegram Bot grpc service
-	controllerGrpc := grpcApiTgBot.NewController(
+	controllerGrpc := apiGrpcTgBot.NewController(
 		[]byte(cfg.Api.Telegram.Token),
 		chanPostHandler,
 		svcReader,
@@ -237,7 +270,7 @@ func main() {
 	)
 	go func() {
 		log.Info(fmt.Sprintf("starting to listen the grpc API @ port #%d...", cfg.Api.Telegram.Bot.Port))
-		err = grpcApi.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
+		err = apiGrpc.Serve(cfg.Api.Telegram.Bot.Port, controllerGrpc)
 		if err != nil {
 			panic(err)
 		}
@@ -322,6 +355,7 @@ func main() {
 		err = service.DonationMessagePin(tgCtx)
 		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
+	b.Handle(telebot.OnChatMember, service.ErrorHandlerFunc(hPaid.Handle))
 	//
 	go b.Start()
 
@@ -352,7 +386,7 @@ func consumeQueueInterestsCreated(
 		//for _, evt := range evts {
 		//    interestId := evt.GetTextData()
 		//    var userId string
-		//    if userIdAttr, userIdPresent := evt.Attributes[ceKeyUserId]; userIdPresent {
+		//    if userIdAttr, userIdPresent := evt.Attributes["awakariuserid"]; userIdPresent {
 		//        userId = userIdAttr.GetCeString()
 		//    }
 		//    if !strings.HasPrefix(userId, util.PrefixUserId) {
