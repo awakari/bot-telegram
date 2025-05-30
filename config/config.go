@@ -45,7 +45,9 @@ type Config struct {
 				IdleTimeout time.Duration `envconfig:"API_USAGE_CONN_IDLE_TIMEOUT" default:"15m" required:"true"`
 			}
 			Limits struct {
-				Subscriptions map[int64]int64 `envconfig:"API_USAGE_LIMITS_SUBSCRIPTIONS" default:"-1002672306001:10" required:"true"`
+				Interests       map[int64]int64 `envconfig:"API_USAGE_LIMITS_INTERESTS" required:"true"`
+				InterestsPublic map[int64]int64 `envconfig:"API_USAGE_LIMITS_INTERESTS_PUBLIC" required:"true"`
+				Subscriptions   map[int64]int64 `envconfig:"API_USAGE_LIMITS_SUBSCRIPTIONS" required:"true"`
 			}
 		}
 	}

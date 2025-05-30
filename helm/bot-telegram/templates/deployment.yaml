@@ -95,7 +95,12 @@ spec:
                   name: "{{ .Values.api.token.internal.name }}"
 
             - name: API_USAGE_LIMITS_SUBSCRIPTIONS
-              value: "{{ .Values.api.usage.limits.subs }}"
+              value: "{{ .Values.api.usage.limits.subscriptions }}"
+            - name: API_USAGE_LIMITS_INTERESTS
+              value: "{{ .Values.api.usage.limits.interests }}"
+            - name: API_USAGE_LIMITS_INTERESTS_PUBLIC
+              value: "{{ .Values.api.usage.limits.interestsPublic }}"
+
             - name: API_USAGE_URI
               value: "{{ .Values.api.usage.uri }}"
             - name: API_USAGE_CONN_COUNT_INIT

@@ -131,7 +131,7 @@ api:
         max: 2
       idleTimeout: "15m"
     limits:
-      subs: {}
+      subscriptions: {}
 cert:
   acme:
     email: "awakari@awakari.com"

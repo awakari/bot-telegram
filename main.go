@@ -168,10 +168,10 @@ func main() {
 	}
 
 	hPaid := service.PaidChatMemberHandler{
-		GroupId:           groupId,
-		Log:               log,
-		LimitByChatIdSubs: cfg.Api.Usage.Limits.Subscriptions,
-		SvcLimits:         svcLimits,
+		GroupId:                    groupId,
+		Log:                        log,
+		LimitByChatIdSubscriptions: cfg.Api.Usage.Limits.Subscriptions,
+		SvcLimits:                  svcLimits,
 	}
 
 	// init Telegram bot

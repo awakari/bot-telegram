@@ -19,4 +19,6 @@ ingress:
 api:
   usage:
     limits:
-      subs: "-1002672306001:10"
+      interestsPublic: "-1002258438008:1"
+      interests: "-1002666141766:5,-1002579740404:10"
+      subscriptions: "-1002672306001:10,-1002582439931:20"
