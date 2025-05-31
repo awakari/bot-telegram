@@ -30,7 +30,7 @@ func Stop(svcReader reader.Service, urlCallbackBase, groupId string) service.Arg
 			}
 		}
 		if err == nil {
-			_ = tgCtx.Send("Stopped following the interest in this chat")
+			_ = tgCtx.Send("Unsubscribed from the interest in this chat")
 		}
 		return
 	}

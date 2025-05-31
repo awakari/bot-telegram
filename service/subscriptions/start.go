@@ -7,8 +7,10 @@ import (
 	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/api/http/reader"
 	"github.com/awakari/bot-telegram/model/interest"
+	"github.com/awakari/bot-telegram/model/usage"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
+	"github.com/awakari/bot-telegram/service/limits"
 	"github.com/awakari/bot-telegram/util"
 	"gopkg.in/telebot.v3"
 	"html"
@@ -17,13 +19,14 @@ import (
 
 const CmdStart = "sub_start"
 const ReqStart = "sub_start"
-const MsgFmtChatLinked = "Following the interest %s in this chat. " +
+const MsgFmtChatLinked = "Subscribed to the interest %s in this chat. " +
 	"New results will appear here with a minimum interval of %s. " +
 	"To manage own interests use the <a href=\"https://awakari.com/login.html\" target=\"blank\">app</a>."
 
 func StartHandler(
 	svcInterests interests.Service,
 	svcReader reader.Service,
+	svcLimits limits.Service,
 	urlCallbackBase string,
 	groupId string,
 ) service.ArgHandlerFunc {
@@ -43,7 +46,7 @@ func StartHandler(
 			}
 			if err == nil {
 				subId := args[1]
-				err = Start(tgCtx, svcInterests, svcReader, urlCallbackBase, subId, groupId, interval)
+				err = Start(tgCtx, svcInterests, svcReader, svcLimits, urlCallbackBase, subId, groupId, interval)
 			}
 		default:
 			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 3 arguments, got %d: %+v", len(args), args))
@@ -65,6 +68,7 @@ func Start(
 	tgCtx telebot.Context,
 	svcInterests interests.Service,
 	svcReader reader.Service,
+	svcLimits limits.Service,
 	urlCallbackBase string,
 	interestId string,
 	groupId string,
@@ -105,16 +109,50 @@ func Start(
 		}
 		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
 	case errors.Is(err, reader.ErrPermitExhausted):
-		err = tgCtx.Send("Subscription count limit reached", &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
-				{
-					telebot.InlineButton{
-						Text: "Increase to 10",
-						URL:  "https://t.me/tribute/app?startapp=sv5Q",
+		var l usage.Limit
+		l, err = svcLimits.Get(ctx, groupId, userId, usage.SubjectSubscriptions)
+		switch err {
+		case nil:
+			switch {
+			case l.Count < 5:
+				err = tgCtx.Send(fmt.Sprintf("Subscription count limit reached: %d", l.Count), &telebot.ReplyMarkup{
+					InlineKeyboard: [][]telebot.InlineButton{
+						{
+							telebot.InlineButton{
+								Text: "Increase to 5",
+								URL:  "https://t.me/tribute/app?startapp=svd8",
+							},
+						},
 					},
-				},
-			},
-		})
+				})
+			case l.Count < 10:
+				err = tgCtx.Send(fmt.Sprintf("Subscription count limit reached: %d", l.Count), &telebot.ReplyMarkup{
+					InlineKeyboard: [][]telebot.InlineButton{
+						{
+							telebot.InlineButton{
+								Text: "Increase to 10",
+								URL:  "https://t.me/tribute/app?startapp=sv5Q",
+							},
+						},
+					},
+				})
+			case l.Count < 20:
+				err = tgCtx.Send(fmt.Sprintf("Subscription count limit reached: %d", l.Count), &telebot.ReplyMarkup{
+					InlineKeyboard: [][]telebot.InlineButton{
+						{
+							telebot.InlineButton{
+								Text: "Increase to 20",
+								URL:  "https://t.me/tribute/app?startapp=svaR",
+							},
+						},
+					},
+				})
+			default:
+				err = tgCtx.Send(fmt.Sprintf("Subscription count limit reached"))
+			}
+		default:
+			_ = tgCtx.Send(fmt.Sprintf("Subscription count limit reached"))
+		}
 	default:
 		err = tgCtx.Send("Unexpected failure", telebot.ModeHTML, telebot.NoPreview)
 	}

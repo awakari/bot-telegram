@@ -18,6 +18,7 @@ import (
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/service/subscriptions"
 	"github.com/awakari/bot-telegram/service/support"
+	"github.com/awakari/bot-telegram/util"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/gin-gonic/gin"
 	"github.com/microcosm-cc/bluemonday"
@@ -150,14 +151,14 @@ func main() {
 	}
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcReader, urlCallbackBase, groupId),
+		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcReader, svcLimits, urlCallbackBase, groupId),
 		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase, cfg.Api.GroupId),
 		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcReader, groupId, urlCallbackBase),
 		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcReader, groupId, urlCallbackBase),
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId),
-		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcReader, urlCallbackBase, groupId),
+		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcReader, svcLimits, urlCallbackBase, groupId),
 		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(svcPub, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
@@ -168,10 +169,11 @@ func main() {
 	}
 
 	hPaid := service.PaidChatMemberHandler{
-		GroupId:                    groupId,
-		Log:                        log,
-		LimitByChatIdSubscriptions: cfg.Api.Usage.Limits.Subscriptions,
-		SvcLimits:                  svcLimits,
+		GroupId:                      groupId,
+		LimitByChatIdSubscriptions:   cfg.Api.Usage.Limits.Subscriptions,
+		LimitByChatIdInterests:       cfg.Api.Usage.Limits.Interests,
+		LimitByChatIdInterestsPublic: cfg.Api.Usage.Limits.InterestsPublic,
+		SvcLimits:                    svcLimits,
 	}
 
 	// init Telegram bot
@@ -211,47 +213,47 @@ func main() {
 	err = b.SetCommands([]telebot.Command{
 		{
 			Text:        "start",
-			Description: "Start and list own Interests",
+			Description: "Start: list own interests",
 		},
 		{
 			Text:        "app",
-			Description: "Go to the Application",
+			Description: "Go to application",
 		},
 		{
 			Text:        "pub",
-			Description: "Publish a simple Message",
+			Description: "Publish a simple message",
 		},
 		{
 			Text:        "sub",
-			Description: "Create and follow a simple Interest",
+			Description: "Create a simple interest and subscribe",
 		},
 		{
 			Text:        "following",
-			Description: "List of all interests following in this chat",
+			Description: "List subscriptions in this chat",
 		},
 		{
 			Text:        "interests",
-			Description: "List all available Interests",
+			Description: "List all available interests",
 		},
 		{
 			Text:        "donate",
-			Description: "Help Awakari to be Free",
+			Description: "Donate",
 		},
 		{
 			Text:        "help",
-			Description: "User Guide",
+			Description: "Help",
 		},
 		{
 			Text:        "support",
-			Description: "Request Support",
+			Description: "Request support",
 		},
 		{
 			Text:        "terms",
-			Description: "Terms of Service",
+			Description: "Terms of service",
 		},
 		{
 			Text:        "privacy",
-			Description: "Privacy Policy",
+			Description: "Privacy policy",
 		},
 	})
 	if err != nil {
@@ -316,10 +318,10 @@ func main() {
 	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(svcInterests, svcReader, groupId, urlCallbackBase))
 	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
-		return tgCtx.Send("Open the <a href=\"https://awakari.com\">link</a>", telebot.ModeHTML)
+		return tgCtx.Send("Open the <a href=\"https://awakari.com/#resources\">link</a>", telebot.ModeHTML)
 	})
 	b.Handle("/support", func(tgCtx telebot.Context) error {
-		_ = tgCtx.Send("Describe the issue in the reply to the next message")
+		_ = tgCtx.Send("Describe your issue in the reply to the next message")
 		return tgCtx.Send("support", &telebot.ReplyMarkup{
 			ForceReply: true,
 		})
@@ -355,7 +357,12 @@ func main() {
 		// err = service.DonationMessagePin(tgCtx)
 		return service.ErrorHandlerFunc(subListHandlerFunc)(tgCtx)
 	})
-	b.Handle(telebot.OnChatMember, service.ErrorHandlerFunc(hPaid.Handle))
+	b.Handle(telebot.OnChatMember, func(tgCtx telebot.Context) error {
+		err = hPaid.Handle(tgCtx)
+		ll := util.LogLevel(err)
+		log.Log(context.TODO(), ll, fmt.Sprintf(""))
+		return err
+	})
 	//
 	go b.Start()
 

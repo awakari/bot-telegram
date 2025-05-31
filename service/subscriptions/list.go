@@ -27,7 +27,7 @@ func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reade
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send("Own interests list. Select one or more to follow in this chat:", m)
+			err = tgCtx.Send("Own interests list. Select one or more to subscribe in this chat:", m)
 		}
 		return
 	}
@@ -43,7 +43,7 @@ func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Serv
 		var m *telebot.ReplyMarkup
 		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, true, urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send("Available interests list. Select one or more to follow in this chat:", m)
+			err = tgCtx.Send("Available interests list. Select one or more to subscribe in this chat:", m)
 		}
 		return
 	}
@@ -164,7 +164,7 @@ func ListFollowing(svcInterests interests.Service, svcReader reader.Service, gro
 		var m *telebot.ReplyMarkup
 		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, "", urlCallBackBase)
 		if err == nil {
-			err = tgCtx.Send("List of interests you following in this chat. Select any to stop:", m)
+			err = tgCtx.Send("List of interests you subscribed to in this chat. Select any to stop:", m)
 		}
 		return
 	}

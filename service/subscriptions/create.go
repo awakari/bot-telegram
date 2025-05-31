@@ -20,7 +20,7 @@ const minTextCondTermsLength = 3
 const maxTextCondTermsLength = 256
 
 const ReqSubCreate = "sub_create"
-const msgSubCreate = "Following a simple text interest. " +
+const msgSubCreate = "Subscribing to a simple text interest. " +
 	"Reply a name followed by keywords to the next message. Example:\n" +
 	"<pre>Wishlist1 tesla iphone</pre>"
 const msgSubCreated = "If you want to read it in another chat, unlink it first using the <pre>/start</pre> command."
@@ -72,7 +72,7 @@ func CreateBasicReplyHandlerFunc(svcInterests interests.Service, groupId string)
 		if err == nil {
 			err = tgCtx.Send(msgSubCreated, telebot.ModeHTML)
 		} else {
-			err = fmt.Errorf("failed to follow the interest to this chat:\n%w", err)
+			err = fmt.Errorf("failed to subscribe to the interest in this chat:\n%w", err)
 		}
 		return
 	}
@@ -123,7 +123,7 @@ func validateCondition(cond condition.Condition) (err error) {
 		countChildren := len(children)
 		if tc.GetLogic() == condition.GroupLogicOr && countChildren > limitGroupOrCondChildrenCount {
 			err = fmt.Errorf(
-				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to follow an additional interest instead",
+				"%w:\nchildren condition count for the group condition with \"Or\" logic is %d, limit is %d,\nconsider to subscribe to an additional interest instead",
 				errInvalidCondition,
 				countChildren,
 				limitGroupOrCondChildrenCount,
