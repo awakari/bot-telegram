@@ -360,7 +360,7 @@ func main() {
 	b.Handle(telebot.OnChatMember, func(tgCtx telebot.Context) error {
 		err = hPaid.Handle(tgCtx)
 		ll := util.LogLevel(err)
-		log.Log(context.TODO(), ll, fmt.Sprintf(""))
+		log.Log(context.TODO(), ll, fmt.Sprintf("PaidChatMemberHandler.Handle(): %s", err))
 		return err
 	})
 	//
