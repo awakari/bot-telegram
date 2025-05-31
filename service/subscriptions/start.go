@@ -56,7 +56,7 @@ func StartHandler(
 }
 
 func StartIntervalRequest(tgCtx telebot.Context, interestId string) (err error) {
-	_ = tgCtx.Send("Reply a minimum notification interval, for example `0`, `1s`, `2m` or `3h`:", telebot.ModeMarkdownV2)
+	_ = tgCtx.Send("Reply a minimum notification interval to the command below, for example `0`, `1s`, `2m` or `3h`:", telebot.ModeMarkdownV2)
 	err = tgCtx.Send(ReqStart+" "+interestId, &telebot.ReplyMarkup{
 		ForceReply:  true,
 		Placeholder: "0",
