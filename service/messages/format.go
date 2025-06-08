@@ -108,36 +108,11 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		if trunc {
 			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
 		}
-		txt += fmt.Sprintf("%s\n\n", txtData)
+		txt += fmt.Sprintf("%s\n", txtData)
 	}
 	attrName, attrNameFound := evt.Attributes["name"]
 	if txt == "" && attrNameFound {
-		txt = fmt.Sprintf("%s\n\n", attrName.GetCeString())
-	}
-	//
-	objAttr, objAttrFound := evt.Attributes["object"]
-	var obj string
-	if objAttrFound {
-		switch objAttr.Attr.(type) {
-		case *pb.CloudEventAttributeValue_CeString:
-			obj = objAttr.GetCeString()
-		case *pb.CloudEventAttributeValue_CeUri:
-			obj = objAttr.GetCeUri()
-		}
-	}
-	if obj == "" || (!strings.HasPrefix(obj, "https://") && !strings.HasPrefix(obj, "http://")) {
-		objAttr, objAttrFound = evt.Attributes["objecturl"]
-		if objAttrFound {
-			switch objAttr.Attr.(type) {
-			case *pb.CloudEventAttributeValue_CeString:
-				obj = objAttr.GetCeString()
-			case *pb.CloudEventAttributeValue_CeUri:
-				obj = objAttr.GetCeUri()
-			}
-		}
-	}
-	if obj == "" {
-		obj = evt.Source
+		txt = fmt.Sprintf("%s\n", attrName.GetCeString())
 	}
 	//
 	attrCats, _ := evt.Attributes[ceKeyCategories]
@@ -160,27 +135,47 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		}
 		tagCount++
 	}
+	if len(tags) > 0 {
+		txt += fmt.Sprintf("\n%s\n", strings.Join(tags, " "))
+	}
 	//
-	addrEvtAttrs := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
+	objAttr, objAttrFound := evt.Attributes["object"]
+	var addOrig string
+	if objAttrFound {
+		switch objAttr.Attr.(type) {
+		case *pb.CloudEventAttributeValue_CeString:
+			addOrig = objAttr.GetCeString()
+		case *pb.CloudEventAttributeValue_CeUri:
+			addOrig = objAttr.GetCeUri()
+		}
+	}
+	if addOrig == "" || (!strings.HasPrefix(addOrig, "https://") && !strings.HasPrefix(addOrig, "http://")) {
+		objAttr, objAttrFound = evt.Attributes["objecturl"]
+		if objAttrFound {
+			switch objAttr.Attr.(type) {
+			case *pb.CloudEventAttributeValue_CeString:
+				addOrig = objAttr.GetCeString()
+			case *pb.CloudEventAttributeValue_CeUri:
+				addOrig = objAttr.GetCeUri()
+			}
+		}
+	}
+	if addOrig == "" {
+		addOrig = evt.Source
+	}
+	txt += "\n" + addOrig
+	//
+	addrMatch := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
 	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:
-		txt += "<a href=\"" + obj + "\">" + obj + "</a>\n\n"
-		interestLnkTxt := descr
-		if interestLnkTxt == "" {
-			interestLnkTxt = addrInterest
-		}
-		txt += "Interest: <a href=\"" + addrInterest + "\">" + interestLnkTxt + "</a>\n\n"
-		if len(tags) > 0 {
-			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
-		}
-		txt += "<a href=\"" + addrEvtAttrs + "\">Result Details</a>"
+		txt += fmt.Sprintf(
+			"\n<a href=\"%s\">Interest</a> | <a href=\"%s\">Match</a>\n",
+			addrInterest, addrMatch,
+		)
 	default:
-		txt += obj + "\n\nInterest: " + addrInterest + "\n\n"
-		if len(tags) > 0 {
-			txt += fmt.Sprintf("%s\n\n", strings.Join(tags, " "))
-		}
-		txt += "Result Details: " + addrEvtAttrs
+		txt += "\nInterest: " + addrInterest
+		txt += "\nMatch: " + addrMatch
 	}
 	//
 	return
