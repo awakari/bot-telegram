@@ -136,7 +136,7 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		tagCount++
 	}
 	if len(tags) > 0 {
-		txt += fmt.Sprintf("\n%s\n", strings.Join(tags, " "))
+		txt += fmt.Sprintf("\n%s", strings.Join(tags, " "))
 	}
 	//
 	objAttr, objAttrFound := evt.Attributes["object"]
@@ -163,19 +163,19 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 	if addOrig == "" {
 		addOrig = evt.Source
 	}
-	txt += "\n" + addOrig
+	txt += "\n\n" + addOrig
 	//
 	addrMatch := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
 	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:
 		txt += fmt.Sprintf(
-			"\n<a href=\"%s\">Interest</a> | <a href=\"%s\">Match</a>\n",
+			"\n\n<a href=\"%s\">Interest</a> | <a href=\"%s\">Match</a>\n",
 			addrInterest, addrMatch,
 		)
 	default:
-		txt += "\nInterest: " + addrInterest
-		txt += "\nMatch: " + addrMatch
+		txt += "\n\nInterest: " + addrInterest
+		txt += "\n\nMatch: " + addrMatch
 	}
 	//
 	return

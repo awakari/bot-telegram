@@ -60,7 +60,9 @@ If you did not publish messages, <a href="https://awakari.com/pub.html?own=true"
 
 Increase your daily publication limit or nominate own source...
 
+
 https://bbs.archlinux.org/extern.php?action=feed&fid=32&type=atom
+
 <a href="https://awakari.com/sub-details.html?id=sub1">Interest</a> | <a href="82f39262-5eb4-4f7f-9142-7c489d670907&interestId=sub1">Match</a>
 `,
 		},
