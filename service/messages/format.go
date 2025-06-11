@@ -220,7 +220,7 @@ func (f Format) header(evt *pb.CloudEvent, mode FormatMode) (txt string) {
 	attrSummary, attrSummaryFound := evt.Attributes[model.CeKeySummary]
 	if attrSummaryFound {
 		v := attrSummary.GetCeString()
-		if v != attrTitle.GetCeString() && v != attrDescr.GetCeString() {
+		if v != attrTitle.GetCeString() && v != attrDescr.GetCeString() && v != evt.GetTextData() {
 			switch mode {
 			case FormatModeHtml:
 				v = f.HtmlPolicy.Sanitize(v)
