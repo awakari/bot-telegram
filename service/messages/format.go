@@ -2,15 +2,14 @@ package messages
 
 import (
 	"fmt"
+	"github.com/awakari/bot-telegram/model"
 	"github.com/cloudevents/sdk-go/binding/format/protobuf/v2/pb"
 	"github.com/microcosm-cc/bluemonday"
 	"gopkg.in/telebot.v3"
+	"net/url"
 	"strings"
 	"unicode/utf8"
 )
-
-const fmtLenMaxAttrVal = 100
-const fmtLenMaxBodyTxt = 100
 
 type Format struct {
 	HtmlPolicy       *bluemonday.Policy
@@ -25,23 +24,27 @@ const (
 	FormatModeRaw              // no html and no attachments
 )
 
+const fmtLenMaxBodyTxt = 300
+const tagCountMax = 8
+const tagLenMax = 64
+
 var htmlStripTags = bluemonday.
 	StrictPolicy().
 	AddSpaceWhenStrippingTag(true)
 
 func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatMode) (tgMsg any) {
-	fileTypeAttr, fileTypeFound := evt.Attributes[ceKeyTgFileType]
+	fileTypeAttr, fileTypeFound := evt.Attributes[model.CeKeyTgFileType]
 	if fileTypeFound && mode != FormatModeRaw {
 		ft := FileType(fileTypeAttr.GetCeInteger())
 		file := telebot.File{
-			FileID:   evt.Attributes[ceKeyTgFileId].GetCeString(),
-			UniqueID: evt.Attributes[ceKeyTgFileUniqueId].GetCeString(),
+			FileID:   evt.Attributes[model.CeKeyTgFileId].GetCeString(),
+			UniqueID: evt.Attributes[model.CeKeyTgFileUniqueId].GetCeString(),
 		}
 		switch ft {
 		case FileTypeAudio:
 			tgMsg = &telebot.Audio{
 				File:     file,
-				Duration: int(evt.Attributes[ceKeyTgFileMediaDuration].GetCeInteger()),
+				Duration: int(evt.Attributes[model.CeKeyTgFileMediaDuration].GetCeInteger()),
 				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		case FileTypeDocument:
@@ -52,16 +55,16 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 		case FileTypeImage:
 			tgMsg = &telebot.Photo{
 				File:    file,
-				Width:   int(evt.Attributes[ceKeyTgFileImgWidth].GetCeInteger()),
-				Height:  int(evt.Attributes[ceKeyTgFileImgHeight].GetCeInteger()),
+				Width:   int(evt.Attributes[model.CeKeyTgFileImgWidth].GetCeInteger()),
+				Height:  int(evt.Attributes[model.CeKeyTgFileImgHeight].GetCeInteger()),
 				Caption: f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		case FileTypeVideo:
 			tgMsg = &telebot.Video{
 				File:     file,
-				Width:    int(evt.Attributes[ceKeyTgFileImgWidth].GetCeInteger()),
-				Height:   int(evt.Attributes[ceKeyTgFileImgHeight].GetCeInteger()),
-				Duration: int(evt.Attributes[ceKeyTgFileMediaDuration].GetCeInteger()),
+				Width:    int(evt.Attributes[model.CeKeyTgFileImgWidth].GetCeInteger()),
+				Height:   int(evt.Attributes[model.CeKeyTgFileImgHeight].GetCeInteger()),
+				Duration: int(evt.Attributes[model.CeKeyTgFileMediaDuration].GetCeInteger()),
 				Caption:  f.convert(evt, subId, subDescr, mode, false, false),
 			}
 		}
@@ -80,23 +83,11 @@ func (f Format) Convert(evt *pb.CloudEvent, subId, subDescr string, mode FormatM
 }
 
 func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode FormatMode, trunc, attrs bool) (txt string) {
+
 	if attrs {
-		txt += f.convertHeaderAttrs(evt, mode, trunc)
+		txt += f.header(evt, mode)
 	}
-	attrSummary, attrSummaryFound := evt.Attributes["summary"]
-	if attrSummaryFound {
-		v := attrSummary.GetCeString()
-		switch mode {
-		case FormatModeHtml:
-			v = f.HtmlPolicy.Sanitize(v)
-		default:
-			v = htmlStripTags.Sanitize(v)
-		}
-		if trunc {
-			v = truncateStringUtf8(v, fmtLenMaxBodyTxt)
-		}
-		txt += fmt.Sprintf("%s\n\n", v)
-	}
+
 	txtData := evt.GetTextData()
 	if txtData != "" {
 		switch mode {
@@ -105,21 +96,28 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		default:
 			txtData = htmlStripTags.Sanitize(txtData)
 		}
-		if trunc {
-			txtData = truncateStringUtf8(txtData, fmtLenMaxBodyTxt)
+		if txt != "" {
+			txt += "\n\n"
 		}
-		txt += fmt.Sprintf("%s\n", txtData)
+		txt += strings.TrimSpace(txtData)
 	}
 	attrName, attrNameFound := evt.Attributes["name"]
 	if txt == "" && attrNameFound {
-		txt = fmt.Sprintf("%s\n", attrName.GetCeString())
+		txt = attrName.GetCeString()
 	}
-	//
-	attrCats, _ := evt.Attributes[ceKeyCategories]
+
+	if trunc {
+		txt = truncateStringUtf8(txt, fmtLenMaxBodyTxt) + "\n"
+	}
+
+	attrCats, _ := evt.Attributes[model.CeKeyCategories]
 	cats := strings.Split(attrCats.GetCeString(), " ")
 	var tags []string
 	var tagCount int
-	for _, cat := range cats {
+	for i, cat := range cats {
+		if i == tagCountMax {
+			break
+		}
 		var t string
 		switch strings.HasPrefix(cat, "#") {
 		case true:
@@ -127,7 +125,7 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		default:
 			t = "#" + cat
 		}
-		if len(t) > 1 {
+		if len(t) > 1 && len(t) < tagLenMax {
 			tags = append(tags, t)
 		}
 		if tagCount > 10 {
@@ -136,65 +134,108 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 		tagCount++
 	}
 	if len(tags) > 0 {
-		txt += fmt.Sprintf("\n%s", strings.Join(tags, " "))
+		txt += fmt.Sprintf("%s\n", strings.Join(tags, " "))
 	}
-	//
+
 	objAttr, objAttrFound := evt.Attributes["object"]
-	var addOrig string
+	var addrOrig string
 	if objAttrFound {
 		switch objAttr.Attr.(type) {
 		case *pb.CloudEventAttributeValue_CeString:
-			addOrig = objAttr.GetCeString()
+			addrOrig = objAttr.GetCeString()
 		case *pb.CloudEventAttributeValue_CeUri:
-			addOrig = objAttr.GetCeUri()
+			addrOrig = objAttr.GetCeUri()
 		}
 	}
-	if addOrig == "" || (!strings.HasPrefix(addOrig, "https://") && !strings.HasPrefix(addOrig, "http://")) {
+	if addrOrig == "" || (!strings.HasPrefix(addrOrig, "https://") && !strings.HasPrefix(addrOrig, "http://")) {
 		objAttr, objAttrFound = evt.Attributes["objecturl"]
 		if objAttrFound {
 			switch objAttr.Attr.(type) {
 			case *pb.CloudEventAttributeValue_CeString:
-				addOrig = objAttr.GetCeString()
+				addrOrig = objAttr.GetCeString()
 			case *pb.CloudEventAttributeValue_CeUri:
-				addOrig = objAttr.GetCeUri()
+				addrOrig = objAttr.GetCeUri()
 			}
 		}
 	}
-	if addOrig == "" {
-		addOrig = evt.Source
+	if addrOrig == "" {
+		addrOrig = evt.Source
 	}
-	txt += "\n\n" + addOrig
-	//
+	if strings.Contains(evt.Type, "telegram") && strings.HasPrefix(addrOrig, "@") {
+		addrOrig = "https://t.me/" + strings.TrimPrefix(addrOrig, "@")
+	}
 	addrMatch := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
 	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:
 		txt += fmt.Sprintf(
-			"\n\n<a href=\"%s\">Interest</a> | <a href=\"%s\">Match</a>\n",
-			addrInterest, addrMatch,
+			"\n<a href=\"%s\">Origin</a> | <a href=\"%s\">Interest</a> | <a href=\"%s\">Match</a>",
+			addrOrig, addrInterest, addrMatch,
 		)
 	default:
-		txt += "\n\nInterest: " + addrInterest
-		txt += "\n\nMatch: " + addrMatch
+		if len(addrOrig) > 100 {
+			urlOrig, err := url.Parse(addrOrig)
+			switch err {
+			case nil:
+				addrOrig = urlOrig.Scheme + urlOrig.Host
+			default:
+				addrOrig = addrOrig[0:100]
+			}
+		}
+		txt += "\nOrigin: " + addrOrig
+		txt += "\nInterest: " + addrInterest
+		txt += "\nMatch: " + addrMatch
 	}
-	//
+
 	return
 }
 
-func (f Format) convertHeaderAttrs(evt *pb.CloudEvent, mode FormatMode, trunc bool) (txt string) {
-	attrTitle, attrTitleFound := evt.Attributes["title"]
-	if attrTitleFound {
-		v := f.HtmlPolicy.Sanitize(attrTitle.GetCeString())
-		if trunc {
-			v = truncateStringUtf8(v, fmtLenMaxAttrVal)
+func (f Format) header(evt *pb.CloudEvent, mode FormatMode) (txt string) {
+
+	attrHead, headPresent := evt.Attributes[model.CeKeyHeadline]
+	if headPresent {
+		txt = strings.TrimSpace(attrHead.GetCeString())
+	}
+
+	attrTitle, titlePresent := evt.Attributes[model.CeKeyTitle]
+	if titlePresent {
+		if txt != "" {
+			txt += " "
 		}
-		switch mode {
-		case FormatModeHtml:
-			txt += fmt.Sprintf("<b>%s</b>\n\n", v)
-		default:
-			txt += fmt.Sprintf("%s\n\n", v)
+		txt += strings.TrimSpace(attrTitle.GetCeString())
+	}
+
+	if txt != "" && mode == FormatModeHtml {
+		txt = fmt.Sprintf("<b>%s</b>", txt)
+	}
+
+	attrDescr, descrPresent := evt.Attributes[model.CeKeyDescription]
+	if descrPresent {
+		if txt != "" {
+			txt += "\n\n"
+		}
+		txt += strings.TrimSpace(attrDescr.GetCeString())
+	}
+
+	attrSummary, attrSummaryFound := evt.Attributes[model.CeKeySummary]
+	if attrSummaryFound {
+		v := attrSummary.GetCeString()
+		if v != attrTitle.GetCeString() && v != attrDescr.GetCeString() {
+			switch mode {
+			case FormatModeHtml:
+				v = f.HtmlPolicy.Sanitize(v)
+			default:
+				v = htmlStripTags.Sanitize(v)
+			}
+			if txt != "" {
+				txt += "\n\n"
+			}
+			txt += strings.TrimSpace(v)
 		}
 	}
+
+	txt = f.HtmlPolicy.Sanitize(txt)
+
 	return
 }
 
