@@ -116,7 +116,7 @@ api:
       connections:
         max: 100
   queue:
-    uri: "instance-20250706-1012.awakari.com:50065"
+    uri: "queue-backend.backend.svc.cluster.local:50065"
     backoff:
       error: "1s"
     interestsCreated:
