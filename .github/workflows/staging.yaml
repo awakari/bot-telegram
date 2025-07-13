@@ -62,4 +62,4 @@ jobs:
         run: |
           helm upgrade --install ${COMPONENT} ${COMPONENT}-0.0.0.tgz \
             --values helm/bot-telegram/values-gke-cluster-0.yaml \
-            --set podAnnotations.commit=$(git rev-parse --short HEAD)
+            --set-string podAnnotations.commit=$(git rev-parse --short HEAD)
