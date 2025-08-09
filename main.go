@@ -10,7 +10,7 @@ import (
 	apiGrpcUsageLimits "github.com/awakari/bot-telegram/api/grpc/usage/limits"
 	"github.com/awakari/bot-telegram/api/http/interests"
 	"github.com/awakari/bot-telegram/api/http/pub"
-	"github.com/awakari/bot-telegram/api/http/reader"
+	apiHttpSubs "github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/config"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/service/chats"
@@ -55,16 +55,16 @@ func main() {
 	svcInterests = interests.NewLogging(svcInterests, log)
 	log.Info("initialized the Awakari interests API client")
 
-	// init websub reader
+	// init websub
 	clientHttp := http.Client{}
-	svcReader := reader.NewService(&clientHttp, cfg.Api.Reader.Uri, cfg.Api.Token.Internal)
-	svcReader = reader.NewServiceLogging(svcReader, log)
+	svcSubs := apiHttpSubs.NewService(&clientHttp, cfg.Api.Subscriptions.Uri, cfg.Api.Token.Internal)
+	svcSubs = apiHttpSubs.NewServiceLogging(svcSubs, log)
 	urlCallbackBase := fmt.Sprintf(
 		"%s://%s:%d%s",
-		cfg.Api.Reader.CallBack.Protocol,
-		cfg.Api.Reader.CallBack.Host,
-		cfg.Api.Reader.CallBack.Port,
-		cfg.Api.Reader.CallBack.Path,
+		cfg.Api.Subscriptions.CallBack.Protocol,
+		cfg.Api.Subscriptions.CallBack.Host,
+		cfg.Api.Subscriptions.CallBack.Port,
+		cfg.Api.Subscriptions.CallBack.Path,
 	)
 
 	// init queues
@@ -84,7 +84,7 @@ func main() {
 	go func() {
 		err = consumeQueueInterestsCreated(
 			context.Background(),
-			svcReader,
+			svcSubs,
 			urlCallbackBase,
 			cfg.Api.GroupId,
 			svcQueue,
@@ -132,8 +132,8 @@ func main() {
 		OnElements("code")
 	htmlPolicy.AllowDataURIImages()
 	fmtMsg := messages.Format{
-		HtmlPolicy:       htmlPolicy,
-		UriReaderEvtBase: cfg.Api.Reader.UriEventBase,
+		HtmlPolicy: htmlPolicy,
+		UriEvtBase: cfg.Api.Messages.UriBase,
 	}
 
 	// init handlers
@@ -151,14 +151,14 @@ func main() {
 	}
 
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcReader, svcLimits, urlCallbackBase, groupId),
-		subscriptions.CmdStop:              subscriptions.Stop(svcReader, urlCallbackBase, cfg.Api.GroupId),
-		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcReader, groupId, urlCallbackBase),
-		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcReader, groupId, urlCallbackBase),
+		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId),
+		subscriptions.CmdStop:              subscriptions.Stop(svcSubs, urlCallbackBase, cfg.Api.GroupId),
+		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcSubs, groupId, urlCallbackBase),
+		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcSubs, groupId, urlCallbackBase),
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId),
-		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcReader, svcLimits, urlCallbackBase, groupId),
+		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId),
 		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(svcPub, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
@@ -264,7 +264,7 @@ func main() {
 	controllerGrpc := apiGrpcTgBot.NewController(
 		[]byte(cfg.Api.Telegram.Token),
 		chanPostHandler,
-		svcReader,
+		svcSubs,
 		urlCallbackBase,
 		log,
 		b,
@@ -282,7 +282,7 @@ func main() {
 	b.Use(func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return service.LoggingHandlerFunc(next, log)
 	})
-	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(svcInterests, svcReader, groupId, urlCallbackBase)
+	subListHandlerFunc := subscriptions.ListOnGroupStartHandlerFunc(svcInterests, svcSubs, groupId, urlCallbackBase)
 	b.Handle(
 		"/start",
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
@@ -314,8 +314,8 @@ func main() {
 	})
 	b.Handle("/pub", messages.PublishBasicRequest)
 	b.Handle("/sub", subscriptions.CreateBasicRequest)
-	b.Handle("/following", subscriptions.ListFollowing(svcInterests, svcReader, groupId, urlCallbackBase))
-	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(svcInterests, svcReader, groupId, urlCallbackBase))
+	b.Handle("/following", subscriptions.ListFollowing(svcInterests, svcSubs, groupId, urlCallbackBase))
+	b.Handle("/interests", subscriptions.ListPublicHandlerFunc(svcInterests, svcSubs, groupId, urlCallbackBase))
 	b.Handle("/donate", service.DonationHandler)
 	b.Handle("/help", func(tgCtx telebot.Context) error {
 		return tgCtx.Send("Open the <a href=\"https://awakari.com/#resources\">link</a>", telebot.ModeHTML)
@@ -367,13 +367,13 @@ func main() {
 	go b.Start()
 
 	// chats websub handler (subscriber)
-	hChats := chats.NewHandler(cfg.Api.Reader.Uri+"/v1", fmtMsg, urlCallbackBase, svcReader, b, svcInterests, groupId)
+	hChats := chats.NewHandler(cfg.Api.Subscriptions.Uri+"/v1", fmtMsg, urlCallbackBase, svcSubs, b, svcInterests, groupId)
 	r := gin.Default()
 	r.
-		Group(cfg.Api.Reader.CallBack.Path).
+		Group(cfg.Api.Subscriptions.CallBack.Path).
 		GET("/:chatId", hChats.Confirm).
 		POST("/:chatId", hChats.DeliverMessages)
-	err = r.Run(fmt.Sprintf(":%d", cfg.Api.Reader.CallBack.Port))
+	err = r.Run(fmt.Sprintf(":%d", cfg.Api.Subscriptions.CallBack.Port))
 	if err != nil {
 		panic(err)
 	}
@@ -381,7 +381,7 @@ func main() {
 
 func consumeQueueInterestsCreated(
 	ctx context.Context,
-	svcReader reader.Service,
+	svcSubs apiHttpSubs.Service,
 	urlCallbackBase string,
 	groupId string,
 	svcQueue queue.Service,
@@ -407,7 +407,7 @@ func consumeQueueInterestsCreated(
 		//        }
 		//    }
 		//    if err == nil {
-		//        err = svcReader.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
+		//        err = svcSubs.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
 		//    }
 		//    if err != nil {
 		//        break

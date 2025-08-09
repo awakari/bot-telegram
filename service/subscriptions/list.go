@@ -5,7 +5,7 @@ import (
 	"fmt"
 	protoInterests "github.com/awakari/bot-telegram/api/grpc/interests"
 	"github.com/awakari/bot-telegram/api/http/interests"
-	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/model"
 	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/model/interest/condition"
@@ -20,12 +20,12 @@ import (
 const CmdPageNext = "subs_next"
 const CmdPageNextFollowing = "following_next"
 
-func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
+func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcSubs subscriptions.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		userId := util.SenderToUserId(tgCtx)
 		cursor := condition.Cursor{}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
+		m, err = listButtons(groupId, userId, svcInterests, svcSubs, tgCtx.Chat().ID, CmdStart, cursor, false, urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("Own interests list. Select one or more to subscribe in this chat:", m)
 		}
@@ -33,7 +33,7 @@ func ListOnGroupStartHandlerFunc(svcInterests interests.Service, svcReader reade
 	}
 }
 
-func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
+func ListPublicHandlerFunc(svcInterests interests.Service, svcSubs subscriptions.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		userId := util.SenderToUserId(tgCtx)
 		cursor := condition.Cursor{
@@ -41,7 +41,7 @@ func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Serv
 			Followers: math.MaxInt64,
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, CmdStart, cursor, true, urlCallBackBase)
+		m, err = listButtons(groupId, userId, svcInterests, svcSubs, tgCtx.Chat().ID, CmdStart, cursor, true, urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("Available interests list. Select one or more to subscribe in this chat:", m)
 		}
@@ -49,7 +49,7 @@ func ListPublicHandlerFunc(svcInterests interests.Service, svcReader reader.Serv
 	}
 }
 
-func PageNext(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
+func PageNext(svcInterests interests.Service, svcSubs subscriptions.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		userId := util.SenderToUserId(tgCtx)
 		var cursor condition.Cursor
@@ -62,7 +62,7 @@ func PageNext(svcInterests interests.Service, svcReader reader.Service, groupId,
 			public = true
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtons(groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, args[0], cursor, public, urlCallBackBase)
+		m, err = listButtons(groupId, userId, svcInterests, svcSubs, tgCtx.Chat().ID, args[0], cursor, public, urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("Interests list page:", m, telebot.ModeHTML)
 		}
@@ -74,7 +74,7 @@ func listButtons(
 	groupId string,
 	userId string,
 	svcInterests interests.Service,
-	svcReader reader.Service,
+	svcSubs subscriptions.Service,
 	chatId int64,
 	btnCmd string,
 	cursor condition.Cursor,
@@ -98,9 +98,9 @@ func listButtons(
 		for _, i := range page {
 			var subLinkedHere bool
 			lastFollowers = i.Followers
-			_, err = svcReader.Subscription(context.TODO(), i.Id, groupId, userId, reader.MakeCallbackUrl(urlCallBackBase, chatId, userId))
+			_, err = svcSubs.Subscription(context.TODO(), i.Id, groupId, userId, subscriptions.MakeCallbackUrl(urlCallBackBase, chatId, userId))
 			if err != nil {
-				_, err = svcReader.Subscription(context.TODO(), i.Id, groupId, userId, reader.MakeCallbackUrl(urlCallBackBase, chatId, ""))
+				_, err = svcSubs.Subscription(context.TODO(), i.Id, groupId, userId, subscriptions.MakeCallbackUrl(urlCallBackBase, chatId, ""))
 			}
 			if err == nil {
 				subLinkedHere = true
@@ -157,12 +157,12 @@ func listButtons(
 	return
 }
 
-func ListFollowing(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
+func ListFollowing(svcInterests interests.Service, svcSubs subscriptions.Service, groupId, urlCallBackBase string) telebot.HandlerFunc {
 	return func(tgCtx telebot.Context) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
 		userId := util.SenderToUserId(tgCtx)
 		var m *telebot.ReplyMarkup
-		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, "", urlCallBackBase)
+		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcSubs, tgCtx.Chat().ID, "", urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("List of interests you subscribed to in this chat. Select any to stop:", m)
 		}
@@ -170,7 +170,7 @@ func ListFollowing(svcInterests interests.Service, svcReader reader.Service, gro
 	}
 }
 
-func PageNextFollowing(svcInterests interests.Service, svcReader reader.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
+func PageNextFollowing(svcInterests interests.Service, svcSubs subscriptions.Service, groupId, urlCallBackBase string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		groupIdCtx := metadata.AppendToOutgoingContext(context.TODO(), model.KeyGroupId, groupId)
 		userId := util.SenderToUserId(tgCtx)
@@ -179,7 +179,7 @@ func PageNextFollowing(svcInterests interests.Service, svcReader reader.Service,
 			cursor = args[0]
 		}
 		var m *telebot.ReplyMarkup
-		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcReader, tgCtx.Chat().ID, cursor, urlCallBackBase)
+		m, err = listButtonsFollowing(groupIdCtx, groupId, userId, svcInterests, svcSubs, tgCtx.Chat().ID, cursor, urlCallBackBase)
 		if err == nil {
 			err = tgCtx.Send("Interests list page:", m, telebot.ModeHTML)
 		}
@@ -191,14 +191,14 @@ func listButtonsFollowing(
 	groupIdCtx context.Context,
 	groupId, userId string,
 	svcInterests interests.Service,
-	svcReader reader.Service,
+	svcSubs subscriptions.Service,
 	chatId int64,
 	cursor string,
 	urlCallBackBase string,
 ) (m *telebot.ReplyMarkup, err error) {
-	cbUrl := reader.MakeCallbackUrl(urlCallBackBase, chatId, "") // makes a prefix w/o user id appended
+	cbUrl := subscriptions.MakeCallbackUrl(urlCallBackBase, chatId, "") // makes a prefix w/o user id appended
 	var interestIds []string
-	interestIds, err = svcReader.InterestsByUrl(groupIdCtx, groupId, userId, service.PageLimit, cbUrl, cursor)
+	interestIds, err = svcSubs.InterestsByUrl(groupIdCtx, groupId, userId, service.PageLimit, cbUrl, cursor)
 	interestIds = append(interestIds)
 	if err == nil {
 		m = &telebot.ReplyMarkup{}

@@ -2,7 +2,7 @@ package tgbot
 
 import (
 	"context"
-	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/bytedance/sonic"
 	tgverifier "github.com/electrofocus/telegram-auth-verifier"
@@ -20,7 +20,7 @@ type Controller interface {
 type controller struct {
 	secretToken     []byte
 	cp              messages.ChanPostHandler
-	svcReader       reader.Service
+	svcSubs         subscriptions.Service
 	urlCallbackBase string
 	log             *slog.Logger
 	tgBot           *telebot.Bot
@@ -30,7 +30,7 @@ type controller struct {
 func NewController(
 	secretToken []byte,
 	cp messages.ChanPostHandler,
-	svcReader reader.Service,
+	svcSubs subscriptions.Service,
 	urlCallbackBase string,
 	log *slog.Logger,
 	tgBot *telebot.Bot,
@@ -39,7 +39,7 @@ func NewController(
 	return controller{
 		secretToken:     secretToken,
 		cp:              cp,
-		svcReader:       svcReader,
+		svcSubs:         svcSubs,
 		urlCallbackBase: urlCallbackBase,
 		log:             log,
 		tgBot:           tgBot,

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/http/interests"
-	apiHttpReader "github.com/awakari/bot-telegram/api/http/reader"
+	apiHttpSubs "github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/service/messages"
 	"github.com/awakari/bot-telegram/util"
 	"github.com/bytedance/sonic"
@@ -32,7 +32,7 @@ type handler struct {
 	topicPrefixBase string
 	format          messages.Format
 	urlCallbackBase string
-	svcReader       apiHttpReader.Service
+	svcSubs         apiHttpSubs.Service
 	tgBot           *telebot.Bot
 	svcInterests    interests.Service
 	groupId         string
@@ -48,7 +48,7 @@ func NewHandler(
 	topicPrefixBase string,
 	format messages.Format,
 	urlCallbackBase string,
-	svcReader apiHttpReader.Service,
+	svcSubs apiHttpSubs.Service,
 	tgBot *telebot.Bot,
 	svcInterests interests.Service,
 	groupId string,
@@ -57,7 +57,7 @@ func NewHandler(
 		topicPrefixBase: topicPrefixBase,
 		format:          format,
 		urlCallbackBase: urlCallbackBase,
-		svcReader:       svcReader,
+		svcSubs:         svcSubs,
 		tgBot:           tgBot,
 		svcInterests:    svcInterests,
 		groupId:         groupId,
@@ -67,7 +67,7 @@ func NewHandler(
 func (h handler) Confirm(ctx *gin.Context) {
 	topic := ctx.Query(keyHubTopic)
 	challenge := ctx.Query(keyHubChallenge)
-	if strings.HasPrefix(topic, h.topicPrefixBase+"/sub/"+apiHttpReader.FmtJson) {
+	if strings.HasPrefix(topic, h.topicPrefixBase+"/sub/"+apiHttpSubs.FmtJson) {
 		ctx.String(http.StatusOK, challenge)
 	} else {
 		ctx.String(http.StatusBadRequest, fmt.Sprintf("invalid topic: %s", topic))
@@ -188,12 +188,12 @@ func (h handler) deliver(
 				errTb := &telebot.Error{}
 				if errors.As(err, &errTb) && errTb.Code == 403 {
 					fmt.Printf("Bot blocked: %s, removing the chat from the storage", err)
-					urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
-					err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+					urlCallback := apiHttpSubs.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
+					err = h.svcSubs.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
 					if err != nil {
 						// legacy callbacks may be without user id parameter
-						urlCallback = apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
-						err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+						urlCallback = apiHttpSubs.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
+						err = h.svcSubs.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
 					}
 					return
 				}
@@ -231,12 +231,12 @@ func (h handler) deliver(
 }
 
 func (h handler) handleFloodError(ctx context.Context, tgCtx telebot.Context, interestId, userId string, chatId int64, retryAfter int) {
-	urlCallback := apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
-	err := h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+	urlCallback := apiHttpSubs.MakeCallbackUrl(h.urlCallbackBase, chatId, userId)
+	err := h.svcSubs.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
 	if err != nil {
 		// legacy callbacks may be without user id parameter
-		urlCallback = apiHttpReader.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
-		err = h.svcReader.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
+		urlCallback = apiHttpSubs.MakeCallbackUrl(h.urlCallbackBase, chatId, "")
+		err = h.svcSubs.Unsubscribe(ctx, interestId, h.groupId, userId, urlCallback)
 	}
 	fmt.Printf("High message rate detected for the interest %s\n", interestId)
 	retryDuration := time.Duration(retryAfter) * time.Second

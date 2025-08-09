@@ -2,7 +2,7 @@ package subscriptions
 
 import (
 	"context"
-	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/service"
 	"github.com/awakari/bot-telegram/util"
 	"gopkg.in/telebot.v3"
@@ -10,23 +10,23 @@ import (
 
 const CmdStop = "sub_stop"
 
-func Stop(svcReader reader.Service, urlCallbackBase, groupId string) service.ArgHandlerFunc {
+func Stop(svcSubs subscriptions.Service, urlCallbackBase, groupId string) service.ArgHandlerFunc {
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		ctx := context.TODO()
 		interestId := args[0]
 		userId := util.SenderToUserId(tgCtx)
-		urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
-		_, err = svcReader.Subscription(ctx, interestId, groupId, userId, urlCallback)
+		urlCallback := subscriptions.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
+		_, err = svcSubs.Subscription(ctx, interestId, groupId, userId, urlCallback)
 		switch err {
 		case nil:
 			if err == nil {
-				err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
+				err = svcSubs.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
 			}
 		default:
-			urlCallbackOld := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
-			_, err = svcReader.Subscription(ctx, interestId, groupId, userId, urlCallbackOld)
+			urlCallbackOld := subscriptions.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
+			_, err = svcSubs.Subscription(ctx, interestId, groupId, userId, urlCallbackOld)
 			if err == nil {
-				err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallbackOld)
+				err = svcSubs.Unsubscribe(ctx, interestId, groupId, userId, urlCallbackOld)
 			}
 		}
 		if err == nil {

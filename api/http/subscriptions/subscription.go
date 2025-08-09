@@ -1,4 +1,4 @@
-package reader
+package subscriptions
 
 import (
 	"net/url"

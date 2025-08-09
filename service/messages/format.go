@@ -12,8 +12,8 @@ import (
 )
 
 type Format struct {
-	HtmlPolicy       *bluemonday.Policy
-	UriReaderEvtBase string
+	HtmlPolicy *bluemonday.Policy
+	UriEvtBase string
 }
 
 type FormatMode int
@@ -164,7 +164,7 @@ func (f Format) convert(evt *pb.CloudEvent, interestId, descr string, mode Forma
 	if strings.Contains(evt.Type, "telegram") && strings.HasPrefix(addrOrig, "@") {
 		addrOrig = "https://t.me/" + strings.TrimPrefix(addrOrig, "@")
 	}
-	addrMatch := f.UriReaderEvtBase + evt.Id + "&interestId=" + interestId
+	addrMatch := f.UriEvtBase + evt.Id + "&interestId=" + interestId
 	addrInterest := "https://awakari.com/sub-details.html?id=" + interestId
 	switch mode {
 	case FormatModeHtml:

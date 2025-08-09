@@ -1,6 +1,6 @@
 api:
-  reader:
-    uri: "http://reader.default.svc.cluster.local:8080"
+  subscriptions:
+    uri: "http://subscriptions.default.svc.cluster.local:8080"
     callback:
       host: "bot-telegram-test.test.svc.cluster.local"
   interests:

@@ -24,9 +24,9 @@ type Config struct {
 			Token                       string `envconfig:"API_TELEGRAM_TOKEN" required:"true"`
 			PublicInterestChannelPrefix string `envconfig:"API_TELEGRAM_PUBLIC_INTEREST_CHANNEL_PREFIX" default:"awk_" required:"true"`
 		}
-		Reader ReaderConfig
-		Queue  QueueConfig
-		Writer struct {
+		Subscriptions SubscriptionsConfig
+		Queue         QueueConfig
+		Writer        struct {
 			Uri string `envconfig:"API_WRITER_URI" default:"http://pub:8080/v1/batch" required:"true"`
 		}
 		Interests struct {
@@ -56,14 +56,13 @@ type Config struct {
 	}
 }
 
-type ReaderConfig struct {
-	Uri          string `envconfig:"API_READER_URI" default:"http://reader:8080" required:"true"`
-	UriEventBase string `envconfig:"API_READER_URI_EVT_BASE" default:"https://awakari.com/pub-msg.html?id=" required:"true"`
-	CallBack     struct {
-		Protocol string `envconfig:"API_READER_CALLBACK_PROTOCOL" default:"http" required:"true"`
-		Host     string `envconfig:"API_READER_CALLBACK_HOST" default:"bot-telegram" required:"true"`
-		Port     uint16 `envconfig:"API_READER_CALLBACK_PORT" default:"8081" required:"true"`
-		Path     string `envconfig:"API_READER_CALLBACK_PATH" default:"/v1/chat" required:"true"`
+type SubscriptionsConfig struct {
+	Uri      string `envconfig:"API_SUBSCRIPTIONS_URI" default:"http://subscriptions:8080" required:"true"`
+	CallBack struct {
+		Protocol string `envconfig:"API_SUBSCRIPTIONS_CALLBACK_PROTOCOL" default:"http" required:"true"`
+		Host     string `envconfig:"API_SUBSCRIPTIONS_CALLBACK_HOST" default:"bot-telegram" required:"true"`
+		Port     uint16 `envconfig:"API_SUBSCRIPTIONS_CALLBACK_PORT" default:"8081" required:"true"`
+		Path     string `envconfig:"API_SUBSCRIPTIONS_CALLBACK_PATH" default:"/v1/chat" required:"true"`
 	}
 }
 
@@ -78,7 +77,8 @@ type QueueConfig struct {
 }
 
 type MessagesConfig struct {
-	Type string `envconfig:"API_MESSAGES_TYPE" default:"com_awakari_bot_telegram_v1" required:"true"`
+	Type    string `envconfig:"API_MESSAGES_TYPE" default:"com_awakari_bot_telegram_v1" required:"true"`
+	UriBase string `envconfig:"API_MESSAGES_URI_BASE" default:"https://awakari.com/pub-msg.html?id=" required:"true"`
 }
 
 func NewConfigFromEnv() (cfg Config, err error) {

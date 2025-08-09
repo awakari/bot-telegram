@@ -33,18 +33,18 @@ spec:
           env:
             - name: API_MESSAGES_TYPE
               value: "{{ .Values.api.messages.type }}"
-            - name: API_READER_URI
-              value: "{{ .Values.api.reader.uri }}"
-            - name: API_READER_URI_EVT_BASE
-              value: "{{ .Values.api.reader.uriEvtBase }}"
-            - name: API_READER_CALLBACK_PROTOCOL
-              value: "{{ .Values.api.reader.callback.protocol }}"
-            - name: API_READER_CALLBACK_HOST
-              value: "{{ .Values.api.reader.callback.host }}"
-            - name: API_READER_CALLBACK_PORT
+            - name: API_MESSAGES_URI_BASE
+              value: "{{ .Values.api.messages.uri.base }}"
+            - name: API_SUBSCRIPTIONS_URI
+              value: "{{ .Values.api.subscriptions.uri }}"
+            - name: API_SUBSCRIPTIONS_CALLBACK_PROTOCOL
+              value: "{{ .Values.api.subscriptions.callback.protocol }}"
+            - name: API_SUBSCRIPTIONS_CALLBACK_HOST
+              value: "{{ .Values.api.subscriptions.callback.host }}"
+            - name: API_SUBSCRIPTIONS_CALLBACK_PORT
               value: "{{ .Values.service.callback.port }}"
-            - name: API_READER_CALLBACK_PATH
-              value: "{{ .Values.api.reader.callback.path }}"
+            - name: API_SUBSCRIPTIONS_CALLBACK_PATH
+              value: "{{ .Values.api.subscriptions.callback.path }}"
             {{- range .Values.ingress.hosts }}
             - name: API_TELEGRAM_WEBHOOK_HOST
               value: {{ .host }}

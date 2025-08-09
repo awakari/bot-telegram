@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/awakari/bot-telegram/api/http/interests"
-	"github.com/awakari/bot-telegram/api/http/reader"
+	"github.com/awakari/bot-telegram/api/http/subscriptions"
 	"github.com/awakari/bot-telegram/model/interest"
 	"github.com/awakari/bot-telegram/model/usage"
 	"github.com/awakari/bot-telegram/service"
@@ -25,7 +25,7 @@ const MsgFmtChatLinked = "Subscribed to the interest %s in this chat. " +
 
 func StartHandler(
 	svcInterests interests.Service,
-	svcReader reader.Service,
+	svcSubs subscriptions.Service,
 	svcLimits limits.Service,
 	urlCallbackBase string,
 	groupId string,
@@ -46,7 +46,7 @@ func StartHandler(
 			}
 			if err == nil {
 				subId := args[1]
-				err = Start(tgCtx, svcInterests, svcReader, svcLimits, urlCallbackBase, subId, groupId, interval)
+				err = Start(tgCtx, svcInterests, svcSubs, svcLimits, urlCallbackBase, subId, groupId, interval)
 			}
 		default:
 			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 3 arguments, got %d: %+v", len(args), args))
@@ -67,7 +67,7 @@ func StartIntervalRequest(tgCtx telebot.Context, interestId string) (err error) 
 func Start(
 	tgCtx telebot.Context,
 	svcInterests interests.Service,
-	svcReader reader.Service,
+	svcSubs subscriptions.Service,
 	svcLimits limits.Service,
 	urlCallbackBase string,
 	interestId string,
@@ -82,17 +82,17 @@ func Start(
 	default:
 		userId = util.SenderToUserId(tgCtx)
 	}
-	urlCallback := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
-	err = svcReader.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
+	urlCallback := subscriptions.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, userId)
+	err = svcSubs.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
 	if errors.Is(err, chats.ErrAlreadyExists) {
 		// might be not an error, so try to re-link the subscription
-		err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
+		err = svcSubs.Unsubscribe(ctx, interestId, groupId, userId, urlCallback)
 		if err != nil {
-			urlCallbackOld := reader.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
-			err = svcReader.Unsubscribe(ctx, interestId, groupId, userId, urlCallbackOld)
+			urlCallbackOld := subscriptions.MakeCallbackUrl(urlCallbackBase, tgCtx.Chat().ID, "")
+			err = svcSubs.Unsubscribe(ctx, interestId, groupId, userId, urlCallbackOld)
 		}
 		if err == nil {
-			err = svcReader.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
+			err = svcSubs.Subscribe(ctx, interestId, groupId, userId, urlCallback, interval)
 		}
 	}
 	switch {
@@ -108,7 +108,7 @@ func Start(
 			subDescr = "id: <code>" + interestId + "</code>"
 		}
 		err = tgCtx.Send(fmt.Sprintf(MsgFmtChatLinked, subDescr, interval), telebot.ModeHTML, telebot.NoPreview)
-	case errors.Is(err, reader.ErrPermitExhausted):
+	case errors.Is(err, subscriptions.ErrPermitExhausted):
 		var l usage.Limit
 		l, err = svcLimits.Get(ctx, groupId, userId, usage.SubjectSubscriptions)
 		switch err {
