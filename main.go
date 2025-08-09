@@ -407,7 +407,7 @@ func consumeQueueInterestsCreated(
 		//        }
 		//    }
 		//    if err == nil {
-		//        err = svcSubs.Subscribe(ctx, interestId, groupId, userId, reader.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
+		//        err = svcSubs.Subscribe(ctx, interestId, groupId, userId, subscriptions.MakeCallbackUrl(urlCallbackBase, chatId, userId), 0)
 		//    }
 		//    if err != nil {
 		//        break
