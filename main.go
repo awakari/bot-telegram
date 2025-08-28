@@ -150,15 +150,17 @@ func main() {
 		CfgMsgs:   cfg.Api.Messages,
 	}
 
+	handlerSubscribe := subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId)
+
 	callbackHandlers := map[string]service.ArgHandlerFunc{
-		subscriptions.CmdStart:             subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId),
+		subscriptions.CmdStart:             handlerSubscribe,
 		subscriptions.CmdStop:              subscriptions.Stop(svcSubs, urlCallbackBase, cfg.Api.GroupId),
 		subscriptions.CmdPageNext:          subscriptions.PageNext(svcInterests, svcSubs, groupId, urlCallbackBase),
 		subscriptions.CmdPageNextFollowing: subscriptions.PageNextFollowing(svcInterests, svcSubs, groupId, urlCallbackBase),
 	}
 	replyHandlers := map[string]service.ArgHandlerFunc{
 		subscriptions.ReqSubCreate: subscriptions.CreateBasicReplyHandlerFunc(svcInterests, groupId),
-		subscriptions.ReqStart:     subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId),
+		subscriptions.ReqStart:     handlerSubscribe,
 		messages.ReqMsgPub:         messages.PublishBasicReplyHandlerFunc(svcPub, groupId, cfg),
 		"support":                  supportHandler.Request,
 	}
@@ -288,8 +290,8 @@ func main() {
 		service.ErrorHandlerFunc(func(tgCtx telebot.Context) (err error) {
 			cmdTxt := tgCtx.Text()
 			if strings.HasPrefix(cmdTxt, "/start ") && len(cmdTxt) > len("/start ") {
-				arg := cmdTxt[len("/start "):]
-				err = subscriptions.StartIntervalRequest(tgCtx, arg)
+				args := strings.Split(cmdTxt, " ")
+				err = handlerSubscribe(tgCtx, args...)
 			} else {
 				chat := tgCtx.Chat()
 				switch chat.Type {
@@ -347,7 +349,7 @@ func main() {
 		if strings.HasPrefix(chanUserName, cfg.Api.Telegram.PublicInterestChannelPrefix) && strings.HasPrefix(txt, "/start ") {
 			// public interest channel created by Awakari
 			args := strings.Split(txt, " ")
-			err = subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId)(tgCtx, args...)
+			err = handlerSubscribe(tgCtx, args...)
 		} else {
 			err = chanPostHandler.Publish(tgCtx, chanUserName)
 		}
