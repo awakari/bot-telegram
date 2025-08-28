@@ -33,8 +33,8 @@ func StartHandler(
 	return func(tgCtx telebot.Context, args ...string) (err error) {
 		switch len(args) {
 		case 1:
-			subId := args[0]
-			err = StartIntervalRequest(tgCtx, subId)
+			interestId := args[0]
+			err = StartIntervalRequest(tgCtx, interestId)
 		case 3:
 			var interval time.Duration
 			interval, err = time.ParseDuration(args[2])
@@ -45,11 +45,11 @@ func StartHandler(
 				err = errors.New("error: interval should not be negative")
 			}
 			if err == nil {
-				subId := args[1]
-				err = Start(tgCtx, svcInterests, svcSubs, svcLimits, urlCallbackBase, subId, groupId, interval)
+				interestId := args[1]
+				err = Start(tgCtx, svcInterests, svcSubs, svcLimits, urlCallbackBase, interestId, groupId, interval)
 			}
 		default:
-			err = errors.New(fmt.Sprintf("invalid response: expected 1 or 3 arguments, got %d: %+v", len(args), args))
+			err = errors.New(fmt.Sprintf("invalid response: expected 1-3 arguments, got %d: %+v", len(args), args))
 		}
 		return
 	}

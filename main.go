@@ -346,8 +346,8 @@ func main() {
 		chanUserName := ch.Username
 		if strings.HasPrefix(chanUserName, cfg.Api.Telegram.PublicInterestChannelPrefix) && strings.HasPrefix(txt, "/start ") {
 			// public interest channel created by Awakari
-			arg := txt[len("/start "):]
-			err = subscriptions.StartIntervalRequest(tgCtx, arg)
+			args := strings.Split(txt, " ")
+			err = subscriptions.StartHandler(svcInterests, svcSubs, svcLimits, urlCallbackBase, groupId)(tgCtx, args...)
 		} else {
 			err = chanPostHandler.Publish(tgCtx, chanUserName)
 		}
